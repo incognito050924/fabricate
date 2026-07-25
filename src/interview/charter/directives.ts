@@ -19,7 +19,7 @@ const BLOCKS: Record<DirectiveId, string> = {
 - 에코 금지 — 원문을 그대로 되풀이한 재구성은 재구성이 아니다`,
 
   U2: `[U2] 출처 구분 — 계획·요약 문턱만 발동
-- 말한것/추론/가정 세 갈래로 출처를 표시해 진술한다
+- 말한것/추론/가정 세 갈래로 표기한다
 - 추론과 가정을 사용자가 말한 것으로 승격하지 않는다`,
 
   U3: `[U3] 발화력 보존
@@ -73,4 +73,19 @@ export const CHARTER_DIRECTIVES_TEXT: string = directivesText;
 /** Returns one addressable block, or undefined for an unknown directive id. */
 export function getDirectiveBlock(id: string): string | undefined {
   return Object.hasOwn(BLOCKS, id) ? BLOCKS[id as DirectiveId] : undefined;
+}
+
+/**
+ * Extracts one directive's block out of ARBITRARY surface text by its marker,
+ * rather than looking the canonical block up. That is what lets a gate judge a
+ * candidate surface: whole-file grep can be satisfied by another block's
+ * wording, so the check has to read the block the cue is supposed to live in.
+ * Returns null when the surface carries no such block.
+ */
+export function extractCueBlock(text: string, id: string): string | null {
+  const start = text.indexOf(`[${id}]`);
+  if (start < 0) return null;
+  const rest = text.slice(start);
+  const nextBlock = rest.search(/\n\s*\n\[U\d+\]/);
+  return (nextBlock < 0 ? rest : rest.slice(0, nextBlock)).trimEnd();
 }
