@@ -1,0 +1,418 @@
+# 69개 조건 (verbatim)
+
+> 기계 운반체는 `criteria.json`이다. 이 파일은 같은 원문의 읽기용 판본이며, 문안은 한 글자도 다르지 않다.
+
+## ac-1
+
+라운드 0에서 충족 상태 스키마(goal_state)를 도출·저장한다: 첫 fired 질문 전 goal_state가 부재면 fired 턴을 거부하고(recordTurn 라운드-0 선행 게이트), goal_state.derived_at는 첫 질문 asked_at보다 앞서야 하며, 술어의 verification_means가 빈값이면 스키마를 거부하고(zod .min(1)) 검증수단 없는 술어는 confirm 불가다. restatement 토큰중복 임계 초과는 에코로 거부하고, 라운드-0 초기 도출은 단일 상호작용(firedTurnCount=1)이어서 초기 도출을 반복 fresh 상호작용으로 다시 도는 것만 거부한다(개정 경로 ac-3는 예외). 합성 brief는 source_request verbatim+확정기록만 담고 questions[]가 없으며 synthesis_provenance.author_context !== 'driver'이다.
+
+증거: test
+
+## ac-2
+
+명시 스킵만 위임으로 기록하고, 그 발화를 verbatim 보존하며 해석을 되비추고, 위임해도 목표는 자율적으로 통치된다: '그냥 진행해'는 delegation.kind='explicit_skip'로 기록하되 재촉/부분답변은 delegation 없음이고, delegation.raw_utterance는 바이트 일치, delegation.interpretation은 비어있지 않고 사용자 출력에 표출된다. 첫 상호작용에서 위임해도 goal_state.predicates.length>0이며, 위임 상태에서도 ac-3 고아 게이트가 작동한다.
+
+증거: test
+
+## ac-3
+
+고아(질문·차원·AC)를 차단하고 발굴 질문에 개정 대상 명시를 요구하며 채택 시 재확정하고 시드를 드롭한다: goal_predicate_ref 없는 fired 질문은 거부+거부 카운터 증가, 고아 차원은 미승인, 고아 AC는 finalize fail-closed로 intent 미기록이다. revises_goal_predicate를 명시한 발굴 질문만 승인하고 명시 없는 발굴 질문은 고아 거부하며, 채택 시 goal_state 개정+confirmed=false로 재확정을 요구하고, 시드 차원 state='dropped'(사유)면 finalize 블록을 해제한다(2-state).
+
+증거: test
+
+## ac-4
+
+완료를 '목표 성립'으로 판정한다: goal_state가 있고 술어 미충족+완료계약 pass면 별도 goalStateGate(item,completion)가 pass:false로 close를 차단하고(work.ts·stop.ts), 완료계약 pass 불변식은 불변(회귀 가드)이며, goal_state 부재면 goalStateGate는 no-op(pass:true)로 기존대로 close한다. judge:'user' 술어에 판정 기록이 없으면 미검증 집계(default-deny)로 close 차단, 판정 기록이 있으면 해제하며, 전체 bun test가 green이다. 판별자는 지속 필드이고 게이트는 순수 리더(판단은 oracleSatisfaction/사용자-판정 기록이 보유)다.
+
+증거: test
+
+## ac-5
+
+pre-mortem에 결정-갈림길 클래스를 도입해 기준-설정만 질문으로 승격하고 그 외는 자율+로그로 처리하며 목표 달성 불가는 독립 확인한다: premortemItem에 fork_class ∈ {criterion_setting, other}를 additive 파싱해 criterion_setting은 사용자 질문 승격, other는 자율+가시 로그, goal_unachievable 판정은 fork 0건이어도 강제 확인을 발동한다(직교 독립 게이트). fork_class 분류기는 기계적 가역성(git·백업·외부 협조)으로 라우팅해서는 안 되며(‘며칠 치 코드 폐기’ 태그 단독으로는 승격 금지) 오직 이해관계 얽힘의 폭·깊이로 판정한다.
+
+증거: test
+
+## ac-6
+
+수렴 가시성을 렌더한다: IntentSummary가 goal_state 섹션(비어있지 않음)·confirmed 유지·remaining_gap(미충족 술어 M개 나열, count==M)·autonomous_decisions(≥1) 4키를 한 렌더에 동시 존재시킨다. 4필드 존재·gap count==미충족 술어수·로그 길이는 결정적이고, 남은 간극의 의미적 완전성은 잔여 판단이다.
+
+증거: test
+
+## ac-7
+
+질문 위생을 강제한다: 수반-심문 질문은 rejection.kind='entailment_interrogation'로 거부하고 그 거부는 reread_triggered=true(표현 거부와 구분)이며, 전제-심문은 world_check로 라우팅해 사용자에게 묻지 않고 실패 시만 표출한다. 혼합 거부열은 각 {kind,question_text,at} 타입으로 기록·조회 가능하고, 자격 갖춘 발굴 질문은 위생 거부 대상이 아니다(carve-out). 수반/전제/함축 분류 자체는 기계화 불가로 unknowns에 분류기 순환을 명기하고, fixture 태그로 라우팅+기록만 단언한다.
+
+증거: test
+
+## ac-8
+
+도그푸드 인터뷰 기록을 산출한다: 로그 파일이 존재하고 비어있지 않으며, 4개 스팬 마커(되말하기·user_confirmation.confirmed=true·remaining-gap 렌더·goalStateGate 호출 기록)를 순서대로 포함하고 user_confirmation 레코드가 ≥1이다. 파일 존재·마커 순서·확인 레코드는 결정적이고, 진짜 도그푸드인지·스팬의 의미적 실재는 잔여(log-evidence AC — 게이트 아님, 산출물 존재+마커만).
+
+증거: log
+
+## ac-9
+
+finalize는 세션-맹검 보존 판정을 통과한 문안만 수용한다(fail-closed): synthesis_provenance 부재면 missing_synthesis_provenance로 거부·intent 미기록·CLI 비정상 종료, preservation_judgment 부재면 거부, verdict='fail'이면 preservation_failed 거부·pass면 진행이다. 판정 brief는 source_request verbatim+후보 문안만 담고 questions[]/dimension notes가 없으며 judge_context!=='driver'이고, fail은 드라이버 편집이 아니라 fresh 재합성으로 라우팅된다. 보존 판정의 정확성은 같은 prior라 기계화 불가(잔여)다.
+
+증거: test
+
+## ac-10
+
+라운드 0 독해가 3개 검사 가능 산출물을 남긴다(코어): (1) 프레임 역할 표 존재+비어있지 않음, role:'core'이고 filler 빈 항목은 ac-3 차원으로 방출; (2) 토큰별 효과 감사 표 — 모든 내용 토큰이 비어있지 않은 제약 행에 매핑(집합 커버리지)되고 빈 행 하나면 독해를 결정적 기각+재독해; (3) 수반/전제/함축 타이핑 표 — 취소·투영 검사, 모든 약속 타이핑, ac-7 위생이 입력을 소비한다. 존재·완전성(토큰 커버리지·빈 행 기각)·하류 연결은 결정적, 역할 'core'성·토큰 제약 내용·타입 정합성은 잔여다.
+
+증거: test
+
+## ac-10a
+
+라운드-0 독해가 요청 동사별 상(aspect) 분류 태그와 완수동사에 대한 완수 술어를 산출하고 '내 종결 상태가 그 종점에 도달하는가' 검사를 남긴다(Vendler): aspect_tags[]에 동사별 상 분류가 존재하고 완수동사 행에 completion_predicate가 비어있지 않으며 endpoint_reached_check가 존재하고, 완수동사에 완수 술어가 없으면 독해 산출 스키마를 거부한다(zod). 완수동사를 활동으로만 읽는 활동-독해는 감지되는 오독 클래스다.
+
+증거: test
+
+## ac-10b
+
+자비 토너먼트(Davidson+Schleiermacher+RSA)를 산출한다: candidate_readings[] 각 항목에 elimination_reason이 존재하고 생존수 라우팅이 결정적이다(survivors≥2 → 질문 후보 방출, ==1 → 진행, ==0 → reread_triggered=true). language_parse_set·user_parse_set 두 집합과 교집합/diff 산출(불일치=질문 표적)이 존재하고, 후보별 rsa_speaker_score(Ŝ(u|m))와 소거 대본이 존재한다. 소거 사유 내용은 잔여다.
+
+증거: test
+
+## ac-10c
+
+요청을 그것이 고치려는 결함으로 읽어 mischief 4문답(이전 상태·결함·처방·처방 이유)을 기록하고 종결 상태가 결함을 실제로 없애는가를 결정적으로 검사하며 Skinner 개입 읽기를 남긴다: mischief 4문답 필드가 완전하고, defect_removed_check가 계획 종결 상태 ⊨ 결함 제거를 결정적으로 검사('일부 이동'=결함 살아있음으로 실패)하며, Skinner situation_snapshot(3줄)·intervention(1줄)·resolution_check가 존재한다. 결함 식별 내용은 잔여다.
+
+증거: test
+
+## ac-10d
+
+독해를 문법·대응·장르·정합 4기준 체크리스트로 검증하고 요청의 뜻(의미)과 에이전트 입장(의의)을 분리 필드로 남긴다(Hirsch): hirsch_criteria 4개 판정이 존재+완전하고 meaning_vs_my_position 분리 필드가 존재한다('rebuild 아직 안 됐는데'는 내 입장이지 요청의 뜻이 아님). 대응·정합 판정 내용은 잔여다.
+
+증거: test
+
+## ac-10e
+
+해석 규범별로 판정 목록을 남긴다(Scalia): 잉여 금지·통상 의미·무언 추가 금지·전체-문맥·기존 결정(ADR) 조화·불합리 기각·해석불능 시 추측 금지 등 각 규범에 verdict ∈ {지지,기각,해당없음}가 있는 interpretive_canons[]가 존재하고, 규범 목록이 완전(정해진 규범 셋 전부 판정, 빠지면 거부)하다. 규범 적용 판단은 잔여다.
+
+증거: test
+
+## ac-10f
+
+귀추 잔여표를 산출하고 동률 잔여를 질문 후보로 방출해 ac-3에 배선한다: abduction_residual_table(행=관찰, 열=후보설명, 셀=설명함/의아)이 존재하고, 동률 잔여(tie)가 있으면 goal_predicate_ref를 갖춘 질문 후보가 방출되어 ac-3 게이트를 통과한다. 설명 셀 판정은 잔여다.
+
+증거: test
+
+## ac-10g
+
+독해를 fresh-context(원문 미열람)로 한국어 되번역해 원문과 diff한 산출물을 ac-1의 restatement와 구분되는 별도 필드로 남긴다: backtranslation_echo가 ac-1 restatement와 별도 필드로 존재하고, fresh-context 되번역이 원문과 diff되며 기계적 불일치('일부 파일 옮겨줘')면 fidelity_failed 플래그를 세운다. '완전' 과장 여부의 최종 판단은 잔여다.
+
+증거: test
+
+## ac-10h
+
+Searle 계획-수용 게이트를 강제한다: '계획은 그 종결 상태가 충족 술어를 수반할 때만 admissible'을 ac-4 완료 게이트와 구분되는 계획-수용 시점 게이트로 두어, planAdmissibilityGate(plan, goal_state)에서 계획 종결 상태가 충족 술어를 수반하지 않으면 admissible=false이고, ac-4 goalStateGate(완료 시점)와 별개의 계획-수용 시점 게이트임을 두 fixture로 구분한다. 계획⊨술어 검사는 §6이 명명한 순수 결정적 검사로 내용도 결정적이고 잔여가 없다.
+
+증거: test
+
+## ac-10i
+
+contra proferentem 종단 동률 규칙을 강제한다: 종단(finalize 시점)까지 복수 독해가 남으면 terminal_tie[] 표면화가 필수(표출 없으면 finalize 거부)이고, 에이전트-유리(일 적은) 방향으로의 조용한 축소 금지 AND 조용한 확장 금지(양방향 침묵 금지, fixture 2건)를 강제하며 ac-7/finalize를 통치한다. 어느 독해가 '에이전트-유리'인지 판단은 잔여다.
+
+증거: test
+
+## ac-10j
+
+skopos 이중 게이트를 둔다: 형태 검사(원문 내용 형태소가 반영됐나) ∧ 효과 검사(계획을 읽은 사용자가 자기 의도한 결과를 알아보나)를 skopos_gate의 form_check·effect_check 두 판정으로 두고, 라우팅 테이블은 pass/pass→채택, pass/fail→수리(재렌더), fail/fail→폐기(재독해)다. 두 검사 존재·라우팅 테이블은 결정적, 형태소 반영·효과 인지 판단은 잔여다.
+
+증거: test
+
+## ac-11
+
+U1 요청 뒤 질문 재구성(Collingwood): 개정 디렉티브/헌장에 '요청이 답하는 상황/문제를 한 줄로, 에코 금지' operative-cue가 존재(결정적 grep)하고 '비단순 요청만' 발동 조건이 명시되며, 픽스처-턴 구조 관찰이 반결정적으로 발동을 확인한다. cue 존재+발동 조건 명시는 결정적, 재구성 내용 품질은 잔여다.
+
+증거: test
+
+## ac-12
+
+U2 말한것/추론/가정 구분 표기(Grice): 개정 디렉티브/헌장에 3분류 표기 operative-cue가 존재(결정적 grep)하고 '계획·요약 문턱만' 발동 조건이 명시되며, 픽스처-턴 구조 관찰이 반결정적으로 이를 확인한다. cue 존재+발동 조건은 결정적, 분류 정합성은 잔여다.
+
+증거: test
+
+## ac-13
+
+U3 발화 힘 존중(화행론): 신규분 '선호·혼잣말을 요구로 승격 금지' operative-cue를 추가하고 기존 '질문·상태확인을 착수지시로 안 읽음'(§3)을 회귀 가드로 보존한다(신규 가치는 전자에만). cue 존재+회귀 보존은 결정적 grep, 힘 분류 판단은 잔여다.
+
+증거: test
+
+## ac-14
+
+U4 묻기-대-가정 삼분류(Howard VoI): 3분기 operative-cue(비중대 기록 / 저위험 가정+가시로그 / 고위험·비가역 질문)가 전부 존재(결정적 grep)하고 '가정은 반드시 보이게 로그'가 강제되며, 픽스처-턴 구조 관찰이 반결정적으로 삼분류 발동을 확인한다. cue 존재·가정 가시로그는 결정적, 삼분류 판단은 잔여다.
+
+증거: test
+
+## ac-15
+
+U5 계획=되말하기(teach-back): '다른 말+구체 사례 ≥1, 에코 금지' operative-cue가 존재하고 사례 ≥1 개수를 셀 수 있다(결정적), 픽스처-턴 구조 관찰이 반결정적으로 되말하기 발동을 확인한다. cue 존재·사례 개수는 결정적, 되말하기 내용 품질은 잔여다.
+
+증거: test
+
+## ac-16
+
+U6 원문 재앵커(Loftus): '범위·완료 전 원문 verbatim 재대면(요약 신뢰 금지)' operative-cue가 존재(결정적 grep)하고 §8.3과 정합해 리마인드가 아니라 원문 공급 구조임을 강제하며, 픽스처-턴 구조 관찰이 반결정적으로 발동을 확인한다. cue 존재는 결정적, 재대면 적절성은 잔여다.
+
+증거: test
+
+## ac-17
+
+U7 되들음 의무(항공 hearback): 신규 '사용자 오복창 즉시 교정, 침묵=위반' operative-cue가 존재(결정적 grep)하고 '발생 시만' 발동 조건이 명시되며, 픽스처-턴 구조 관찰이 반결정적으로 발동을 확인한다. cue 존재+발동 조건은 결정적, 오복창 인지 판단은 잔여다.
+
+증거: test
+
+## ac-18
+
+U8 용어는 사례로(Wittgenstein→SbE→GATE): '정의 묻지 말고 사례 분류' operative-cue가 존재(결정적 grep)하고 glossary(제품) 랜딩 경로(개인 메모리 아님)가 명시되며, 픽스처-턴 구조 관찰이 반결정적으로 발동을 확인한다. cue 존재·랜딩 경로는 결정적, 사례 분류 판단은 잔여다.
+
+증거: test
+
+## ac-19
+
+U9 가정 장부 전역화(Brier): 모든 로그된 가정에 신뢰도 필드가 존재하고 회고 정산이 인터뷰-비한정으로 적용되며 상관 맹점이 적용된다. 신뢰도 필드 존재·전역화는 결정적, 정산 값 판단은 잔여다.
+
+증거: test
+
+## ac-20
+
+U10 명료화-필요 1–4 등급(ClariQ): 등급+근거를 로그하고 경량/무거운 라우팅 입력으로 쓰며, 이 등급이 묶음6 C5의 단일 SoT다. 등급+근거 로그·라우팅 입력·단일 SoT는 결정적, 등급 판정 내용은 잔여다.
+
+증거: test
+
+## ac-21
+
+역방향(a) 합의 어휘 앵커: glossary에 (개념·한국어·양성·음성·avoid 목록) 필드를 두고 렌더링은 재번역 대신 소비하며, avoid 위반은 grep로 결정적 검출한다. 내부(영어)→표면(한국어) 번역 압력이 뿌리이고 현행 지시(translationese 금지)가 있는데도 실패하므로 구조가 필요하다. 필드 존재·avoid grep 검출은 결정적, 어휘 선택 정합성은 잔여다.
+
+증거: test
+
+## ac-22
+
+역방향(b) 강제 번역 금지: '자연 등가 없는 하중 용어는 영어 유지 > 억지 번역' operative-cue가 존재(내부-영어/사용자-한국어 분리 결정과 정합)한다. cue 존재는 결정적 grep, 용어별 번역 판단은 잔여다.
+
+증거: test
+
+## ac-23
+
+역방향(c) 고통-사례 장부: 실패 사례를 즉시 채록해 glossary/회귀목록(제품 랜딩, 개인 메모리 아님)에 기록하고 grep 회귀 + U9 정산과 연결한다. 즉시 채록·grep 회귀·U9 연결은 결정적, 사례 원인 판단은 잔여다.
+
+증거: test
+
+## ac-24
+
+역방향(d) 정적 문구 전수 검수: 검수 커버리지를 열거하고 ADR-20260713(배너 충실도 게이트)을 통과하며, wi_2607130ld의 i18n에 종속되어 충실도 검수만 심화하고 중복 구현을 금지한다(배너 하드 승격은 #30 소관). 커버리지 열거·충실도 게이트 통과는 결정적, 문구별 충실도 판단은 잔여다.
+
+증거: test
+
+## ac-25
+
+A1 차원 완전성 게이트: 원 의도 조각↔차원을 역매핑해 미커버 조각을 origin:'discovered' state:'open' seed로 심고(prism seedUncoveredFragments 이식), seededFragmentIds가 비어있지 않음/빈 배열·빈 조각 drop·idempotent·매핑은 실재 노드만 커버 인정을 강제한다. 사용자 결정에 따라 미커버 조각 seed는 표시-전용이 아니라 readiness를 실제로 하드-블록하는 강판(readiness 입력)이며, 미커버 조각이 있으면 준비도를 실제로 차단한다.
+
+증거: test
+
+## ac-26
+
+A2 해소 셸: critical resolved close에 justifying_reason + user-답 마커 + refutation_attempted를 요구하고, 없으면 unevaluated(닫힘 아님)로 두며(prism 3값 이식) backward-compat를 유지한다. 인터뷰 dimensionState enum 확장(22 consumer 영향)으로 배선한다. 3값 게이트·마커 요구는 결정적, 해소 내용 판단은 잔여다.
+
+증거: test
+
+## ac-27
+
+A3 잠금 강화: acceptanceTestable 게이트(gates.ts)를 intent write(interview-driver.ts) 앞으로 옮기고 사용자 확인을 문안 다이제스트(sha256)와 바인딩한다(prism finalize.ts 정합). VAGUE_TERMS·OBSERVABLE 정규식은 근사이며 형식 보장이 아니다. 게이트 순서·해시 바인딩은 결정적, 문안 모호성 판단은 근사(잔여)다.
+
+증거: test
+
+## ac-28
+
+A4 준비도 하한 실존 신호: conflicting을 실입력화(현 gates.ts 하드코딩 0 대체)하고 unsure 답 수·강등 리뷰·characterize 판정을 배선한다. B2(모순 패스)에 의존하며 B2 없이 A4만 하면 conflicting 소스가 없어 여전히 0이다. 정수 집계·게이트 배선은 결정적이다.
+
+증거: test
+
+## ac-29
+
+A5 질문-답 원자 기록 + 전제 stale 전파: 답↔질문 원문을 원자쌍으로 기록하고(현 부분충족) 전제 DAG가 뒤집히면 하류를 stale로 재개방하며(현 interviewBranchEdge는 양-극 전용, 음-극/stale 신규) 참조 무결성을 가드한다. 묶음5 C1·ac-E2와 seam을 공유하며 A5가 먼저다. 그래프 연산·원자쌍·stale 전파는 결정적이다.
+
+증거: test
+
+## ac-30
+
+B1 되말하기 계약: 답마다 다른-말+예시(에코 임계 거부)와 confirmation_kind {paraphrase,verbatim}(verbatim 소수 클래스=수량·식별자·삭제범위 인간-고정 리터럴 셋)을 두고 candidate→confirmed 상태기계를 강제하며 미교정 불일치는 잠금을 차단하고 intent_summary 누출 결함을 이 표면에 흡수(누출 스캔)한다. 에코 임계·상태기계·누출 스캔은 결정적, 되말하기 품질과 유비 전이 효능은 잔여(미검증)다.
+
+증거: test
+
+## ac-31
+
+B2 모순 패스: 잠금 전 교차-답변 일관성을 1회(fixpoint 아님) 돌려 conflict 리스트(포인터)를 만들고 그 count가 A4 conflicting을 대체해 floor를 실효화하며 미실행은 정직하게 기록한다(ADR-0018). 1회 실행·conflict count·A4 대체·미실행 기록은 결정적, 모순 내용 판단은 잔여다.
+
+증거: test
+
+## ac-32
+
+B3 이견이 결론을 봄: buildIntentDissentBrief에 resolved_reading을 추가해 원 의도 + 해소된 독해 비교쌍을 두어 오-해소 의도가 finalize 이견 블록에 도달하게 하고, host-absent degrade와 INTENT_DISSENT_CONSTRAINT를 보존(범위 확장 채널 아님)한다. 비교쌍 도달·degrade/제약 보존은 결정적, 오-해소 판단은 상관 맹점(잔여)이다.
+
+증거: test
+
+## ac-33
+
+C6 예측 probe(DESIGN 노드): 목표는 반사실 k개에 대해 에이전트가 선예측한 뒤 질문하고 적중률이 잠금 게이트가 되어 bare-yes('네')로는 통과 불가하게 하는 것이다. 완료기준은 {counterfactual,predicted,actual,hit} 스키마 + '선예측 먼저·bare-yes 불통' 게이트 spec + k/위험등급 정책 + red 테스트 산출이다. B1·finalize 블록에 의존하고 상관 맹점(B5·C4 공유)을 갖는다.
+
+증거: doc, test
+
+## ac-34
+
+B4 답변을 증거로 도전: 답이 glossary·코드와 모순되면 grounding 인용 필수로 다음 라운드 질문을 발동하고(interview-state.ts) 인용 없는 '도전'은 비승인한다. glossary/코드 자체가 drift 가능하므로(§4-11) 현재 코드를 권위로 인용한다. grounding 인용 필수·비승인은 결정적, 모순 내용 판단은 잔여다.
+
+증거: test
+
+## ac-35
+
+B5 중대성 ask-트리거: k-해석→산출물→행동 diff를 {material, divergence_point?}로 두어, 불변이면 가정+가시로그(over-ask 억제, 증거로 k-diff)·변하면 분기점 질문·저위험가역이면 가정로그·고위험이면 질문으로 라우팅하고 다양성 바닥(단일 해석 붕괴는 '비중대' 불가)을 강제한다. 라우팅·다양성 바닥은 결정적, 중대성 판단은 상관 맹점(같은 prior, 잔여)이다.
+
+증거: test
+
+## ac-36
+
+C1 frontier(DESIGN 노드): 목표는 의존성 frontier로 질문을 스케줄하고 frontier-empty를 종결 신호로 삼으며 점수를 frontier 내 선택으로 강등하는 것이다. 완료기준은 frontier 계산 spec(orderPendingBranchWork 위) + 'frontier-empty⇒dry'(기존 diminishing_returns 재사용, 새 enum 아님) + red 테스트다. A5(같은 branch_edges seam)에 의존하며 A5가 먼저다.
+
+증거: doc, test
+
+## ac-37
+
+B6 예시-판정 구체화: hard 잎마다 사용자-판정 예시 ≥1 {input,expected,verdict,at}에서 oracle을 생성(합의↔검증 표류 불가)하고 EARS-파싱 lint(파싱 실패=진단)·hard/soft 타이핑(soft는 가짜 AC 금지 sufficiency_judge:user)을 강제하며, evidence_required가 있다고 예시를 면제하지 않는다(anti-exemption). mold record이지 conversation이 아니다(질문을 EARS로 안 물음). 예시→oracle·EARS lint·타이핑은 결정적, 예시 내용은 잔여다.
+
+증거: test
+
+## ac-38
+
+C2 세-장부 상태(DESIGN 노드): 목표는 dimensionState를 결정/미진술(fog)/범위밖(사유·재질문 금지)로 두고 승격 시험을 '지금 질문을 정확히 진술 가능한가'(답 가능이 아니라)로 두는 것이다. 완료기준은 새 enum additive 마이그레이션 + 'fog→Decided는 진술된-질문 포인터 필수' red 테스트 + 범위밖 재질문 제외 red 테스트다. readiness/ambiguity 게이트·C1(fog vs frontier)·A2에 의존한다.
+
+증거: doc, test
+
+## ac-39
+
+C3 충실도 사다리(DESIGN 노드): 목표는 N라운드 막힌 차원을 질문 대신 프로토타입/구조가-다른 3안으로 에스컬레이션하는 것이다. 완료기준은 stuck 검출기(기존 novelty/isValueExhausted 재사용) red 테스트 + '3안 구조적 상이(라벨만 다름 금지)' 게이트 + 침묵 계속질문 차단이다. dry/novelty 기계·prototype 스킬·C6에 의존한다.
+
+증거: doc, test
+
+## ac-40
+
+C4 보정 루프 + 합성-사용자 회귀 하네스(DESIGN 노드): 목표는 (a) 로그 가정에 신뢰도(likely/unsure/guess)→회고 정산→VoI 임계 되먹임(Brier), (b) 합성-사용자 하네스로 인터뷰 스킬 변경을 회귀 테스트화하는 것이다. 완료기준은 (a) interviewAssumption.confidence에 정산 단계+'likely 70% 정산→0.7 되먹임' red 테스트, (b) 이슈 #72에 플러그인(신규 하네스 아님)+회귀 baseline+'인터뷰 스킬 변경이 recall 지표 이동' red 테스트다. 회고 기계·#72(재사용)·U4/B5 VoI에 의존하고 상관 맹점(B5/C6 공유)을 갖는다.
+
+증거: doc, test
+
+## ac-B1
+
+산파술 origin enum + aporia(ac-25·ac-3 확장): 최종 의도 항목마다 origin ∈ {사용자진술, 에이전트후보-사용자채택, 에이전트가정}을 두고 '에이전트 가정'이 결정 항목에 남으면 잠금 불가(finalize fail-closed)이며, aporia(의도 없음 → 안 만듦)를 정당한 종착지로 인정해 산출물 없이 정당 종료(에러 아님)한다. origin enum·에이전트가정→잠금불가·aporia 종료 경로는 결정적, origin 라벨 정확성은 잔여다.
+
+증거: test
+
+## ac-B2
+
+Gadamer 선이해 시트: 인터뷰 시작 전 선이해 외부화 시트 preunderstanding_sheet[] 각 항목이 state ∈ {위험노출,확정,반박됨}를 갖고, 미확정 선이해를 전제로 깐 질문은 leading_question으로 감지·재작성하며, 답 묶음마다 전체 의도 재투영 diff를 산출해 diff가 닿는 이전 항목을 reconfirm_required로 마킹한다. 시트 존재·enum·감지 플래그·재투영 diff·재확인 마킹은 결정적, 유도성 판단은 잔여다.
+
+증거: test
+
+## ac-B3
+
+Grice 함축 원장(ac-12/U2 확장): 실질 발화마다 후보 함축 원장 implicature_ledger[]가 state ∈ {확정,미확정,취소됨}를 갖고, state='미확정' 함축이 결정 집합(decision set)에 진입하면 게이트가 거부한다('…라는 뜻은 아니에요'가 자연스러운 함축의 사실 승격 차단). 원장 enum·미확정→결정집합 차단은 결정적, 함축 분류는 잔여다.
+
+증거: test
+
+## ac-B4
+
+화행 6-force enum(ac-13/U3 확장): 발화마다 force ∈ {제약, 선호, 예시, 가설, 약속, 푸념}를 태깅하고 구속력 있는 힘(제약·약속)만 AC 근거 자격을 가져, AC 근거가 force ∉ {제약, 약속}인 발화면 게이트가 거부한다('X면 좋겠는데'가 요구사항으로 못 굳음). enum·비구속 힘→AC근거 차단은 결정적, 힘 분류는 잔여다.
+
+증거: test
+
+## ac-B5
+
+laddering 삼원/양극: 흐린 선호 차원에서 구체 대안 셋(triadic_alternatives)을 제시해 '어느 둘이 한편·왜'로 양극 쌍(bipolar_pair)을 채록하고(한쪽 극만이면 incomplete 플래그) '왜 중요' 상향 포화 시 정지 신호·관찰가능 사례 하향을 두며 채록 쌍을 glossary에 기록한다. 삼원 셋·양극쌍 완성 검사·glossary 기록은 결정적, 양극 내용은 잔여다.
+
+증거: test
+
+## ac-B6
+
+artifact_anchor: 주요 의도 주장에 artifact_anchor(실제 로그·파일·재현물) 필드를 두고, 없으면 abstract_only=true로 '추상-전용' 약한 가중 태그를 붙인다. 앵커 필드 존재·없으면 추상-전용 태그는 결정적, 앵커 실재성은 잔여다.
+
+증거: test
+
+## ac-B7
+
+GATE 질문-모드 정책: 라운드별 question_mode ∈ {개방형, 경계라벨, 예아니오}(초반 개방형 / 중반 경계-라벨 / 후반 예-아니오)를 기록하고 모드 분포 감사를 산출하며 novel_consideration_count(첫 요청에 없던 항목 수)가 0이면 weak-elicitation 약신호를 낸다. 모드 기록·분포 감사·카운트 필드는 결정적, 모드 적절성은 잔여다.
+
+증거: test
+
+## ac-C1
+
+KAOS 확장(ac-3 WHY-사슬 확장): 정련 잎마다 kind ∈ {requirement, assumption} 분리 결정적 필드를 두고 refinement_complete 술어(모든 잎이 단일-담당 배정 가능 ∧ 검증 가능일 때만 true)와 'so that/위해/목적' 키워드 WHY-추출기를 둔다. 요구/가정 필드·정련-완료 술어·WHY 추출기는 결정적, 요구 vs 가정 분류는 잔여다.
+
+증거: test
+
+## ac-C2
+
+i* HOW 분류(ac-37 확장): 사용자가 HOW를 말하면('Redis로 해') 그것이 구속 처방인지 결과 스케치인지 how_classification ∈ {binding_prescription, outcome_sketch}로 정확히 1회 분류하고, 미분류면 게이트 플래그를 세운다. 분류 필드·1회 강제는 결정적, 처방 vs 스케치 판단은 잔여다.
+
+증거: test
+
+## ac-C3
+
+SbE N-라운드 강제 하향(ac-37 확장; ac-39/C3 충실도 사다리와 구분): hard 잎에서 추상 공방 N라운드에 도달하면 강제 하향 변환('이 입력이면 이 출력인가요?')을 발동해 example_downshift를 산출한다(즉시 풀리거나 진짜 불일치를 드러냄). ac-39(프로토타입·구조가-다른 3안)와 달리 이건 예시 하향이다. N-라운드 카운터·하향 변환 발동은 결정적, 예시 내용은 잔여다.
+
+증거: test
+
+## ac-D1
+
+Habermas 진실성 채널(ac-31 사실채널·is-ought 정당성채널에 추가): 진술 선호와 세션 내 행동이 어긋나면('품질 우선'이라면서 품질 비용을 전부 기각) 비난이 아니라 구체-사례를 든 질문으로만 표면화하고, 사실 채널(B2)·정당성 채널(is-ought)과 구분되는 진실성 채널로 라우팅한다. 어긋남 감지→구체사례 질문 라우팅·채널 구분은 결정적, 어긋남 판단은 잔여다.
+
+증거: test
+
+## ac-D2
+
+teach-back 포인터·즉시(ac-30 확장): ac-30에 구획마다 즉시 확인을 강제하고(끝에 몰아서 확인 시도는 deferred_confirmation 위반 플래그) 결정 항목에 teachback_confirmed 발화 포인터가 없으면 잠금을 거부한다(예측형 확인은 ac-33/C6 소관). 즉시-확인 강제·포인터 없으면 잠금불가는 결정적, 되말하기 품질(ac-30 소관)은 잔여다.
+
+증거: test
+
+## ac-E1
+
+Wald 사전등록 + 두 출구 + 예산소진 공개: ① lock_threshold를 인터뷰 시작 전 위험등급별로 사전등록하고 중간 '느낌상 됐다' 하향 시도를 거부하며, ② 종결 출구 exit ∈ {build, aporia_or_rescope} 둘이 실재(단일 출구 불가)하고, ③ 예산 소진 시 shortfall_disclosure를 강제 산출(부족분 공개 없이 종료 불가)한다. 사전등록·하향 차단·두 출구·부족분 공개 강제는 결정적, 위험등급 판정은 잔여다.
+
+증거: test
+
+## ac-E2
+
+Lindley 열거 해석집합 + separates(DESIGN 노드; ac-36/C1과 접합): 열거된 살아있는-해석 집합 + 후보질문마다 separates:[해석 i, 해석 j] 정당화 + 어떤 후보도 집합을 못 줄이면 정지를 둔다. 완료기준(design)은 살아있는-해석 집합 열거 스키마 + 후보질문 separates 필드 + '어떤 후보도 집합 축소 못 하면 정지' 게이트 spec + red 테스트다. C1(frontier)과 seam을 공유하며 A5가 먼저다. 해석 집합 완전성 판단은 잔여다.
+
+증거: doc, test
+
+## ac-E3
+
+MacKay AC-가중 + Howard 죽은-가지(ac-35/B5 확장): 해석-분기를 스케줄할 때 AC에 안 닿는 분기는 후순위(deprioritized)로 두고, 완전정보 가치가 계획을 못 바꾸면 그 질문 계열을 pruned=true(죽은 가지)로 가지치기한다. AC-가중 후순위·죽은가지 가지치기 배선은 결정적, 계획 변경 여부 판단(ac-35 k-diff 소관)은 잔여다.
+
+증거: test
+
+## ac-F1
+
+QbC 불일치 지도(ac-40/C4 또는 ac-35 확장): 위원회 산출에서 disagreement_map(영역별 불일치, 점수 아님)을 산출하고 최대-불일치 영역을 다음 질문 표적으로 두며 진단 분기를 라우팅한다(consensus-but-wrong → 검증 라우팅, disagreement → 추출 문제). 불일치 지도 존재·최대영역→질문·진단 분기 라우팅은 결정적, 불일치 원인 판단은 잔여다.
+
+증거: test
+
+## ac-G1
+
+사실-대-결정 규칙(ac-7 전제→world_check를 일반 규칙으로): 환경에서 조회 가능한 사실은 world_check/서브에이전트 조회로 라우팅해 사용자에게 묻지 않고 실패 시에만 표면화한다. 사실→world_check 라우팅·실패시만 표출은 결정적, '사실 vs 결정' 분류는 ac-7 분류기 순환을 상속하는 잔여다.
+
+증거: test
+
+## ac-G2
+
+경계 시나리오 + 합의 즉시 glossary(ac-34 확장): B4 도전에서 경계를 찌르는 구체 시나리오(boundary_scenario)를 발명하고, 합의된 용어는 그 자리에서 즉시 glossary에 기록(지연 시 플래그)한다. 경계 시나리오 산출·즉시 glossary 기록은 결정적, 시나리오 적절성은 잔여다.
+
+증거: test
+
+## ac-G3
+
+cap 기각 회귀 가드(ac-4/ac-6에 회귀 단언): 질문 수 단독으로는 종결할 수 없으며 cap이 종결 판정에 재도입되지 않음을 회귀 가드로 못 박아, 질문 수만으로 종결 시도하면 종결을 거부(cap 재도입 차단)하고 ac-4 완료=목표성립·ac-6 수렴 가시성에 회귀 단언을 추가한다. cap→종결 불가 회귀 단언은 전부 결정적이고 잔여가 없다.
+
+증거: test
+

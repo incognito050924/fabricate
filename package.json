@@ -1,0 +1,22 @@
+{
+  "name": "fabricate",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Agent work harness whose spine is intent formation",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "citty": "^0.1.6",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  }
+}
