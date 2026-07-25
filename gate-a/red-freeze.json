@@ -1,0 +1,558 @@
+{
+  "frozen_at": "2026-07-25T14:44:57.819Z",
+  "note": "빨간 테스트 동결 매니페스트 — 게이트④(red-first)가 조각 3에서 해시·삭제·빨강 관측을 검사한다. 약화·삭제는 거부된다.",
+  "entries": [
+    {
+      "criterion_id": "ac-1",
+      "path": "acceptance/ac-1.test.ts",
+      "sha256": "3c7bfb1ae08d73e616f1e10c45f8283dc975d749f2aa08574f0ea5a1462bbfc9",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10",
+      "path": "acceptance/ac-10.test.ts",
+      "sha256": "abb2c5ebcfc1601468bb800da56b0545641fce0d885cf5d358624183c9d90867",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10a",
+      "path": "acceptance/ac-10a.test.ts",
+      "sha256": "eb5a6d19caefe9e0ca06614535c0d9baab2658424315460ee76c30f520d76a79",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10b",
+      "path": "acceptance/ac-10b.test.ts",
+      "sha256": "36c55a5eef7ec3d695f6a263ae6e4feae5382bdf836e67ca0157be3e23c719ce",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10c",
+      "path": "acceptance/ac-10c.test.ts",
+      "sha256": "27ac5f9af5e371fd0d20db8d042b5f39479a5b6de45eb6285c47b1b93a2cb219",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10d",
+      "path": "acceptance/ac-10d.test.ts",
+      "sha256": "f431880ce50c3dcd58efe104ab644202331ab366a573ac25cf98b8a6496b3135",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10e",
+      "path": "acceptance/ac-10e.test.ts",
+      "sha256": "3a086a66091545589a82b172c623165ad9a70259baa4d6d6545217c112b18b86",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10f",
+      "path": "acceptance/ac-10f.test.ts",
+      "sha256": "8e2afbab60e0f0649cb4a8b84bf6e7dcba2ce0c2f804fc02fbf8eda63f2d6f44",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10g",
+      "path": "acceptance/ac-10g.test.ts",
+      "sha256": "982d1b1bb66bad2fd5f88ec11b1eb0ecac11312e93d71dfb786fc0d2bb4a71d6",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10h",
+      "path": "acceptance/ac-10h.test.ts",
+      "sha256": "a0fb0466fa2490cce13f79d4231dca52352f89a15f6e5830a56e1834637471f2",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10i",
+      "path": "acceptance/ac-10i.test.ts",
+      "sha256": "f1c653adb27a7be05c2308a17a51bdc3ebe1e98e9886fe8a8860e35776b3a8d7",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-10j",
+      "path": "acceptance/ac-10j.test.ts",
+      "sha256": "022389551b09c497b829f992a73590a6d5c5f41645513fedde782b15f39eaafe",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-11",
+      "path": "acceptance/ac-11.test.ts",
+      "sha256": "0baccb9881533eec5de55a98c7ee22833d46bf9599e82da20dbe7becef6bbb12",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-12",
+      "path": "acceptance/ac-12.test.ts",
+      "sha256": "41decd62cee2d8a20a8c5e930d8a061fe5d967fe1af0a60a5f33664eff906d51",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-13",
+      "path": "acceptance/ac-13.test.ts",
+      "sha256": "4673eadd78f8f7ccac9c34d8b8112bb23d367df66e6101ecfc5426d188a80a16",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-14",
+      "path": "acceptance/ac-14.test.ts",
+      "sha256": "57cf7f6f48e79d4bfe8b27a52f593527a2a2428ffb457f50777c165dee1a1c60",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-15",
+      "path": "acceptance/ac-15.test.ts",
+      "sha256": "850714c31bfd696ba0c1aaf70c7e12179ca09623a3dcbe2cf82f4d6ffc66634e",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-16",
+      "path": "acceptance/ac-16.test.ts",
+      "sha256": "624e1d30ede8506797e497705daf87dc834f050ac988324c49cfcc61425cee0b",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-17",
+      "path": "acceptance/ac-17.test.ts",
+      "sha256": "a0f6586d144b76205cd7a482e88e474eb32c0d668f2321f4c362d84340ede4d8",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-18",
+      "path": "acceptance/ac-18.test.ts",
+      "sha256": "ded7288420bc56b610c84377d432b26cb02345aabe005aa245ac591c1aa624cd",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-19",
+      "path": "acceptance/ac-19.test.ts",
+      "sha256": "d0e8485e0729925576787f646305f985738cacfcd570172bb3d4147525181f38",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-2",
+      "path": "acceptance/ac-2.test.ts",
+      "sha256": "9c94b31283c5c5a9d0b3cd905cd75348bf33b13985fac5bc8edb8149d434a84b",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-20",
+      "path": "acceptance/ac-20.test.ts",
+      "sha256": "02a0739dd9afb3f92c1ebf63b65d6b1e5c832857ea03fb0a12a137b69c4a8d9e",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-21",
+      "path": "acceptance/ac-21.test.ts",
+      "sha256": "f9b93ef317128d990eac692ba6d58c265b75d0ab361988073c5e7040c6a008b7",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-22",
+      "path": "acceptance/ac-22.test.ts",
+      "sha256": "82113ba1739ec0ff232cb0e2700b69a4935cb40224fc7ed6387a1fc963799ebd",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-23",
+      "path": "acceptance/ac-23.test.ts",
+      "sha256": "abfee319fa5471f57589da051d6eadd647b70d81f42f6750293cfbf77970d863",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-24",
+      "path": "acceptance/ac-24.test.ts",
+      "sha256": "e5f378142aeaf3fb3bef1677a9d319522de519c467f4c9f0a2a5f8a94f4b3c16",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-25",
+      "path": "acceptance/ac-25.test.ts",
+      "sha256": "7db510b7aff24e8fcf8b650d1ed5a2942e3de6e3844c0a8c2a402f574cb471f8",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-26",
+      "path": "acceptance/ac-26.test.ts",
+      "sha256": "8a3f81452c3d6ae738ac993cecf82e697e106d4a2b97c8559072b1da9f8382b3",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-27",
+      "path": "acceptance/ac-27.test.ts",
+      "sha256": "df4ef98c9655804ab664ccaf471c7dff357ca802a9b02f25e05ee08e01873229",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-28",
+      "path": "acceptance/ac-28.test.ts",
+      "sha256": "08d09ce6bbe834c9266e3375f2e8580430a2cb1ea5a15f53d3301e0d253dc0b1",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-29",
+      "path": "acceptance/ac-29.test.ts",
+      "sha256": "4c7a59bfb7055217810f70d763ae66122747ddfe95828a3825c81bbd24ea8c2b",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-3",
+      "path": "acceptance/ac-3.test.ts",
+      "sha256": "52f3fecd4c842a1b16cc7a2bb60e7faf15c5124505f5c35f3948603a8a2facd3",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-30",
+      "path": "acceptance/ac-30.test.ts",
+      "sha256": "f1b0219ea853abd6ecb26af409864cdb710b82e33aa09c19fa9b3db25d66ca2e",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-31",
+      "path": "acceptance/ac-31.test.ts",
+      "sha256": "ad290352b946fb9a7ccef56ab35387ba7a549946477176199c932c4c37df6cd5",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-32",
+      "path": "acceptance/ac-32.test.ts",
+      "sha256": "1da79887ae386d8334b0f5ab9f7a7f6e36d48d19e7e71507e55dd43c7f0c04f3",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-33",
+      "path": "acceptance/ac-33.test.ts",
+      "sha256": "6727474bd7b3f4a17495026f6e3e959ab5fcdf5d7ec07c9051d501724ea42f1c",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-34",
+      "path": "acceptance/ac-34.test.ts",
+      "sha256": "653e52a184088b488b01ff0ab9cdefc5c16afb0c9c06b3a42bde7b1fd5f2cfe4",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-35",
+      "path": "acceptance/ac-35.test.ts",
+      "sha256": "413c0a7c96527f9872337e86a5c916c33f396c35c1eaed848c269c384e17883c",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-36",
+      "path": "acceptance/ac-36.test.ts",
+      "sha256": "0b9c7d5913a9db6a143043ab7a3aa4a64deddd9eb07b126f83810138fad94bf6",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-37",
+      "path": "acceptance/ac-37.test.ts",
+      "sha256": "468f20027e46c15e57d3f8447419193f0156b558fe1b63dab184fabd7774b7f1",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-38",
+      "path": "acceptance/ac-38.test.ts",
+      "sha256": "6c322b0fad61a62c2bdc413b6e2d57f8e95fd05e605309e4cdf0415b05e52daa",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-39",
+      "path": "acceptance/ac-39.test.ts",
+      "sha256": "1ccc12ea54e0e26a8d046059727da9a72ff17855cd5793cb2452861c91849c63",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-4",
+      "path": "acceptance/ac-4.test.ts",
+      "sha256": "fa7d88cb64e0481a5bab93dbb0bc85d4cc6c4366826f84f8d2a21563125054ae",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-40",
+      "path": "acceptance/ac-40.test.ts",
+      "sha256": "909b5f5abc46465876919dd708c9fd696e5db13ac95bdae5f761b582d914c4f2",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-5",
+      "path": "acceptance/ac-5.test.ts",
+      "sha256": "dde7f01b0048d5d8b210d80857cefc50c4feb30328b83c08ba40a1af79bf241d",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-6",
+      "path": "acceptance/ac-6.test.ts",
+      "sha256": "4f9204261c26a62ec0c8e70dc04bbe8efbeef97eda2d574fcb7dad1b51314123",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-7",
+      "path": "acceptance/ac-7.test.ts",
+      "sha256": "4681558912244d351a121122a8e48334e6c9d1d75e1669b22aa96c891ed23b66",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-8",
+      "path": "acceptance/ac-8.test.ts",
+      "sha256": "420d5448b01b1e98b11b4337f0d22f39783f1cb8d8ee055c196882b89c3edcf8",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-9",
+      "path": "acceptance/ac-9.test.ts",
+      "sha256": "6ce4c5e64d3d4305e343fab3adf113b142dafd66f3952d18b9290c39f1269e9b",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-B1",
+      "path": "acceptance/ac-B1.test.ts",
+      "sha256": "9c301ba83203d0bedd841ef3122c13a7128bd9ccc7c74b0516e43836f1dc34a7",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-B2",
+      "path": "acceptance/ac-B2.test.ts",
+      "sha256": "63b45e7f7c2d27198484a399576e2acb2f9fc84e336d4b6528e6b279b36a9bf9",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-B3",
+      "path": "acceptance/ac-B3.test.ts",
+      "sha256": "5964e1bb8d955ae37644a952bbf65ffb9e4e1f1b67fc9e20e591b1fcf6fb27aa",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-B4",
+      "path": "acceptance/ac-B4.test.ts",
+      "sha256": "3d32be1cee7b4c0c420291022a185b483813405d5ac389a2a3af8c01a7b7cb75",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-B5",
+      "path": "acceptance/ac-B5.test.ts",
+      "sha256": "e1299f91ef785c16c69dcca6853969a5bd9133fe6519fda69cc0659e278f9c4a",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-B6",
+      "path": "acceptance/ac-B6.test.ts",
+      "sha256": "11436b5c0b3c5a955880f3077231d0e759c9d54590b90cd0669e4df5276b0a11",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-B7",
+      "path": "acceptance/ac-B7.test.ts",
+      "sha256": "37902f8012bb69af05edf06f3adecdf26a74ea11439d713de0118da605de2989",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-C1",
+      "path": "acceptance/ac-C1.test.ts",
+      "sha256": "015fc42616d0386533a401da51bf2d5828b621179b2afc4d734ce0a327fb6c30",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-C2",
+      "path": "acceptance/ac-C2.test.ts",
+      "sha256": "46e19d6507000b6cd6e012e750843cc799d150d4fcfd11e7a221d3f0d918d827",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-C3",
+      "path": "acceptance/ac-C3.test.ts",
+      "sha256": "b3eeb9cd5cc1d0ca5f2f9534e9743fbb0bf52aab2b62db7a8aa0ca1fa364c82c",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-D1",
+      "path": "acceptance/ac-D1.test.ts",
+      "sha256": "5035bef32f7ba15d40423be064a24677d390f0822e187a12df2049bf4e349618",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-D2",
+      "path": "acceptance/ac-D2.test.ts",
+      "sha256": "c5db20d4c309894d296730b1a323a46c3f4da5602f1323b36b91049406418a3a",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-E1",
+      "path": "acceptance/ac-E1.test.ts",
+      "sha256": "cefad1206643ddfb950103a28989def9f3b71d7bd83128a745b8e6939650c2be",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-E2",
+      "path": "acceptance/ac-E2.test.ts",
+      "sha256": "96d56481a27ce78329813b8486cb62f0d66b8d38f44a8156d97d0535d8f0a1c2",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-E3",
+      "path": "acceptance/ac-E3.test.ts",
+      "sha256": "1f6ea9f903c4076baf5f0b061675b3269f7f1781912448c2a92a42fd790a236b",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-F1",
+      "path": "acceptance/ac-F1.test.ts",
+      "sha256": "3448e4bf62e6b0b97dfb51fac6c5cfa7e2f6203070d51699d741ca268e8bedec",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-G1",
+      "path": "acceptance/ac-G1.test.ts",
+      "sha256": "090d72eeffe0a28dc6ed3b4a8cd9c5077acfb694acb873cecfd01271350220ce",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-G2",
+      "path": "acceptance/ac-G2.test.ts",
+      "sha256": "6fcd3f52a16d55e34de15e5548d9baeeb586c268c61b162a58c7bb3f825b71b6",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    },
+    {
+      "criterion_id": "ac-G3",
+      "path": "acceptance/ac-G3.test.ts",
+      "sha256": "9823b73fb7eedeb252e91a63d780492167b69c0d50b370e470ada71d6b6f49ae",
+      "red_exit_code": 1,
+      "author": "external",
+      "author_context": "piece2-fanout-agent (구현 루프가 아닌 조각 2 작성자)"
+    }
+  ]
+}

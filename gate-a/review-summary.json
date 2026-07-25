@@ -1,14 +1,6 @@
 {
-  "narrow_ids": [
-    "ac-10j",
-    "ac-11",
-    "ac-34"
-  ],
-  "revised_ids": [
-    "ac-10j",
-    "ac-11",
-    "ac-34"
-  ],
+  "narrow_ids": ["ac-10j", "ac-11", "ac-34"],
+  "revised_ids": ["ac-10j", "ac-11", "ac-34"],
   "critic": {
     "empty_or_missing_ids": [],
     "duplicate_red_test_paths": [],
@@ -164,5 +156,300 @@
     "ac-8-binding: 비평가 지적은 타당했다: 수리 전 ac-8의 oracle_statement는 red_test_path(acceptance/ac-8.test.ts)를 어디서도 언급하지 않아 69행 중 유일하게 테스트 파일이 오라클에 결속되지 않은 행이었다(다른 행들은 전부 'bun test <경로> 실행'이 첫 절 — ac-1/ac-7/ac-9로 확인). 잠긴 문안(criteria.json의 ac-8 statement)은 판정 술어와 잔여 선언만 규정하므로, 테스트 파일을 rescan의 실행 수단으로 명시하는 것은 문안에 없는 요구를 추가하는 것이 아니라 판정 수단의 운반체를 지정하는 것이다. 초안(contract-draft.md line 108–111 log-evidence AC, line 379 KEEP 판정)과도 정합. method=rescan, evidence_kinds=[\"file\"]은 결정 0001(log→file) 그대로 유지했고, 기존 코드 위치 앵커는 추가하지 않았다(markers.ts 등 module_plan 경로는 forward 계획 경로로 기존 그대로). 수리 후 JSON 유효성과 스키마 필드 전부를 기계 검사로 확인했다. 수정 파일: /Users/incognito/dev/projects/fabricate/gate-a/rows/ac-8.json",
     "ac-26-residual: 비평가 지적은 타당했다: 잠긴 문안(contract/criteria.json ac-26)은 '인터뷰 dimensionState enum 확장(22 consumer 영향)으로 배선한다'를 확정 절로 포함하며 스스로 잔여로 선언한 것은 '해소 내용 판단'뿐인데, 기존 행은 '22 consumer' 절을 residual 2번으로 밀어 오라클 밖에 뒀다. 수리로 해당 residual을 제거하고 오라클 (4)를 새 표면 기준 전-소비자 배선 술어(소비 지점 전수 스캔 + 진공 통과 방지 + exhaustive 처리 단언 + 신규 표면 소비자 픽스처)로 확장했다. 수리 후 재검증: JSON 유효, 스키마 9필드 전부 존재, method=run·evidence_kinds=[test](결정 0001 번역 일치), red_test_path 고정값 유지, oracle_statement에 기존 코드 file:line 앵커 없음(residual의 engine.ts:143-187 언급은 prism 원본 이식-충실성이 범위 밖임을 설명하는 기존 항목으로, 비평 범위 밖이라 보존). 소유 행은 ac-26 하나뿐이며 그 행을 수정했다. contract/ 는 읽기만 했다.",
     "ac-32-deps: 비평가 지적은 타당했다. ac-9.json(module_plan에 src/interview/finalize.ts 포함, depends_on=[ac-1])과 ac-1.json(세션·턴 기계: record-turn/goal-state 등)을 직접 읽어 표면 공유를 확인했다. ac-9가 ac-1에 의존하므로 ac-1은 추이적으로도 보장되지만, ac-32 오라클이 인터뷰 진행(턴 기계)을 직접 행사하므로 명시 나열했다 — 같은 표(예: ac-8이 ac-4·ac-6과 함께 ac-1을 직접 나열)의 관례와 일치하며, finalize 블록 의존을 ac-9로 나열한 ac-33 관례와도 정합. 수리 후 /Users/incognito/dev/projects/fabricate/gate-a/rows/ac-32.json 을 다시 파싱해 JSON 유효성과 스키마 필드 보존(criterion_id, oracle_statement, method, evidence_kinds, module_plan, red_test_path, depends_on, residual, draft_passage_found)을 확인했다. depends_on 외 다른 필드는 변경하지 않았고, contract/ 및 타 행 파일은 수정하지 않았다."
-  ]
+  ],
+  "test_review": {
+    "total": 69,
+    "returned": 69,
+    "no_result": [],
+    "authored_in_finish_pass": ["ac-D1", "ac-D2", "ac-E2", "ac-G1", "ac-G2", "ac-G3"],
+    "rebut_missing": [],
+    "flagged": [
+      {
+        "id": "ac-D1",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 5
+      },
+      {
+        "id": "ac-G2",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 1
+      },
+      {
+        "id": "ac-G3",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-1",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 5
+      },
+      {
+        "id": "ac-2",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-3",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 2
+      },
+      {
+        "id": "ac-4",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-5",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-8",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 2
+      },
+      {
+        "id": "ac-10",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-10a",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-10c",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-10d",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 4
+      },
+      {
+        "id": "ac-10g",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 6
+      },
+      {
+        "id": "ac-10i",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 6
+      },
+      {
+        "id": "ac-12",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 4
+      },
+      {
+        "id": "ac-13",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-14",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-15",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-16",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 4
+      },
+      {
+        "id": "ac-17",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-18",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-23",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 5
+      },
+      {
+        "id": "ac-24",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 5
+      },
+      {
+        "id": "ac-25",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 2
+      },
+      {
+        "id": "ac-26",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 5
+      },
+      {
+        "id": "ac-27",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 2
+      },
+      {
+        "id": "ac-29",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 4
+      },
+      {
+        "id": "ac-31",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 5
+      },
+      {
+        "id": "ac-32",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 2
+      },
+      {
+        "id": "ac-33",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 4
+      },
+      {
+        "id": "ac-36",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 6
+      },
+      {
+        "id": "ac-37",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-38",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 4
+      },
+      {
+        "id": "ac-39",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 4
+      },
+      {
+        "id": "ac-40",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-B1",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-B2",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 3
+      },
+      {
+        "id": "ac-B3",
+        "verdict": "weaker",
+        "revised": true,
+        "offending": 2
+      },
+      {
+        "id": "ac-B5",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 2
+      },
+      {
+        "id": "ac-C1",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 1
+      },
+      {
+        "id": "ac-E1",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 5
+      },
+      {
+        "id": "ac-F1",
+        "verdict": "shell_passable",
+        "revised": true,
+        "offending": 5
+      }
+    ],
+    "honest": [
+      "ac-D2",
+      "ac-E2",
+      "ac-G1",
+      "ac-6",
+      "ac-7",
+      "ac-9",
+      "ac-10b",
+      "ac-10e",
+      "ac-10f",
+      "ac-10h",
+      "ac-10j",
+      "ac-11",
+      "ac-19",
+      "ac-20",
+      "ac-21",
+      "ac-22",
+      "ac-28",
+      "ac-30",
+      "ac-34",
+      "ac-35",
+      "ac-B4",
+      "ac-B6",
+      "ac-B7",
+      "ac-C2",
+      "ac-C3",
+      "ac-E3"
+    ]
+  }
 }

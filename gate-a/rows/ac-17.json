@@ -3,10 +3,7 @@
   "oracle_statement": "acceptance/ac-17.test.ts를 bun test로 실행해 전부 green이면 통과. 테스트가 검사하는 술어: (1) 신규 인터뷰 표면의 개정 디렉티브/헌장 원문(src/interview/charter/directives.ts가 내보내는 문자열)에 U7 operative-cue — '사용자 오복창 즉시 교정'과 '침묵=위반' — 이 신규분으로 결정적 grep(부분 문자열 단언)으로 존재한다. (2) 같은 원문에 발동 조건 '발생 시만'이 명시되어 결정적 grep으로 검출된다. (3) 픽스처-턴 구조 관찰(반결정적): 사용자 오복창으로 태그된 픽스처 턴의 기록 구조에 즉시 교정 발화 필드가 비어있지 않게 존재해 발동이 확인되고, 오복창 태그 턴에서 교정 발화 없이 지나간 픽스처는 위반으로 기록되며(cue의 '침묵=위반' 절), 오복창이 없는 일반 픽스처 턴에는 교정이 발동하지 않는다 — '발생 시만' 게이팅이 턴 구조로 관찰된다. 실제 발화가 오복창인지를 인지하는 판단은 이 판정에 포함되지 않는다(잔여 필드 참조).",
   "method": "run",
   "evidence_kinds": ["test"],
-  "module_plan": [
-    "src/interview/charter/directives.ts",
-    "src/interview/turn/hearback.ts"
-  ],
+  "module_plan": ["src/interview/charter/directives.ts", "src/interview/turn/hearback.ts"],
   "red_test_path": "acceptance/ac-17.test.ts",
   "depends_on": ["ac-1"],
   "residual": [

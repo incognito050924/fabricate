@@ -3,10 +3,7 @@
   "oracle_statement": "acceptance/ac-15.test.ts를 bun test로 실행해 전부 green이면 통과. 테스트가 검사하는 술어: (1) 신규 인터뷰 표면의 개정 디렉티브/헌장 원문(src/interview/charter/directives.ts가 내보내는 문자열)에 U5 operative-cue — '다른 말+구체 사례 ≥1'과 '에코 금지' — 가 결정적 grep(부분 문자열 단언)으로 존재한다. (2) 사례 개수 셀 수 있음(결정적): 계획 되말하기(teach-back) 산출의 기록 구조가 구체 사례를 열거 가능한 필드(배열)로 노출해 그 길이를 셀 수 있고, 테스트가 사례 개수 ≥1을 결정적으로 단언하며 사례 0건인 되말하기 픽스처는 위반으로 검출된다. (3) 픽스처-턴 구조 관찰(반결정적): 계획 제시로 태그된 픽스처 턴의 기록 구조에 teach-back 필드(원문과 다른 말의 되말하기 + 구체 사례 목록)가 비어있지 않게 존재해 되말하기 발동이 확인된다. 되말하기 내용의 품질 — 다른 말이 실제로 의미를 보존한 딴 표현인가, 사례가 계획을 실제로 예증하는가 — 는 이 판정에 포함되지 않는다(잔여 필드 참조).",
   "method": "run",
   "evidence_kinds": ["test"],
-  "module_plan": [
-    "src/interview/charter/directives.ts",
-    "src/interview/turn/teachback.ts"
-  ],
+  "module_plan": ["src/interview/charter/directives.ts", "src/interview/turn/teachback.ts"],
   "red_test_path": "acceptance/ac-15.test.ts",
   "depends_on": ["ac-1"],
   "residual": [

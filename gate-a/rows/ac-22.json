@@ -3,10 +3,7 @@
   "oracle_statement": "acceptance/ac-22.test.ts를 bun test로 실행해 전부 green이면 통과. 테스트가 검사하는 술어: (1) cue 존재(결정적 grep) — 신규 인터뷰 표면의 개정 디렉티브 원문(src/interview/charter/directives.ts가 내보내는 문자열)에 역방향(b) operative-cue '자연 등가 없는 하중 용어는 영어 유지 > 억지 번역'이 부분 문자열 단언으로 존재한다: '자연 등가 없는 하중 용어'·'영어 유지'·'억지 번역' 세 문구와 우선순위 방향(영어 유지가 억지 번역보다 앞서는 '>' 서열)이 한 cue 문장 안에서 검출된다. (2) 분리 결정과의 정합(결정적, 구조 수준) — 렌더링 언어 정책 원문(src/interview/render/language-policy.ts가 내보내는 문자열)에 내부-영어/사용자-한국어 분리 결정 문구가 존재하고, cue가 그 결정과 같은 방향임(하중 용어의 영어 유지가 사용자-한국어 표면 규범의 명시적 예외로 선언됨)이 두 문자열의 공존·상호 참조로 검출된다. 검사 범위는 문안이 스스로 선언한 대로 cue 존재의 결정적 grep에 한정되며, 개별 용어가 자연 등가 없는 하중 용어인지·영어 유지와 번역 중 무엇이 옳은지의 용어별 판단은 채점하지 않는다(잔여 참조).",
   "method": "run",
   "evidence_kinds": ["test"],
-  "module_plan": [
-    "src/interview/charter/directives.ts",
-    "src/interview/render/language-policy.ts"
-  ],
+  "module_plan": ["src/interview/charter/directives.ts", "src/interview/render/language-policy.ts"],
   "red_test_path": "acceptance/ac-22.test.ts",
   "depends_on": [],
   "residual": [
