@@ -8,12 +8,21 @@
  * one of ITS predicates. A ref that resolves nowhere is an orphan wearing a
  * link, and a gate that only checked for a non-empty string would pass it.
  *
+ * A goal state this module cannot READ is a third thing, and it is kept
+ * separate on purpose. Folding it into "orphan" made every correctly-linked
+ * question of a differently-shaped goal state a rejection and inflated the
+ * orphan counter — a number that is supposed to mean "unattached questions
+ * were fired" was reporting a schema mismatch instead. So an unreadable goal
+ * state refuses the turn under its own rejection kind and leaves the orphan
+ * counter alone. What the terminal failure mode should be (throw, or this
+ * explicit report) is not settled here.
+ *
  * Every operation returns a new log — the caller cannot mutate history in place
  * — and the rest of the session (delegations, goal state) rides through
  * unchanged, because the thing being governed is the session, not a bare list.
  */
 
-import { parseGoalState } from "./goal-state";
+import { readPredicateIds } from "./goal-state";
 import { type OrphanRejection, hasGoalLink, orphanRejection } from "./orphan-gate";
 
 export type FiredTurnInput = {
@@ -50,10 +59,18 @@ export type Session = TurnLog & {
   delegations: unknown[];
 };
 
+/** Refused because the session's goal state could not be read at all. */
+export type UnreadableGoalStateRejection = {
+  kind: "unreadable_goal_state";
+  reason: string;
+};
+
+export type FiredTurnRejection = OrphanRejection | UnreadableGoalStateRejection;
+
 export type RecordFiredTurnResult<L extends TurnLog> = {
   recorded: boolean;
   log: L;
-  rejection?: OrphanRejection;
+  rejection?: FiredTurnRejection;
 };
 
 export function createTurnLog(): TurnLog {
@@ -70,34 +87,47 @@ export function createSession(input: { source_request: string }): Session {
   };
 }
 
-/** The predicate ids this log's goal state actually holds, if it holds one. */
-function predicateIdsOf(log: TurnLog): Set<string> | null {
-  if (log.goal_state === undefined) return null;
-  try {
-    return new Set(parseGoalState(log.goal_state).predicates.map((predicate) => predicate.id));
-  } catch {
-    // A goal state that does not parse cannot vouch for any ref.
-    return new Set<string>();
-  }
+const UNREADABLE_GOAL_STATE =
+  "이 세션의 goal_state를 읽을 수 없다 — 참조가 목표에 닿는지 판정할 수 없으므로 기록하지 않는다(고아 아님)";
+
+/**
+ * The predicate ids this log's goal state holds.
+ *  - `undefined` — no goal state at all, so there is nothing to check against.
+ *  - `null` — a goal state exists but cannot be read.
+ *  - a set — the ids it names.
+ */
+function predicateIdsOf(log: TurnLog): Set<string> | null | undefined {
+  if (log.goal_state === undefined) return undefined;
+  const ids = readPredicateIds(log.goal_state);
+  return ids === null ? null : new Set(ids);
 }
 
 export function recordFiredTurn<L extends TurnLog>(
   log: L,
   turn: FiredTurnInput,
 ): RecordFiredTurnResult<L> {
-  const reject = (rejection: OrphanRejection): RecordFiredTurnResult<L> => ({
+  const rejectAsOrphan = (rejection: OrphanRejection): RecordFiredTurnResult<L> => ({
     recorded: false,
     log: { ...log, orphan_rejection_count: log.orphan_rejection_count + 1 },
     rejection,
   });
 
   if (!hasGoalLink(turn.goal_predicate_ref)) {
-    return reject(orphanRejection("goal_predicate_ref"));
+    return rejectAsOrphan(orphanRejection("goal_predicate_ref"));
   }
 
   const predicateIds = predicateIdsOf(log);
-  if (predicateIds !== null && !predicateIds.has(turn.goal_predicate_ref)) {
-    return reject(orphanRejection("goal_predicate_ref"));
+  if (predicateIds === null) {
+    // Not an orphan: the ref may well be correct — this module simply cannot
+    // tell. The orphan counter stays where it was.
+    return {
+      recorded: false,
+      log,
+      rejection: { kind: "unreadable_goal_state", reason: UNREADABLE_GOAL_STATE },
+    };
+  }
+  if (predicateIds !== undefined && !predicateIds.has(turn.goal_predicate_ref)) {
+    return rejectAsOrphan(orphanRejection("goal_predicate_ref"));
   }
 
   const recorded: FiredQuestionTurn = {

@@ -9,6 +9,7 @@
 import { type Dimension, isSettled } from "./dimension";
 import type { IntentDissentBrief } from "./dissent";
 import type { RevisableGoalState } from "./goal-revision";
+import { isGoalStateConfirmed } from "./goal-state";
 import { hasGoalLink } from "./orphan-gate";
 import { preservationJudgmentSchema } from "./preservation-judgment";
 import { type ResynthesisRoute, routeAfterPreservationFail } from "./resynthesis";
@@ -47,7 +48,7 @@ export type FinalizeResult = {
 export function finalizeIntent(input: FinalizeInput): FinalizeResult {
   const blockers: FinalizeBlocker[] = [];
 
-  if (input.goal_state.confirmed !== true) {
+  if (!isGoalStateConfirmed(input.goal_state)) {
     blockers.push({ kind: "unconfirmed_goal_state" });
   }
 
