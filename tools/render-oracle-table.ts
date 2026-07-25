@@ -31,6 +31,7 @@ interface ReviewSummary {
   narrow_ids?: string[];
   revised_ids?: string[];
   critic?: { summary?: string; suspect_rows?: Array<{ id: string; why: string }> };
+  repaired?: Array<{ id: string; change_summary: string; task: string }>;
 }
 
 const contract = (await Bun.file(new URL("contract/criteria.json", ROOT)).json()) as {
@@ -54,6 +55,7 @@ try {
 const narrowIds = new Set(summary.narrow_ids ?? []);
 const revisedIds = new Set(summary.revised_ids ?? []);
 const suspectById = new Map((summary.critic?.suspect_rows ?? []).map((s) => [s.id, s.why]));
+const repairedById = new Map((summary.repaired ?? []).map((r) => [r.id, r.change_summary]));
 
 const methodCounts = new Map<string, number>();
 for (const row of rows.values()) {
@@ -78,6 +80,7 @@ lines.push(
 lines.push(
   `- 반박에서 narrow 판정 후 수정된 행: ${revisedIds.size}개${revisedIds.size > 0 ? ` (${[...revisedIds].join(", ")})` : ""}`,
 );
+lines.push(`- 비평가 지적 후 수리된 행: ${repairedById.size}개`);
 if (summary.critic?.summary) {
   lines.push(`- 완전성 비평 요약: ${summary.critic.summary}`);
 }
@@ -107,12 +110,18 @@ for (const criterion of contract.criteria) {
   if (narrowIds.has(criterion.id)) {
     meta.push(`**반박**: narrow${revisedIds.has(criterion.id) ? " → 수정 반영" : " (수정 없음)"}`);
   }
-  const suspicion = suspectById.get(criterion.id);
-  if (suspicion !== undefined) {
-    meta.push(`**비평가 지적**: ${suspicion}`);
-  }
   lines.push(meta.join(" · "));
   lines.push("");
+  const suspicion = suspectById.get(criterion.id);
+  if (suspicion !== undefined) {
+    lines.push(`**비평가 지적**: ${suspicion}`);
+    lines.push("");
+  }
+  const repair = repairedById.get(criterion.id);
+  if (repair !== undefined) {
+    lines.push(`**비평 후 수리**: ${repair}`);
+    lines.push("");
+  }
   if (row.residual.length > 0) {
     lines.push("**잔여 (이 판정 기준으로 닫히지 않음)**:");
     for (const r of row.residual) lines.push(`- ${r}`);
