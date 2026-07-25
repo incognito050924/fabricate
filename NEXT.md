@@ -17,7 +17,7 @@ git log --oneline -12        # 최근 흐름
 `gate-a/rows/<id>.json` → `acceptance/<id>.test.ts`.
 
 **지금 상태 한 줄**: 조각 1(방어 게이트)·조각 2(69행 판정표 + 빨간 테스트 동결) 완료, 관문 A
-승인됨(2026-07-26), 조각 3(인터뷰 표면 구현) 진행 중 **12/69 초록**.
+승인됨(2026-07-26), 조각 3(인터뷰 표면 구현) 진행 중 **24/69 초록 — 물결 1·2 완료**.
 
 **저장소 전체 `bun test`는 빨갛다 — 설계상 그렇다.** 방어 게이트는 초록이고, 아직 구현되지 않은
 조건의 수용 테스트가 없는 모듈을 import해 빨갛다. 조각 3이 하나씩 초록으로 만든다.
@@ -92,14 +92,16 @@ git log --oneline -12        # 최근 흐름
 | `bun tools/render-gate-a-package.ts` | `gate-a/PACKAGE.md` 재생성 |
 | `bun tools/freeze-red-tests.ts` | 동결 매니페스트 재생성 — **조각 3에서는 쓰지 마라**(굳은 것을 다시 굳히면 약화가 통과한다) |
 
-## 4. 다음 행동 — 조각 3 계속 (12/69)
+## 4. 다음 행동 — 조각 3 계속 (24/69)
 
 물결 순서대로, 조건 하나씩 **순차로** 짓는다. 부챗살 금지(락이 없어 같은 파일을 덮어쓴다).
 
-초록: `ac-1 ac-11 ac-12 ac-13 ac-15 ac-16 ac-17 ac-18 ac-21 ac-22 ac-27 ac-B4`
+물결 1·2 전부 초록(24개): `ac-1 ac-3 ac-4 ac-5 ac-9 ac-11 ac-12 ac-13 ac-14 ac-15 ac-16 ac-17
+ac-18 ac-20 ac-21 ac-22 ac-24 ac-26 ac-27 ac-29 ac-B2 ac-B4 ac-B5 ac-B7`
 
-다음 대상(물결 2의 남은 12개): `ac-3 ac-4 ac-5 ac-9 ac-14 ac-20 ac-24 ac-26 ac-29 ac-B2 ac-B5 ac-B7`
-그다음 물결 3→4→5→6은 `bun tools/progress.ts`가 순서대로 알려준다.
+다음 대상(물결 3, 14개): `ac-2 ac-6 ac-10 ac-10h ac-19 ac-25 ac-31 ac-32 ac-34 ac-35 ac-36 ac-37
+ac-B3 ac-C1`
+그다음 물결 4→5→6은 `bun tools/progress.ts`가 순서대로 알려준다.
 
 ### 조건 하나를 짓는 절차
 
@@ -123,20 +125,42 @@ git log --oneline -12        # 최근 흐름
 
   ```
   bun test acceptance/ac-11.test.ts acceptance/ac-12.test.ts acceptance/ac-13.test.ts \
-           acceptance/ac-15.test.ts acceptance/ac-16.test.ts acceptance/ac-17.test.ts \
-           acceptance/ac-18.test.ts acceptance/ac-22.test.ts
+           acceptance/ac-14.test.ts acceptance/ac-15.test.ts acceptance/ac-16.test.ts \
+           acceptance/ac-17.test.ts acceptance/ac-18.test.ts acceptance/ac-22.test.ts
   ```
 
-  아직 안 선 디렉티브 소비자: ac-14(U4)·ac-19(U9) — 이 둘을 지을 때 위 목록에 추가할 것.
+  아직 안 선 디렉티브 소비자: ac-19(U9) — 지을 때 위 목록에 추가할 것.
 - `src/interview/charter/charter.ts` — 헌장 원문(비어있지 않은 줄 ≥20 유지).
-- `src/interview/glossary/{entry,render,avoid-scan,landing}.ts` — ac-B5가 `entry`를 추가로 쓴다.
-- `src/interview/goal-state.ts` — ac-4가 `goalStateSchema`·`persistedWorkItemSchema`를 **추가로**
-  요구한다. 기존 `parseGoalState`·`confirmPredicate`를 깨지 말고 additive로 붙여라.
-- `src/interview/turn/{reconstruction,attribution,teachback,hearback,example-classification}.ts`
+- `src/interview/glossary/{entry,render,avoid-scan,landing}.ts` — ac-B5가 `entry`를 쓴다.
+- `src/interview/goal-state.ts` — **두 형상이 공존한다.** 기존 `goalState`(술어별 confirmed)와
+  ac-4의 `goalStateSchema`(상단 confirmed + judge, 지속 저장용)·`persistedWorkItemSchema`. 어느 쪽도
+  깨지 말고 additive로만 붙여라.
+- **`src/interview/finalize.ts` — 두 API가 한 파일에 산다.** ac-3의 `finalizeIntent`(목표상태·AC·차원
+  블로커)와 ac-9의 `finalize`/`createIntentStore`/`listRecordedIntents`(보존 판정 fail-closed).
+  ac-32가 후자를 더 쓴다.
+- **`src/interview/dimension.ts`(ac-3, 파일) ≠ `src/interview/dimension/`(ac-26, 디렉터리).** 둘 다
+  존재하고 서로 다른 표면이다. 상태 어휘도 따로다 — 디렉터리 쪽 `state.ts`가
+  `LEGACY_DIMENSION_STATES`+`unevaluated`의 SoT이고 ac-38이 여기에 세-장부를 더한다.
+  **`close.ts`류 소비자는 `matchDimensionState`를 지나야 한다** — ac-26의 src/ 전수 스캔이 기본 팔
+  fallthrough를 잡는다(리터럴 분기 파일에 `unevaluated` 팔이 없으면 위반).
+- `src/interview/orphan-gate.ts` — 고아 판정(`hasGoalLink`) 단일 소유. turn·dimension·finalize·
+  goal-revision이 공유한다.
+- `src/interview/synthesis-provenance.ts` — `DRIVER_CONTEXT` 단일 소유(synthesis-brief가 참조).
+- `src/interview/clarification/grade.ts` — 명료화 1–4 등급 **단일 SoT**. ac-20의 src/ 전수 grep이
+  제2 정의를 금지한다 — 다른 파일에서 `clarificationGrade`류 식별자를 **선언**하지 마라(임포트는 허용,
+  `1 | 2 | 3 | 4` 열거도 이 파일에서만).
+- `src/interview/i18n/{static-copy-catalog,static-copy-coverage,banner-fidelity-gate}.ts` — 사용자
+  문구는 카탈로그에만 산다. 검수 계층에 번역 문자열을 두면 ac-24가 거부한다.
+- `src/interview/graph/{branch-edge,stale-propagation}.ts` — ac-36(C1 frontier)·ac-E2가 같은 seam을
+  쓴다(A5 먼저 원칙).
+- `src/interview/turn/{reconstruction,attribution,teachback,hearback,example-classification,
+  atomic-pair,clarification-log}.ts`
 - `src/interview/{record-turn,restatement-echo,round0-derivation,synthesis-brief}.ts`
 - `src/interview/lock/{acceptance-testable,statement-digest,intent-write}.ts`
 - `src/interview/anchor/original-reanchor.ts`, `src/interview/force/{speech-act-force,ac-grounding-gate}.ts`,
   `src/interview/render/language-policy.ts`
+- `src/interview/{premortem,preunderstanding,laddering,question-mode,universal,log,close}/…` — 물결 2에서
+  새로 선 표면들. 자세한 것은 각 `gate-a/rows/<id>.json`의 `module_plan`.
 
 ### 함정 (이번 세션에서 실제로 걸린 것들)
 
@@ -158,7 +182,8 @@ git log --oneline -12        # 최근 흐름
 ### 남아 있는 배선
 
 계약이 이름 부르지 않은 것 하나: **명령줄 진입점**(citty) — 첫 명령이 곧 인터뷰다.
-ac-9가 `src/cli/interview-finalize`를 요구하므로 그 조건을 지을 때 함께 선다.
+ac-9로 `src/cli/interview-finalize.ts`의 finalize arm(거부 시 0 아닌 종료 코드)까지는 섰지만,
+**citty 루트 명령에 마운트되지는 않았다.** 아직 실행 가능한 CLI가 아니다.
 
 ## 5. 하지 말 것
 
@@ -191,7 +216,11 @@ ac-9가 `src/cli/interview-finalize`를 요구하므로 그 조건을 지을 때
 ## 7. 미검증으로 남긴 것
 
 - 조각 3의 규모 추정(2,000~3,000줄)은 옛 코드 밀도에서 뽑은 추정이며 계약이 규정한 수치가 아니다.
-  (조각 1은 실측 667줄, 조각 3은 12/69 시점에 인터뷰 모듈 23개.)
-- 남은 57개 조건의 난이도는 고르지 않다. ac-26(701줄)·ac-29(495줄)·ac-B2(453줄)처럼 큰 것들이
-  물결 2에 남아 있고, 실제로 얼마나 걸릴지는 재보지 않았다.
+  (조각 1은 실측 667줄, 조각 3은 24/69 시점에 인터뷰 모듈 47개.)
+- 남은 45개 조건의 난이도는 고르지 않다. 물결 2에서 가장 컸던 셋(ac-26 701줄·ac-29 495줄·
+  ac-B2 453줄)은 닫혔지만, 물결 3~6의 크기는 재보지 않았다.
+- **물결 2에서 구현이 테스트보다 넓게 간 자리 둘** — 초록이지만 계약이 요구한 것보다 강하다:
+  ac-26의 `refutation_attempted`를 존재가 아니라 `=== true`로 요구했고(false는 "시도하지 않았다"로
+  읽었다), ac-26 집계에서 `dropped`를 닫힘으로 셌다(ac-3의 드롭 의미와 맞춘 것). 둘 다 테스트가
+  강제하지 않은 해석이다.
 - 실제 인터뷰를 한 번도 돌려 보지 않았다(관문 B). 표면이 서기 전까지는 돌릴 수 없다.
