@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { oracleSatisfactionRecordSchema } from "./oracle-satisfaction";
+import { userJudgmentRecordSchema } from "./user-judgment";
 
 /**
  * The goal state — round 0's artifact and the standard that governs the rest of
@@ -48,3 +50,52 @@ export function confirmPredicate(candidate: unknown): ConfirmResult {
   }
   return { ok: true, predicate: { ...parsed.data, confirmed: true } };
 }
+
+/**
+ * The persisted form of the goal state — what survives on disk between runs, so
+ * that "is the goal established?" can be asked again later by a reader that was
+ * not present when the interview happened.
+ *
+ * Each predicate names its judge. 'oracle' means a machine check decides it;
+ * 'user' means only a recorded human verdict can. The judge is mandatory: a
+ * predicate with no judge has no one who can ever settle it.
+ */
+
+export const predicateJudge = z.enum(["oracle", "user"]);
+export type PredicateJudge = z.infer<typeof predicateJudge>;
+
+export const persistedGoalPredicateSchema = z
+  .object({
+    id: z.string().min(1),
+    statement: z.string().min(1),
+    verification_means: z.string().min(1),
+    judge: predicateJudge,
+  })
+  .strict();
+export type PersistedGoalPredicate = z.infer<typeof persistedGoalPredicateSchema>;
+
+export const goalStateSchema = z
+  .object({
+    derived_at: z.string().datetime(),
+    confirmed: z.boolean(),
+    predicates: z.array(persistedGoalPredicateSchema),
+  })
+  .strict();
+export type PersistedGoalState = z.infer<typeof goalStateSchema>;
+
+/**
+ * The stored work-item record. goal_state is a member field of it — a
+ * discriminant that persists with the item rather than a value recomputed at
+ * close time. It is optional so items that predate an interview still parse,
+ * and the gate treats its absence as "nothing to judge" rather than "nothing
+ * blocks" by accident.
+ */
+export const persistedWorkItemSchema = z
+  .object({
+    id: z.string().min(1),
+    goal_state: goalStateSchema.optional(),
+    oracle_satisfaction: z.array(oracleSatisfactionRecordSchema),
+    user_judgments: z.array(userJudgmentRecordSchema),
+  })
+  .strict();
+export type PersistedWorkItem = z.infer<typeof persistedWorkItemSchema>;
