@@ -1,9 +1,26 @@
 # 인수인계 — 이 저장소에서 다음에 할 일
 
-이 문서 하나가 세션 경계를 넘기는 전부다. 원 의도, 되돌릴 수 없는 결정, 지금 상태, 다음 행동,
-하지 말 것, 남는 위험 순으로 적었다. 계획 전체는 `PLAN.md`, 만들어야 할 것은 `contract/`에 있다.
+이 문서 하나가 세션 경계를 넘기는 전부다. 계획 전체는 `PLAN.md`, 만들어야 할 것은 `contract/`에 있다.
 
 ---
+
+## 0. 첫 5분 (새 세션은 여기부터)
+
+```
+bun tools/progress.ts        # 조각 3 진행 — 조건별 초록/빨강, 물결별 남은 것 (약 1분 소요)
+bun tools/verify-freeze.ts   # 동결 69개가 무결한지 (거부 0이어야 함)
+bun test src                 # 방어 게이트 5개 — 초록이어야 함
+git log --oneline -12        # 최근 흐름
+```
+
+읽을 순서: 이 문서 → `gate-a/PACKAGE.md`(무엇이 왜 이렇게 굳었는지) → 손댈 조건의
+`gate-a/rows/<id>.json` → `acceptance/<id>.test.ts`.
+
+**지금 상태 한 줄**: 조각 1(방어 게이트)·조각 2(69행 판정표 + 빨간 테스트 동결) 완료, 관문 A
+승인됨(2026-07-26), 조각 3(인터뷰 표면 구현) 진행 중 **12/69 초록**.
+
+**저장소 전체 `bun test`는 빨갛다 — 설계상 그렇다.** 방어 게이트는 초록이고, 아직 구현되지 않은
+조건의 수용 테스트가 없는 모듈을 import해 빨갛다. 조각 3이 하나씩 초록으로 만든다.
 
 ## 1. 원 의도
 
@@ -36,118 +53,121 @@
 - **운전 방식**: 순차 작업(게이트·인터뷰 짓기)은 Claude Code 세션이 테스트 우선으로 직접 한다.
   판단을 69갈래로 뿌리는 일만 ultracode 워크플로에 맡긴다. `/goal`은 쓰지 않는다 — 그 판정자는
   대화만 읽고 파일·명령을 못 보므로 결국 일한 쪽의 주장을 채점한다(공식 문서 확인).
-- **사용자가 등장하는 자리는 두 곳뿐**이다. 관문 A(69행 판정표 + 테스트 동결 해시 승인 — 이게 착수
-  허가), 관문 B(실제 인터뷰 1회 + 사람만 판정할 수 있는 항목 기록 + 마무리). 그 사이는 한 덩어리로 돈다.
+- **사용자가 등장하는 자리는 두 곳뿐**이다. 관문 A(69행 판정표 + 테스트 동결 해시 승인 — **2026-07-26
+  승인 완료**), 관문 B(실제 인터뷰 1회 + 사람만 판정할 수 있는 항목 기록 + 마무리). 그 사이는 한
+  덩어리로 돈다.
 - **옛 저장소의 처분은 보류.** 이 하네스가 실제로 쓸 만해진 뒤에 증거를 보고 정한다.
 
-## 3. 지금 상태
+## 3. 지금 서 있는 것
 
-**조각 1 완료 + 이음매 봉합 (2026-07-25)** — 방어 게이트 다섯 개가 서 있고 서로 엮여 있으며,
-이 시점부터 모든 후속 작업이 기계에 감시된다. 작업 트리 깨끗.
+### 방어 게이트 다섯 (조각 1) — 이것들이 이후 모든 작업을 감시한다
 
-- `f3a1732` 저장소 정초 — 창립 계약 원문 + 도구 사슬
-- `662123d`·`dce19f8` 이어받기 문서
-- 게이트 다섯(전부 동작적, 각각 실패 테스트 관측 후 최소 구현): `0c8b1d8` 스키마 /
-  `94b53b1` 잠금 / `7c6db95` 증거 대조 / `d41a084` 빨간 선행 / `ecaca55` 종료
-- `486a17a` 구조적 — `src/contract` → `src/intent` 개명. biome 1.x의 `"contract/**"` ignore가
-  gitignore식으로 매칭되어 `src/contract/`까지 린트 사각지대였다. 루트 계약 문서 ignore는 유지.
-- **이음매 봉합(사용자 검증에서 지적)**: `0fd0062` 종료 게이트가 잠긴 집합을 검사 —
-  69개 잠그고 61개만 넘겨 done 받는 조용한 축소 차단. `6573e3d` 증거를 조건에 결속 —
-  테스트 하나로 69개 닫는 연극 통과 차단. 둘 다 개별 게이트는 초록이면서 총합 성질이
-  구멍이던 자리였다.
-- **결정 0001** (`a37ce81` 문서 + `edb7550` 기계화): 계약 증거 어휘 doc(6건)·log(1건, ac-8)
-  → file/rescan 매핑 확정. 대조 테스트가 criteria.json을 직접 읽어 완전성을 강제.
+| 모듈 | 하는 일 |
+| --- | --- |
+| `src/intent/criterion.ts` | 판정 기준 없는 조건은 파싱 거부. 방식은 run/rescan/human 셋뿐. forward 판정 기준은 코드 위치 앵커 금지. criterion_id 일치 강제 |
+| `src/intent/lock.ts` | 조건 집합 잠금 — 제거 거부, 추가 허용+보고, 판정 붙은 뒤 재잠금 거부 |
+| `src/gate/evidence.ts` | 증거 결속(criterion_id 필수)을 종류보다 **먼저** 검사. run→test·command / rescan→file / human→observation·repro. 증거 없으면 항상 차단. 결정 0001 매핑 상수 보유 |
+| `src/gate/red-first.ts` | 루프 자작 테스트 무효, 빨강 관측 기록 필수, 동결 해시 불일치·삭제 거부 |
+| `src/gate/close.ts` | 잠긴 집합을 필수 인자로 받아 누락 id를 잔여보다 먼저 부적격 처리. 착지 상태는 게이트가 도출(호출자가 주장 불가). 미검증+재진입으로만 착지 |
 
-**초록 증거 (2026-07-25 실측)**: `bun test` 70 pass / 0 fail (테스트 파일 6개, expect 100회),
-`bunx tsc --noEmit` 통과, `bunx biome check .` 통과. 구현+테스트 합계 847줄, 게이트당 구현
-55~84줄 — 옛 구현 실질 크기와 같은 자릿수.
+### 관문 A 산출물 (조각 2) — 굳었다
 
-지어진 모듈:
+- `gate-a/rows/*.json` 69개 — 조건별 판정 기준(무엇을 실행/재스캔하면 통과인지) + `module_plan` + 잔여
+- `acceptance/*.test.ts` 69개 — **완료 정의. 수정 금지.** 게이트④가 sha256으로 감시
+- `gate-a/red-freeze.json` — 동결 해시 + 빨강 관측 기록
+- `gate-a/PACKAGE.md`·`oracle-table.md` — 사람이 읽는 형태 (도구로 재생성 가능)
+- `decisions/0001-contract-evidence-mapping.md` — 증거 어휘 test→test, doc→file, log→file
 
-1. `src/intent/criterion.ts` — 조건·판정 기준 스키마 (판정 기준 없으면 파싱 거부,
-   run/rescan/human 셋뿐, forward는 코드 앵커 금지, criterion_id 일치 강제)
-2. `src/intent/lock.ts` — 조건 집합 잠금 (제거 거부, 추가 허용+보고, 판정 후 재잠금 거부)
-3. `src/gate/evidence.ts` — 증거 결속+종류 대조 (증거마다 criterion_id 필수, 결속 검사가
-   종류보다 먼저, run→test·command / rescan→file / human→observation·repro, 증거 없으면
-   항상 차단) + 결정 0001 매핑 상수
-4. `src/gate/red-first.ts` — 빨간 테스트 선행 검사 (루프 자작 무효, 빨강 관측 기록 필수,
-   동결 해시 불일치·삭제 거부)
-5. `src/gate/close.ts` — 종료 게이트 (잠긴 집합을 필수 인자로 받아 누락 id를 잔여보다 먼저
-   부적격 처리, 잔여 있으면 done 부적격, 착지 상태는 게이트가 도출, 미검증+재진입으로만 착지)
+조각 2에서 빈-껍데기 반박이 **69개 중 43개를 잡았다**(빈껍데기 통과 31·판정 약화 12, 전부 수정).
+지금 남아 있는 테스트는 그 수정을 거친 것이다 — 약해 보이면 의심할 것이 아니라 읽을 것.
 
-**계약 복사 검증(추측 아님)**: 69개 조건 문안이 원본과 바이트 단위로 동일, 원 요청 문장과 목표 문장도
-verbatim 일치(처음 생성에서 줄바꿈 한 글자가 붙어 실패했고 다시 만들어 통과), 연구 보고서·계약 초안·
-심의 기록 세 건은 파일 비교로 동일.
+### 도구
 
-옛 저장소에서 `wi_260724pps`는 partial로 세워 뒀고, 재진입 명령이 이 문서를 가리킨다.
+| 명령 | 하는 일 |
+| --- | --- |
+| `bun tools/progress.ts` | 조각 3 진행 — 동결 테스트 개별 실행, 물결별 남은 것 |
+| `bun tools/verify-freeze.ts` | **진짜 게이트④**로 동결 69개 재검사(재구현 아님) |
+| `bun tools/validate-oracle-table.ts` | 판정표 69행을 게이트①③·결정0001로 대조 |
+| `bun tools/render-oracle-table.ts` | `gate-a/oracle-table.md` 재생성 |
+| `bun tools/render-gate-a-package.ts` | `gate-a/PACKAGE.md` 재생성 |
+| `bun tools/freeze-red-tests.ts` | 동결 매니페스트 재생성 — **조각 3에서는 쓰지 마라**(굳은 것을 다시 굳히면 약화가 통과한다) |
 
-### 조각 2 완료 (2026-07-25) — 관문 A 대기 중
+## 4. 다음 행동 — 조각 3 계속 (12/69)
 
-- `58264d3` 69행 판정표 — 조건당 에이전트 하나(계약 원문 직접 읽기, 요약 무개입) → 다른
-  에이전트가 같은 원문만 보고 좁게-읽기 반박(narrow 3건 전부 수정) → 완전성 비평가가 의심 12건
-  지목 → 주제별 표적 수리 17행. 기계 검증 위반 0건.
-- `60b29b7` 빨간 테스트 69개 동결 — 조건당 작성 후 각자 빨강 실측 → **빈-껍데기 반박에서
-  43건 적발**(빈껍데기 통과 31·판정 약화 12) 전부 수정 → 26건 honest. 69개 개별 실행으로
-  빨강(exit≠0) 관측 후 sha256 동결.
-- 도구 4개(`57dc0f8`·`8e1ed52`·`854ff67`·`4057158`): 판정표 기계 검증기·렌더러·동결기·동결 검증기.
+물결 순서대로, 조건 하나씩 **순차로** 짓는다. 부챗살 금지(락이 없어 같은 파일을 덮어쓴다).
 
-**관문 A 검토 대상**: `gate-a/PACKAGE.md`(요약·재검증 절차) · `gate-a/oracle-table.md`(69행 전문) ·
-`gate-a/red-freeze.json`(동결 해시 69개).
+초록: `ac-1 ac-11 ac-12 ac-13 ac-15 ac-16 ac-17 ac-18 ac-21 ac-22 ac-27 ac-B4`
 
-**사용자 승인 전까지 `src/`의 인터뷰 표면 구현에 손대지 않는다.** 지금 src에는 방어 게이트 5개뿐이고,
-수용 테스트 69개는 아직 없는 모듈을 import해 전부 빨강이다 — 설계상 그렇다.
+다음 대상(물결 2의 남은 12개): `ac-3 ac-4 ac-5 ac-9 ac-14 ac-20 ac-24 ac-26 ac-29 ac-B2 ac-B5 ac-B7`
+그다음 물결 3→4→5→6은 `bun tools/progress.ts`가 순서대로 알려준다.
 
-증거 어휘 번역은 **결정 0001**(`decisions/0001-contract-evidence-mapping.md`)로 고정돼 있다 —
-test→test, doc→file, log→file. 매핑을 벗어나면 `src/gate/contract-evidence.test.ts`가 깨진다.
+### 조건 하나를 짓는 절차
 
-### 관문 A 승인됨 (2026-07-26) — 조각 3 진행 중
-
-**현재 12/69 초록.** 진행 상황은 언제든 `bun tools/progress.ts`로 확인한다(동결 테스트를 개별
-실행해 물결별로 센다). 완료된 것: 물결 1 전부(ac-1·13·21·22·27), 물결 2에서 7개(ac-11·12·15·
-16·17·18·B4).
-
-## 4. 다음 행동 — 조각 3 계속
-
-물결 순서대로, 조건 하나씩 순차로 짓는다. **부챗살 금지**(락 없이 같은 파일을 덮어쓴다) —
-판단 작업만 부챗살로 뿌린다. 다음 대상은 `bun tools/progress.ts`가 물결 2에 남았다고 표시하는
-것들: ac-14 ac-20 ac-24 ac-26 ac-29 ac-3 ac-4 ac-5 ac-9 ac-B2 ac-B5 ac-B7.
-
-조건 하나를 짓는 절차:
-
-1. `gate-a/rows/<id>.json`의 `oracle_statement`와 `module_plan`을 읽는다.
-2. `acceptance/<id>.test.ts`를 읽는다 — **이것이 완료 정의다. 절대 수정하지 않는다.**
+1. `gate-a/rows/<id>.json` — `oracle_statement`(무엇이 통과인지)와 `module_plan`(어디에 짓는지),
+   `residual`(테스트하지 않는 것)을 읽는다.
+2. `acceptance/<id>.test.ts`를 읽는다. **이것이 완료 정의다. 절대 수정하지 않는다.**
    헤더 주석에 어떤 절이 잔여인지 적혀 있다.
-3. `module_plan`의 신규 모듈을 `src/` 아래에 쓴다.
+3. `module_plan`의 신규 모듈을 `src/` 아래에 쓴다. 테스트가 실제로 import하는 경로가 정답이다
+   (행의 `module_plan`과 테스트의 import가 어긋나면 **테스트를 따른다**).
 4. `bun test acceptance/<id>.test.ts`가 초록이 될 때까지.
-5. `bunx tsc --noEmit`, `bunx biome check --write src/`, `bun test src`(방어 게이트 회귀),
-   `bun tools/verify-freeze.ts`(동결 무결) 확인 후 커밋.
+5. 커밋 전 4종 확인: `bunx tsc --noEmit` · `bunx biome check --write src/` ·
+   `bun test src`(방어 게이트 회귀) · `bun tools/verify-freeze.ts`(동결 무결).
+6. 커밋. 구조 변경과 동작 변경을 한 커밋에 섞지 않는다.
 
-**이미 선 공유 이음매**(다시 만들지 말고 확장할 것):
+### 이미 선 공유 이음매 (다시 만들지 말고 확장할 것)
 
-- `src/interview/charter/directives.ts` — U1~U10 블록. 10개 테스트가 쓴다. `getDirectiveBlock(id)`은
-  미지 id에 throw(fail-closed), `extractCueBlock(text, id)`는 임의 표면에서 마커로 블록을 뽑는다.
-  새 cue가 필요하면 해당 블록에 줄을 **추가**한다 — 기존 문구 수정은 다른 테스트를 깬다.
-- `src/interview/charter/charter.ts` — 헌장 원문(≥20줄 유지).
+- **`src/interview/charter/directives.ts`** — U1~U10 블록, 10개 테스트가 공유하는 최대 이음매.
+  `getDirectiveBlock(id)`는 미지 id에 **throw**(fail-closed), `extractCueBlock(text, id)`는 임의 표면에서
+  마커로 블록을 뽑는다. 새 cue가 필요하면 해당 블록에 줄을 **추가**하라 — 기존 문구를 고치면 다른
+  테스트가 깨진다. 고쳤다면 아래로 회귀를 확인할 것 (2026-07-26 기준 84 pass / 0 fail 실측):
+
+  ```
+  bun test acceptance/ac-11.test.ts acceptance/ac-12.test.ts acceptance/ac-13.test.ts \
+           acceptance/ac-15.test.ts acceptance/ac-16.test.ts acceptance/ac-17.test.ts \
+           acceptance/ac-18.test.ts acceptance/ac-22.test.ts
+  ```
+
+  아직 안 선 디렉티브 소비자: ac-14(U4)·ac-19(U9) — 이 둘을 지을 때 위 목록에 추가할 것.
+- `src/interview/charter/charter.ts` — 헌장 원문(비어있지 않은 줄 ≥20 유지).
 - `src/interview/glossary/{entry,render,avoid-scan,landing}.ts` — ac-B5가 `entry`를 추가로 쓴다.
-- `src/interview/goal-state.ts` — ac-4가 `goalStateSchema`·`persistedWorkItemSchema`를 추가로
-  요구한다(기존 `parseGoalState`·`confirmPredicate`를 깨지 말고 additive로 추가).
+- `src/interview/goal-state.ts` — ac-4가 `goalStateSchema`·`persistedWorkItemSchema`를 **추가로**
+  요구한다. 기존 `parseGoalState`·`confirmPredicate`를 깨지 말고 additive로 붙여라.
 - `src/interview/turn/{reconstruction,attribution,teachback,hearback,example-classification}.ts`
-- 주의: `src/interview/turn.ts`(ac-2·3·10f가 쓰는 `createSession`/`createTurnLog`/`recordFiredTurn`)는
-  위 `turn/` 디렉터리와 **다른 표면**이다. 아직 없다.
+- `src/interview/{record-turn,restatement-echo,round0-derivation,synthesis-brief}.ts`
+- `src/interview/lock/{acceptance-testable,statement-digest,intent-write}.ts`
+- `src/interview/anchor/original-reanchor.ts`, `src/interview/force/{speech-act-force,ac-grounding-gate}.ts`,
+  `src/interview/render/language-policy.ts`
 
-**설계 노드 5개**(ac-33·36·38·39·E2)는 코드 구현이 아니라 spec 문서 + 동결 red 산출물이다.
-`*.redtest.ts` 명명이 bun 기본 glob에 안 걸린다는 것은 실측 확인했다.
+### 함정 (이번 세션에서 실제로 걸린 것들)
 
-계약이 이름 부르지 않은 배선 하나가 남아 있다: **명령줄 진입점**(citty) — 첫 명령이 곧 인터뷰다.
-ac-9가 `src/cli/interview-finalize`를 요구하므로 그 지점에서 함께 선다.
+- **`src/interview/turn.ts` ≠ `src/interview/turn/`.** ac-2·3·10f가 import하는
+  `../src/interview/turn`(`createSession`/`createTurnLog`/`recordFiredTurn`)은 아직 없는 **별개 표면**이다.
+  기존 `turn/` 디렉터리의 모듈들과 헷갈리지 마라.
+- **블록 격리.** U1과 U5가 둘 다 "에코 금지"를 담는다. 전역 grep으로 만족시키려 하면 ac-11의
+  적대적 테스트에 걸린다 — cue는 자기 블록 안에 있어야 한다.
+- **미지 id에 조용한 기본값을 반환하지 마라.** `undefined`를 돌려주면 게이트가 묻지 않은 블록을
+  grep하게 된다. throw가 정답이다(ac-18이 이걸 잡는다).
+- **`acceptance/`는 `tsconfig.json`의 include 밖이다.** 없는 모듈을 향한 import를 타입 검사에 넣으면
+  조각 3 내내 영구 빨강이 되므로 일부러 뺐다. IDE 진단에 뜨는 `Cannot find module '../src/...'`은
+  아직 구현하지 않은 모듈이라는 뜻이지 오류가 아니다.
+- **설계 노드 5개**(ac-33·36·38·39·E2)는 코드 구현이 아니라 **spec 문서 + 동결 red 산출물**이다.
+  산출 red 테스트는 `*.redtest.ts`로 이름 짓는다 — bun 기본 glob에 안 걸린다는 것을 실측 확인했다.
+- **`bun tools/freeze-red-tests.ts`를 다시 돌리지 마라.** 동결은 이미 끝났다. 재실행은 지금 내용을
+  새로 굳혀 게이트④의 감시를 무력화한다.
+
+### 남아 있는 배선
+
+계약이 이름 부르지 않은 것 하나: **명령줄 진입점**(citty) — 첫 명령이 곧 인터뷰다.
+ac-9가 `src/cli/interview-finalize`를 요구하므로 그 조건을 지을 때 함께 선다.
 
 ## 5. 하지 말 것
 
 - `contract/`의 문안 수정 — 조건을 고치지 않는다. 좁게 읽혔다고 판단되면 판정 기준 쪽에서 다루고
   사용자에게 드러낸다.
+- **`acceptance/`의 테스트 수정** — 완료 정의를 낮추는 길이다. 게이트④가 막지만, 막히기 전에 하지 마라.
+  테스트가 틀렸다고 판단되면 고치지 말고 사용자에게 드러내라.
 - 옛 저장소의 코드 복사·이식 — 읽기는 허용, 승계는 금지.
 - 69개 조건에 추가·축소·분할, 또는 "나중에 하면 된다"로 미완을 완료처럼 포장하기.
-- 관문 A 승인 전에 인터뷰 구현 착수.
 - 부챗살(여러 에이전트 동시)로 하나의 표면을 짓기 — 락이 없어 서로 덮어쓴다. 부챗살은 판단 작업 전용.
 - 이 저장소에 ditto 산출물(`.ditto/`) 만들기.
 
@@ -157,18 +177,21 @@ ac-9가 `src/cli/interview-finalize`를 요구하므로 그 지점에서 함께 
   자와 검사한 자를 벌리고 해시로 굳혀도 편향은 남는다. 조건을 좁게 읽고 그에 맞춰 굳은 테스트는
   **영구히** 틀린 채 초록을 만든다. 이 계획에서 제거 불가능한 가장 큰 위험이다. "이걸 없앴다"고
   주장하지 마라 — 줄일 뿐이다.
-- ~~조각 1을 짓는 구간에는 방어가 없다.~~ 그 창은 닫혔다 — 다만 그 구간에 지어진 게이트 자체는
-  자기 자신의 감시 없이 지어졌으므로, 게이트의 결함은 조각 2 이후의 실사용에서만 드러난다.
-- **관문 A가 사실상 유일한 인간 방어선인데 69행이다.** 사용자가 훑고 넘기면 방어의 대부분이 사라진다.
+- **구현이 테스트에 맞춰 좁아질 수 있다.** 조각 3의 각 모듈은 그 테스트를 통과하도록 지어진다.
+  테스트가 계약 문안보다 좁으면 구현도 좁아지고, 그 사실은 초록 안에 숨는다.
+- **관문 A가 사실상 유일한 인간 방어선이었고 69행이었다.** 훑고 넘긴 만큼 방어가 사라졌다.
 - **조건 집합 잠금은 id만 본다.** 계약 원문은 해시로 굳힐 수 있지만, "그 문장을 판정 기준이 어떻게
   해석했는가"는 잠기지 않은 해석물이다.
 - **한 번에 통과 불가로 이미 아는 것들**: 사람의 실제 인터뷰 답이 필요한 조건, 사람만 판정할 수 있는
-  술어(획득 절차는 계약이 범위 밖으로 명시), 아직 짓지 않은 표면에 기대는 조건 몇 개. 정직한 착지는
-  미검증 + 재진입이다.
+  술어(획득 절차는 계약이 범위 밖으로 명시). 정직한 착지는 미검증 + 재진입이다. 각 행의 `residual`에
+  총 184개 항목이 적혀 있다 — 이것들은 초록이 되어도 닫히지 않는다.
 - **옛 저장소에서 이미 고쳤던 결함을 다시 만들 수 있다.** 참고 읽기로 줄이되 0이 되지는 않는다.
+- **게이트 다섯은 자기 자신의 감시 없이 지어졌다.** 게이트의 결함은 실사용에서만 드러난다.
 
 ## 7. 미검증으로 남긴 것
 
 - 조각 3의 규모 추정(2,000~3,000줄)은 옛 코드 밀도에서 뽑은 추정이며 계약이 규정한 수치가 아니다.
-  (조각 1은 실측 667줄로 착지 — 추정 600~900줄 범위 아래쪽이었다.)
-- 게이트 다섯은 서로를 검사하지 않았다 — 자기 자신에 대한 빨간 선행·증거 대조는 조각 2부터 적용된다.
+  (조각 1은 실측 667줄, 조각 3은 12/69 시점에 인터뷰 모듈 23개.)
+- 남은 57개 조건의 난이도는 고르지 않다. ac-26(701줄)·ac-29(495줄)·ac-B2(453줄)처럼 큰 것들이
+  물결 2에 남아 있고, 실제로 얼마나 걸릴지는 재보지 않았다.
+- 실제 인터뷰를 한 번도 돌려 보지 않았다(관문 B). 표면이 서기 전까지는 돌릴 수 없다.
