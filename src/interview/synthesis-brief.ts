@@ -8,6 +8,8 @@
  * key set is fixed — and refuses to build at all when the author is the driver.
  */
 
+import { DRIVER_CONTEXT } from "./synthesis-provenance";
+
 export interface ConfirmationRecord {
   predicate_id: string;
   utterance: string;
@@ -34,10 +36,8 @@ export type SynthesisBriefResult =
   | { built: true; brief: SynthesisBrief }
   | { built: false; reason: string };
 
-const DRIVER = "driver";
-
 export function buildSynthesisBrief(input: SynthesisBriefInput): SynthesisBriefResult {
-  if (input.author_context === DRIVER) {
+  if (input.author_context === DRIVER_CONTEXT) {
     return {
       built: false,
       reason: "합성 brief를 driver 컨텍스트에서 작성할 수 없다 — 소유권 분리 위반",
