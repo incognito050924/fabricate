@@ -7,6 +7,7 @@
  */
 
 import { type Dimension, isSettled } from "./dimension";
+import type { IntentDissentBrief } from "./dissent";
 import type { RevisableGoalState } from "./goal-revision";
 import { hasGoalLink } from "./orphan-gate";
 import { preservationJudgmentSchema } from "./preservation-judgment";
@@ -118,11 +119,28 @@ export type FinalizeRejectionKind =
   | "invalid_synthesis_provenance"
   | "missing_preservation_judgment"
   | "invalid_preservation_judgment"
-  | "preservation_failed";
+  | "preservation_failed"
+  | "blocked_by_dissent";
 
 export type FinalizeRejection = {
   kind: FinalizeRejectionKind;
   reason: string;
+  /** Present on a dissent block — the comparison pair, untouched. */
+  dissent_brief?: IntentDissentBrief | undefined;
+};
+
+/**
+ * A raised dissent, as the engagement returned it, plus whatever human triage
+ * was added. An unacknowledged engaged dissent blocks: the objection reached
+ * the conclusion and nobody answered it. A host-absent record does not block —
+ * no opponent ran, so there is nothing to answer.
+ */
+export type FinalizeDissent = {
+  status: string;
+  brief?: IntentDissentBrief;
+  text?: string;
+  impact?: string;
+  acknowledged?: boolean;
 };
 
 export type FinalizeCandidate = {
@@ -130,6 +148,7 @@ export type FinalizeCandidate = {
   candidate_statement: string;
   synthesis_provenance?: unknown;
   preservation_judgment?: unknown;
+  intent_dissent?: FinalizeDissent;
 };
 
 export type FinalizeOutcome =
@@ -190,6 +209,19 @@ export function finalize(candidate: FinalizeCandidate, store: IntentStore): Fina
         source_request: candidate.source_request,
         judgment: judgment.data,
       }),
+    };
+  }
+
+  const dissent = candidate.intent_dissent;
+  if (dissent?.status === "engaged" && dissent.acknowledged !== true) {
+    return {
+      status: "rejected",
+      rejection: {
+        kind: "blocked_by_dissent",
+        reason: "이견이 제기됐고 아직 답해지지 않았다 — 확정하지 않는다",
+        // The pair travels on untouched: both readings, not a summary.
+        dissent_brief: dissent.brief,
+      },
     };
   }
 
