@@ -26,6 +26,18 @@ export const evidence = z
   .strict();
 export type Evidence = z.infer<typeof evidence>;
 
+/**
+ * Decision 0001 (decisions/0001-contract-evidence-mapping.md): the fixed
+ * translation from the founding contract's evidence_required vocabulary to
+ * gate evidence kinds. doc/log are re-scannable artifacts on disk → file;
+ * oracle authors may not translate around this table.
+ */
+export const CONTRACT_EVIDENCE_KIND = {
+  test: "test",
+  doc: "file",
+  log: "file",
+} as const satisfies Record<string, EvidenceKind>;
+
 export interface GateResult {
   decision: "pass" | "block";
   reason: string;
