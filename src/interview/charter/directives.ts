@@ -46,7 +46,8 @@ const BLOCKS: Record<DirectiveId, string> = {
 
   U8: `[U8] 모호 용어 구체화
 - 정의 묻지 말고 사례 분류로 용어의 경계를 잡는다
-- 사례에 대한 사용자의 판정이 정의를 대신한다`,
+- 사례에 대한 사용자의 판정이 정의를 대신한다
+- 합의된 용어는 제품 glossary(docs/glossary.md)에 착지한다 — 개인 메모리 아님`,
 
   U9: `[U9] 가정 장부와 회고 정산
 - 모든 로그된 가정에 신뢰도 필드를 붙인다
@@ -70,9 +71,21 @@ export const directivesText: string = ORDER.map((id) => BLOCKS[id]).join("\n\n")
 export const CHARTER_DIRECTIVES: string = directivesText;
 export const CHARTER_DIRECTIVES_TEXT: string = directivesText;
 
-/** Returns one addressable block, or undefined for an unknown directive id. */
-export function getDirectiveBlock(id: string): string | undefined {
-  return Object.hasOwn(BLOCKS, id) ? BLOCKS[id as DirectiveId] : undefined;
+export class UnknownDirectiveError extends Error {
+  constructor(id: string) {
+    super(`알 수 없는 디렉티브 id: ${id}`);
+    this.name = "UnknownDirectiveError";
+  }
+}
+
+/**
+ * Returns one addressable block. Fail-closed on an unknown id: refusing is what
+ * keeps the lookup keyed — silently handing back a default would let a gate
+ * grep a block that is not the one it asked about.
+ */
+export function getDirectiveBlock(id: string): string {
+  if (!Object.hasOwn(BLOCKS, id)) throw new UnknownDirectiveError(id);
+  return BLOCKS[id as DirectiveId];
 }
 
 /**
