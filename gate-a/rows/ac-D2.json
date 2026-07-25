@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-D2",
+  "oracle_statement": "bun test acceptance/ac-D2.test.ts를 실행해 전부 green이면 통과. 그 테스트는 문안의 각 절을 다음 결정적 술어로 단언한다: (1) 구획별 즉시-확인 강제 — 의도 구획이 확정될 때마다 그 구획의 teach-back 확인이 즉시 요구되며, 여러 구획을 확인 없이 누적한 뒤 끝(잠금 직전)에 몰아서 확인을 시도하는 fixture에서는 deferred_confirmation 위반 플래그가 결정적으로 세워지고, 각 구획을 확정 직후 즉시 확인한 fixture에서는 플래그가 세워지지 않는다(몰아서-위반·즉시-통과 2 fixture); (2) 포인터 잠금 게이트 — teachback_confirmed 발화 포인터가 없는 결정 항목이 하나라도 있는 fixture에서 잠금(finalize) 시도가 fail-closed로 거부되고, 모든 결정 항목이 확인 발화 기록을 가리키는 teachback_confirmed 포인터를 가진 fixture에서는 이 게이트가 잠금을 막지 않는다(포인터-부재 거부·포인터-완비 통과 2 fixture); (3) 관할 경계 — 예측형 확인(선예측 probe)은 ac-33/C6 소관이므로 이 테스트는 예측형 확인의 존재·부재를 요구하지도 채점하지도 않으며, 예측 기록이 전혀 없는 fixture도 (1)(2)만 충족하면 통과함을 단언한다. 검사는 전부 위반 플래그·포인터 존재·잠금 거부 같은 결정적 술어이며(문안 선언: 즉시-확인 강제·포인터 없으면 잠금불가는 결정적), 되말하기 내용의 품질은 ac-30 소관 잔여로 이 판정에 포함되지 않는다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/teachback/immediate-confirmation.ts",
+    "src/interview/teachback/pointer-lock-gate.ts"
+  ],
+  "red_test_path": "acceptance/ac-D2.test.ts",
+  "depends_on": ["ac-30"],
+  "residual": [
+    "되말하기 품질 — 즉시 확인된 teach-back의 '다른 말+예시'가 진짜 패러프레이즈인가는 사람 판단이며 ac-30 소관 잔여다(문안이 스스로 선언).",
+    "'구획'의 분절 적절성 — 무엇이 하나의 의도 구획인가의 경계 긋기는 LLM/사람 판단이다. 테스트는 fixture가 고정한 구획 경계 위에서 즉시/몰아서 라우팅과 플래그만 단언한다(태그 방출→순수 게이트 라우팅 패턴).",
+    "포인터가 가리키는 확인 발화의 실재성 — teachback_confirmed 포인터가 가리키는 발화가 실제 사용자의 진짜 이해 확인인가는 포인터·필드 검사로 닫히지 않으며 실제 사용자 답이 필요하다.",
+    "유비 전이 효능 — 즉시 teach-back(임상 유래)의 소프트웨어 인터뷰 전이는 구조 유비이고, ac-D2 효능의 실측은 C4 하네스(ac-40) 이후까지 미검증이다(초안 387행이 명시)."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 커버리지 보강 그룹 D(306–319행), 항목 315–319행. 첫 문장: '**ac-D2 · teach-back 포인터·즉시. (ac-30 확장)** — 진술: ac-30에 구획마다 즉시 확인(끝에 몰아서 금지) + teachback_confirmed 발화 포인터 없이 잠금 불가(결정적 게이트). 예측형 확인은 ac-33/C6 소관.' TC1(317행): 끝에 몰아서 확인 시도 → deferred_confirmation 위반 플래그(구획별 즉시 확인 필수); TC2(318행): teachback_confirmed 발화 포인터 없는 결정 항목, WHEN finalize, THEN 잠금 거부; 319행: 결정적=즉시-확인 강제·포인터 없으면 잠금불가, 잔여=되말하기 품질(ac-30 소관). 그룹 머리말 308행: 그룹 D 전부 forced-artifact·evidence test. 부수 근거: 59행(커버리지 매핑 ac-D2→ac-30 — 부모 AC의 test 표적 오염 금지, 별개 AC로 분리·부모 참조), 387행(§5 유비 전이 한계 — B1·B6·ac-D2 효능은 C4 하네스 이전 미검증)."
+}

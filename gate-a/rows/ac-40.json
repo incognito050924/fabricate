@@ -1,0 +1,26 @@
+{
+  "criterion_id": "ac-40",
+  "oracle_statement": "bun test acceptance/ac-40.test.ts를 실행해 전부 green이면 통과한다. DESIGN 노드이므로 판정 대상은 문안이 선언한 산출 'spec+red 테스트' 두 갈래이며, 하나의 실행이 세 묶음의 술어를 검사한다. (1) spec 문서 재스캔(doc→file 증거, 테스트에 내장): 고정 경로 src/interview/calibration/c4-spec.md의 설계 spec 문서를 디스크에서 다시 스캔해, 목표 (a)의 각 절 — 로그된 가정의 신뢰도 3값 enum(likely/unsure/guess), 회고 정산 단계, Brier 기반 VoI 임계 되먹임 — 과 목표 (b)의 각 절 — 합성-사용자 하네스에 의한 인터뷰 스킬 변경 회귀 테스트화, 이슈 #72 efficacy 하네스 재사용 조율(신규 하네스가 아니라 플러그인이라는 결정) — 을 다루는 섹션이 전부 존재하고 본문이 비어있지 않음을 단언한다(문서 부재·섹션 누락·빈 본문이면 실패). (2) 완료기준 (a) red 테스트(test 증거): interviewAssumption.confidence가 {likely, unsure, guess} 3값 enum으로 존재해 그 외 값은 파싱 거부되고, 정산 단계가 로그된 가정에 적중/불발 정산 레코드를 남기며, 결정적 fixture('likely' 가정 10건을 7건 적중으로 정산)에서 likely의 정산 적중률 0.7이 VoI 임계 입력으로 되먹임됨('likely 70% 정산→0.7 되먹임')을 단언한다. (3) 완료기준 (b) red 테스트(test 증거): 회귀 모듈이 이슈 #72 하네스의 플러그인 seam을 구현해 플러그인으로 등록되고 독립 하네스 러너를 신설하지 않음(신규 하네스 아님의 구조 검사), 회귀 baseline 산출물(recall 지표 기준값)이 고정 경로에 존재함, 인터뷰 스킬 변경을 모사한 결정적 fixture(변경 전/후 합성-사용자 전사쌍)에서 recall 지표가 baseline 대비 이동함이 검출됨을 단언한다. 세 묶음 전부 green이어야 통과다. 문안이 스스로 선언한 상관 맹점(B5/C6 공유)과 합성 사용자의 대표성·정산 라벨의 실질·#72 재사용 조율의 실질은 이 판정으로 닫히지 않는다(residual 참조).",
+  "method": "run",
+  "evidence_kinds": ["file", "test"],
+  "module_plan": [
+    "src/interview/calibration/c4-spec.md",
+    "src/interview/calibration/confidence.ts",
+    "src/ledger/retro-settlement.ts",
+    "src/interview/calibration/voi-feedback.ts",
+    "src/harness/synthetic-user/plugin.ts",
+    "src/harness/synthetic-user/baseline.ts",
+    "src/harness/synthetic-user/recall-metric.ts"
+  ],
+  "red_test_path": "acceptance/ac-40.test.ts",
+  "depends_on": ["ac-14", "ac-19", "ac-35"],
+  "residual": [
+    "상관 맹점(B5/C6 공유, 문안 자체 선언): 합성 사용자·해석 표집(B5)·예측 probe(C6)가 전부 같은 모델 prior를 공유한다 — 전원이 같은 오독을 공유하면 회귀 하네스가 recall 이동을 잡지 못한다. §5가 '다양성 강제는 완화지 제거 아님'으로 명시한 한계이며 이 판정 기준으로 닫히지 않는다.",
+    "합성 사용자의 실제-사용자 대표성: recall 지표 이동 검출은 고정 fixture 위의 결정적 검사일 뿐, 하네스가 실제 인터뷰 효능을 대표하는가는 사람-판정 술어다. §5 유비 전이(B1·B6·ac-D2 효능의 실측은 C4 하네스 이후)가 말하는 '실측' 자체의 타당성은 이 판정 밖이다.",
+    "정산 라벨의 실질: 가정이 실제로 맞았는가의 적중/불발 판정은 회고에서의 사람/LLM 판단이다 — 오라클은 정산 레코드가 주어진 뒤의 되먹임 산술(likely 70%→0.7)만 닫는다.",
+    "이슈 #72 재사용 조율의 실질: #72는 이 저장소 계약 밖 외부 의존이고(초안 379행 '#72 재사용 = 의존 척추'), 초안이 '재사용 조율이 첫 설계 행위'로 선언했다. 테스트는 플러그인 seam 준수·독립 러너 부재라는 구조 검사까지만 닫고, 실제 #72 하네스와의 중복 부재·조율 완료 여부는 사람 판단이다.",
+    "spec 문서의 설계 품질: 섹션 존재·비공백 재스캔은 문서가 '있다'까지만 닫는다. 설계 내용의 타당성은 사람 판단이며, 결정 0001에 따라 증거 종류를 완화하지 않고 잔여로 남긴다.",
+    "숫자의 서수성: Brier·recall 수치의 통계적 타당성(표본 수·보정확률 성립 조건)은 §5가 '숫자는 서수'로 선언한 전역 한계다 — 이 판정은 산술 배선만 검사한다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 묶음7 'Tier C DESIGN 노드 (ac-38..ac-40)'(237–243행), 항목 241행: \"- **ac-40 · C4 보정 루프 + 합성-사용자 회귀 하네스 (DESIGN)**: 목표=(a) 로그 가정에 신뢰도(likely/unsure/guess)→회고에서 정산→VoI 임계 되먹임(Brier), (b) 합성-사용자 하네스로 인터뷰 스킬 변경 회귀 테스트화. …\" 증거 어휘 선언은 243행 \"evidence_required: C2·C3·C4 design 노드(각 산출=spec+red 테스트)\". 부수 구절: 59행(커버리지 매핑 ac-F1→ac-35/ac-40), 345행(ac-F1이 ac-40/C4 또는 ac-35 확장), 378행(기각 3 — QuestBench는 별도 AC 없이 ac-40/C4 하네스에 흡수), 379행(역-스코프 KEEP 판정 — ac-40 '#72 재사용 = 의존 척추', 유지), 386행(§5 상관 맹점 — 합성 사용자(C4)가 같은 모델 prior 공유), 387행(§5 유비 전이 — 실측은 C4 하네스 이후). 초안 241행의 interview-state.ts:337-344(정산 side가 갭)는 옛 나무 위치라 forward 판정 기준의 앵커로 쓰지 않았다."
+}

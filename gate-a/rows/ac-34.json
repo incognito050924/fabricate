@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-34",
+  "oracle_statement": "bun test acceptance/ac-34.test.ts를 실행해 다음 단언이 전부 green이면 통과. 답↔glossary·코드의 모순 판정 자체는 fixture로 고정한다(모순 내용 판단은 문안이 스스로 잔여로 선언): (1) [도전 발동 — 바로 다음 라운드] 답변 턴이 glossary·현재 코드와 모순으로 고정된 fixture에서 도전 레코드가 산출되고 다음 라운드 질문으로 발동된다 — 발동된 질문의 라운드 번호가 해당 답변 턴의 라운드 + 1과 정확히 같아야 한다(문안의 '다음 라운드' = 바로 다음 라운드; N+2 이후로 미루는 스케줄은 fail — 엄격히-크다 완화 금지), 그리고 도전 레코드가 원 답변 턴을 참조한다; (2) [grounding 인용 필수] 발동된 도전 질문에는 grounding 인용 필드가 필수이며 비어있지 않다(인용 원천 참조+발췌 .min(1)); grounding 인용이 없는 '도전'은 승인 게이트/zod 파싱에서 비승인된다 — negative fixture로 비승인을 단언; (3) [현재 코드 권위] glossary 항목과 현재 코드가 서로 어긋난(drift) fixture에서 승인되는 도전의 grounding 인용은 현재 코드를 권위로 가리킨다 — 인용의 authority가 코드 원천이고 인용 발췌가 fixture의 현재 코드 내용과 일치하면 승인; glossary만 인용한 도전, 그리고 현재 코드 내용과 불일치하는 낡은 발췌를 인용한 도전은 각각 비승인(negative fixture 2건); (4) [결정성] 승인/비승인 게이트는 순수 함수로, 같은 입력이면 항상 같은 라우팅을 반환한다. 검사는 전부 레코드 존재·필드 필수·라운드 +1 일치·발췌↔현재내용 일치·승인/비승인 라우팅 같은 결정적 술어이며, 답이 실제로 모순인가의 내용 판단은 채점하지 않는다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/challenge/grounding-citation.ts — grounding 인용 zod 스키마(원천 참조·발췌 .min(1)·authority 종류 enum, parse-or-refuse 진입점)",
+    "src/interview/challenge/answer-challenge.ts — 도전 레코드 스키마(원 답변 턴 참조 필수) + 승인 게이트(인용 없는 도전 비승인) + 바로 다음 라운드(답변 라운드 + 1) 질문 발동 배선",
+    "src/interview/challenge/current-code-authority.ts — 현재-코드 권위 검사: 인용 발췌↔현재 코드 내용 결정적 대조, glossary-단독 인용·낡은 발췌 인용은 비승인하는 순수 함수"
+  ],
+  "red_test_path": "acceptance/ac-34.test.ts",
+  "depends_on": ["ac-1", "ac-3", "ac-21"],
+  "residual": [
+    "답이 glossary·코드와 실제로 모순되는가의 모순 내용 판단 — 문안이 스스로 잔여로 선언; 테스트는 모순 판정을 fixture로 고정하고 그 뒤의 구조(발동·인용 필수·비승인)만 닫는다. 모순 감지의 재현율·정밀도는 이 판정 기준으로 닫히지 않는다.",
+    "인용의 논지 적합성 — 인용된 현재-코드 발췌가 그 도전의 근거를 실제로 뒷받침하는가는 사람 판단이다; 기계는 인용 존재·authority 종류·발췌가 현재 코드 내용과 일치하는가까지만 검사한다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 묶음5(222행 헤더 '### 묶음5 — 질문 경제 (ac-34..ac-36)'), 224행: '- **ac-34 · B4 답변을 증거로 도전**: 답↔glossary·코드 모순→다음 라운드 질문(`grounding` 인용 필수, interview-state.ts:222-228). 인용 없는 \"도전\"은 비승인. glossary/코드 자체 drift 가능(§4-11) — 현재 코드를 권위로 인용.' 228행이 evidence_required: B4·B5 **test**를 고정. 부수 언급: 59행(커버리지 보강 ac-G2→ac-34 매핑), 360–363행(ac-G2 · 경계 시나리오+합의 즉시 glossary — 'ac-34 확장'이되 별개 AC로 분리, 경계 시나리오·즉시 glossary 기록은 ac-G2 소관). 문안 속 interview-state.ts:222-228은 옛 나무의 grounding 필드 위치 언급으로, forward 판정 기준의 코드 앵커로 쓰지 않았다. 문안의 '다음 라운드'는 바로 다음 라운드(답변 라운드 + 1)로 읽어 라운드 순서 술어를 등식으로 고정했다."
+}

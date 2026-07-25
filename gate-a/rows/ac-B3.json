@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-B3",
+  "oracle_statement": "bun test acceptance/ac-B3.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) 원장 부착 — 실질 발화로 태그된 fixture 턴의 기록에 후보 함축 원장 implicature_ledger[] 필드가 존재한다(배열 필수; 후보 함축이 없으면 빈 배열은 허용하되 필드 부재는 파싱 거부). (2) 원장 enum — 원장 각 항목의 state가 {확정, 미확정, 취소됨} 세 값만 허용되고, state가 없거나 enum 밖 값인 항목은 zod 파싱에서 거부된다(negative fixture). (3) 미확정→결정집합 차단 — state='미확정'인 함축을 결정 집합(decision set)에 진입시키려는 fixture에서 게이트가 거부 변이를 반환하고 결정 집합이 변하지 않으며, 대비 fixture에서 state='확정'인 함축은 같은 게이트를 통과해 결정 집합에 진입한다(2-state 대비 fixture). (4) 사실 승격 차단 시나리오('…라는 뜻은 아니에요') — 자연스러운 함축이 state='미확정'으로 원장에 있고 결정 집합 진입 시도가 (3)의 게이트로 거부된 fixture에서, 사용자의 취소 발화로 그 항목이 state='취소됨'으로 전이한 뒤에도 결정 집합에 그 함축이 존재하지 않음을 단언한다 — 미확정 함축의 조기 사실-승격이 차단되어 Grice 취소 가능성 경로가 살아있음을 결정적으로 확인. 검사는 전부 필드 존재·enum 파싱 거부·게이트 거부/통과 변이·결정 집합 불변/부재 같은 결정적 술어이며, 어떤 후보 함축을 원장에 올릴지와 각 항목의 state 라벨이 실제 담화에 비추어 옳은지(함축 분류)는 채점하지 않는다(문안이 잔여로 선언).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/implicature/ledger.ts",
+    "src/interview/implicature/decision-set-gate.ts"
+  ],
+  "red_test_path": "acceptance/ac-B3.test.ts",
+  "depends_on": ["ac-12"],
+  "residual": [
+    "함축 분류 — 발화에서 어떤 후보 함축을 원장에 올리는가, 그리고 각 항목의 state(확정/미확정/취소됨) 라벨이 실제 담화에 비추어 옳은가는 기계화되지 않는다; 테스트는 fixture가 고정한 원장과 라벨 위에서 enum 강제와 게이트 라우팅만 단언한다(문안 스스로 '함축 분류는 잔여'로 선언).",
+    "'실질 발화' 판별 — 어떤 턴이 원장 부착 의무를 지는 실질 발화인가의 판별은 fixture 태그로 고정되며, 실제 세션에서 그 판별이 옳은가는 이 판정 기준으로 닫히지 않는다.",
+    "취소 발화의 해석 — '…라는 뜻은 아니에요' 같은 발화가 실제로 어느 함축을 취소하는지의 인지·귀속은 함축 분류 잔여에 속한다; 테스트는 fixture가 고정한 취소됨 전이 위에서 결정 집합 부재만 단언한다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그, 커버리지 보강 그룹 B(§3.1 파악 기계) 247행 제목·249행 공통 머리말(전부 forced-artifact, evidence test), 262–265행. 첫 문장(262–263행): '**ac-B3 · Grice 함축 원장. (ac-12/U2 확장)** — 진술: 실질 발화마다 후보 함축 원장 {확정|미확정|취소됨} + 미확정 함축은 결정 집합 진입 금지(결정적 게이트).' TC(264행): implicature_ledger[] state ∈ {확정,미확정,취소됨}; state='미확정' 함축이 결정 집합(decision set)에 진입하면 게이트 거부('…라는 뜻은 아니에요'가 자연스러운 함축의 사실 승격 차단); 265행: 결정적=원장 enum·미확정→결정집합 차단, 잔여=함축 분류. 보조 근거: 28행 커버리지 보강(v2) 목록이 ac-B1..B7을 §3.1 파악으로 배치(original-request.md)."
+}

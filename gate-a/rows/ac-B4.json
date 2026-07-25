@@ -1,0 +1,17 @@
+{
+  "criterion_id": "ac-B4",
+  "oracle_statement": "bun test acceptance/ac-B4.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) 6-force enum — 발화 레코드 스키마가 force ∈ {제약, 선호, 예시, 가설, 약속, 푸념} 여섯 값만 허용하고, force 필드가 없거나 enum 밖 값인 발화는 zod 파싱에서 거부된다(negative fixture — '발화마다 태깅'은 필드 필수화로 강제); (2) 비구속 힘→AC근거 차단 — AC 근거가 참조하는 발화의 force가 {제약, 약속} 밖이면 게이트가 그 AC 근거를 거부한다: 비구속 4종(선호·예시·가설·푸념) 각각을 근거로 삼은 fixture에서 전부 거부됨을 단언하고, 특히 force='선호'인 'X면 좋겠는데' 발화가 요구사항 근거로 못 굳음을 단언한다; (3) 구속력 있는 힘의 자격 — 대비 fixture에서 근거 발화가 전부 force ∈ {제약, 약속}(각각 1건 이상)이면 이 사유로는 거부되지 않는다(2-state 대비). 검사는 전부 enum 파싱 거부·게이트 거부/통과 boolean 같은 결정적 술어이며, 발화에 어느 force 라벨을 붙이는 게 옳은가(힘 분류)는 채점하지 않는다(문안이 스스로 잔여로 선언).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/force/speech-act-force.ts",
+    "src/interview/force/ac-grounding-gate.ts"
+  ],
+  "red_test_path": "acceptance/ac-B4.test.ts",
+  "depends_on": ["ac-13"],
+  "residual": [
+    "힘 분류 — 실제 발화가 제약·선호·예시·가설·약속·푸념 중 무엇인지의 화행 분류는 문안이 스스로 잔여로 선언한 사람-판정 술어다; 테스트는 fixture가 고정한 force 라벨 위에서 enum 강제와 게이트 라우팅만 단언한다.",
+    "실사용 태깅 실행 — 라이브 인터뷰 세션에서 모든 발화가 실제로 force 태깅을 거치고 그 라벨이 발화의 실제 힘을 반영하는가는 이 판정으로 닫히지 않는다; 기계는 스키마의 필드 필수화(태깅 없는 발화는 파싱 거부)와 게이트의 결정적 차단만 검사한다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그, 커버리지 보강 그룹 B(§3.1 파악 기계) 247행 제목·249행 공통 머리말(전부 forced-artifact, evidence test), 267–270행. 첫 문장: '**ac-B4 · 화행 6-force enum. (ac-13/U3 확장)** — 진술: 발화마다 힘 유형 force ∈ {제약, 선호, 예시, 가설, 약속, 푸념} + 구속력 있는 힘(제약·약속)만 AC 근거 자격(결정적 게이트).' TC(269행): 발화마다 force enum 태깅; AC 근거가 force ∉ {제약, 약속}인 발화면 게이트 거부('X면 좋겠는데'가 요구사항으로 못 굳음). 270행: 결정적=enum·비구속 힘→AC근거 차단, 잔여=힘 분류. 부모 근거: ac-13(U3 발화 힘 존중) 판정표 행이 '힘 분류의 구조적 게이트는 ac-B4 소관'으로 위임함을 상호 확인."
+}

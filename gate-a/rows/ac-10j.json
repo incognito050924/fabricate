@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-10j",
+  "oracle_statement": "`bun test acceptance/ac-10j.test.ts`를 실행해 다음이 전부 green이면 통과. 테스트는 form_check·effect_check의 판정값 자체를 fixture로 고정하고 존재와 라우팅만 결정적으로 단언한다: (1) 존재 — 라운드-0 독해 패스 산출물에 skopos_gate가 존재하고, 그 안에 form_check(원문 내용 형태소가 반영됐나의 판정)·effect_check(계획을 읽은 사용자가 자기 의도한 결과를 알아보나의 판정) 두 판정 필드가 pass/fail 값으로 존재하며, 두 판정 중 하나라도 누락된 skopos_gate는 zod 파싱이 거부한다(fail-closed 누락 fixture 단언). (2) 라우팅 테이블 — form=pass ∧ effect=pass fixture는 채택 분기를 반환하고, form=pass ∧ effect=fail fixture는 수리 분기를 반환하며 그 라우팅 타깃이 재렌더로 표기되고, form=fail ∧ effect=fail fixture는 폐기 분기를 반환하며 그 라우팅 타깃이 재독해로 표기된다(조합별 fixture 3건, 같은 판정 조합 입력이면 항상 같은 분기 — 결정성). 형태소가 실제로 반영됐는가(form_check의 내용)와 사용자가 실제로 자기 의도한 결과를 알아보는가(effect_check의 내용)는 이 오라클이 검사하지 않는다 — 문안이 스스로 잔여로 선언했다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/reading/skopos-gate.ts — skopos_gate zod 스키마(form_check·effect_check 두 판정 필수, pass/fail enum, 누락 시 파싱 거부하는 fail-closed refine) + 결정적 라우팅 함수(pass/pass→채택, pass/fail→수리·라우팅 타깃 재렌더, fail/fail→폐기·라우팅 타깃 재독해)",
+    "src/interview/reading/round0-reading.ts — 라운드-0 통합 독해 산출물 스키마(ac-10 코어 산출물과 한 패스 공유)에 skopos_gate 필드를 필수로 편입"
+  ],
+  "red_test_path": "acceptance/ac-10j.test.ts",
+  "depends_on": ["ac-1", "ac-10"],
+  "residual": [
+    "형태소 반영 판단 — 원문 내용 형태소가 렌더된 계획에 실제로 반영됐는지(form_check의 내용적 옳음)는 기계 판정 불가. 문안이 스스로 잔여로 선언했고, 오라클은 판정 필드 존재와 라우팅까지만 닫는다.",
+    "효과 인지 판단 — 계획을 읽은 실제 사용자가 자기 의도한 결과를 알아보는지(effect_check의 내용적 옳음)는 실제 사용자 답이 필요한 사람-판정 술어. 문안이 스스로 잔여로 선언했고, 테스트는 판정값을 fixture로 고정한다.",
+    "form=fail ∧ effect=pass 조합의 라우팅 — 문안의 라우팅 테이블은 pass/pass·pass/fail·fail/fail 세 조합만 지정하므로 이 조합이 어디로 라우팅되는지는 오라클이 판정하지 않는다(문안에 없는 요구를 추가하지 않음)."
+  ],
+  "draft_passage_found": "contract/contract-draft.md 172–175행, §4 AC 카탈로그 묶음1의 ac-10a..10j 블록(123행 헤더: 전부 라운드-0 통합 독해 절차의 한 번의 패스로 ac-10 코어와 함께 방출·1회 검사, 전부 forced-artifact, evidence test). 첫 문장: \"**ac-10j · skopos 이중 게이트. [forced-artifact]** — 진술: 형태 검사(원문 내용 형태소가 반영됐나) ∧ 효과 검사(계획을 읽은 사용자가 자기 의도한 결과를 알아보나)를 두 판정으로 두고, pass/pass만 채택, pass/fail은 수리(재렌더), fail/fail은 폐기(재독해)로 라우팅한다.\" TC(174행): `skopos_gate`에 `form_check`·`effect_check` 두 판정 존재; 라우팅 테이블 — pass/pass→채택, pass/fail→수리, fail/fail→폐기. 결정적/잔여(175행): 결정적=두 검사 존재·라우팅 테이블, 잔여=형태소 반영·효과 인지 판단."
+}

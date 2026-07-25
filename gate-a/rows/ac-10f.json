@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-10f",
+  "oracle_statement": "bun test acceptance/ac-10f.test.ts를 실행(run)해 전부 green이면 통과. 테스트는 라운드-0 통합 독해 패스(ac-10 코어와 같은 한 번의 패스) 산출물에 대해 문안의 각 절을 단언한다: (1) 표 존재·구조 — abduction_residual_table이 존재하고 행=관찰, 열=후보설명 구조이며 각 셀 값이 enum {설명함, 의아} 둘 중 하나다(그 외 셀 값은 zod 파싱 거부 — negative fixture); (2) 동률→방출 — 셀 값을 fixture로 고정한 표에서 복수 후보설명이 동률로 남는 동률 잔여(tie)가 결정적으로 검출되면(enum 셀 값 위의 결정적 계산), goal_predicate_ref가 비어있지 않은 질문 후보가 1건 이상 방출되고 그 후보가 방출 원인인 동률 잔여(관찰×후보설명 표적)를 참조한다('동률 잔여를 질문 후보로' 방출됨의 검사); (3) ac-3 배선 — 그 방출된 질문 후보를 ac-3 고아 게이트에 투입하면 goal_predicate_ref를 갖췄으므로 고아 거부에 걸리지 않고 통과한다(게이트 통과를 실제 호출로 단언). 테스트는 셀 판정 내용(어느 후보가 어느 관찰을 설명하는가)을 채점하지 않고 표 구조·enum 강제·동률 검출→방출 배선·게이트 통과만 검사한다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/round0/abduction-residual.ts",
+    "src/interview/round0/tie-question-emitter.ts",
+    "src/interview/reading/round0-reading.ts"
+  ],
+  "red_test_path": "acceptance/ac-10f.test.ts",
+  "depends_on": ["ac-1", "ac-3", "ac-10"],
+  "residual": [
+    "설명 셀 판정 내용 — 어떤 관찰을 어떤 후보설명이 '설명함'인지/'의아'로 남는지의 판정은 기계화 불가(문안이 스스로 잔여로 선언); 테스트는 fixture로 셀 값을 고정하고 구조·배선만 단언한다.",
+    "후보설명 집합의 완전성 — 관찰을 설명할 후보를 빠짐없이 열거했는가는 이 판정 기준으로 닫히지 않는다; 기계는 주어진 표 위의 동률 검출·방출만 검사한다.",
+    "방출된 질문 후보의 goal_predicate_ref가 의미적으로 옳은 목표 술어에 닿는가 — ac-3의 잔여(ref 토큰 존재·게이트 라우팅까지만 기계화)를 그대로 상속한다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 묶음1, 152–155행(공통 머리말 123행: ac-10a..10j 전부 forced-artifact·라운드-0 단일 패스로 ac-10 코어와 함께 방출·evidence test). 첫 문장: '**ac-10f · 귀추 잔여표 (절차 ⑩). [forced-artifact]** — 진술: 관찰(각 내용어+맥락 사실)×후보 설명의 잔여표(셀=설명함/의아)를 산출하고, 동률 잔여를 질문 후보로 방출해 ac-3에 배선한다.'"
+}

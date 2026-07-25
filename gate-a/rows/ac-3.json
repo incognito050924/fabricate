@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-3",
+  "oracle_statement": "bun test acceptance/ac-3.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) goal_predicate_ref 없는 fired 질문의 기록 시도는 거부되고 거부 카운터가 증가한다; (2) goal_predicate_ref 없는 고아 차원은 승인되지 않는다(미승인 유지); (3) 고아 AC가 존재하면 finalize가 fail-closed로 실패하고 intent는 기록되지 않는다; (4) revises_goal_predicate를 명시한 발굴 질문은 승인되고, 명시 없는 발굴 질문은 여전히 고아로 거부된다(대비 fixture 2건); (5) 발굴 질문 채택 시 goal_state가 개정되고 confirmed=false로 리셋되어 재확정이 요구된다; (6) 시드 차원이 state='dropped'(사유 포함)이면 그 차원으로 인한 finalize 블록이 해제되고, dropped 아닌 시드 차원은 여전히 finalize를 블록한다(2-state 대비 fixture). 검사는 전부 ref 토큰 존재·거부/승인 boolean·카운터·confirmed 리셋·블록 해제 같은 결정적 술어이며 프로즈를 채점하지 않는다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/turn.ts",
+    "src/interview/orphan-gate.ts",
+    "src/interview/dimension.ts",
+    "src/interview/goal-revision.ts",
+    "src/interview/finalize.ts"
+  ],
+  "red_test_path": "acceptance/ac-3.test.ts",
+  "depends_on": ["ac-1"],
+  "residual": [
+    "링크(goal_predicate_ref·revises_goal_predicate)가 진짜 목표 술어에 의미적으로 닿는가는 기계화되지 않는다 — 기계는 명시 ref 토큰의 존재와 게이트 라우팅만 검사하고, 참조의 의미 정합성은 사람 판단으로 남는다(초안 §4 ac-3 잔여 선언과 일치)."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 82-85행. 첫 문장: 'ac-3 · 고아 차단(질문·차원·AC) + 발굴 질문 자격(개정 대상 명시) + 채택 시 재확정 + 시드 드롭.' 보조 근거: 73행 [FIX 1] — ac-3의 revises_goal_predicate 개정 경로는 ac-1 firedTurnCount=1 단언의 명시적 예외(통제된 개정+confirmed=false 재확정); 78행 — 위임 상태에서도 ac-3 고아 게이트 작동(ac-2 TC); 153-155행 — ac-10f 동률 잔여 질문 후보가 goal_predicate_ref를 갖춰 ac-3 게이트를 통과하는 배선."
+}

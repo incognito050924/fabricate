@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-25",
+  "oracle_statement": "bun test acceptance/ac-25.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) 원 의도 조각 목록과 차원 집합을 고정한 fixture에서 조각↔차원 역매핑이 계산되고, 어떤 실재 차원에도 매핑되지 않은 미커버 조각 각각이 origin='discovered' state='open'인 seed로 차원 구조에 심어진다(두 필드 값 모두 단언); (2) 미커버 조각이 존재하는 fixture에서 반환된 seededFragmentIds가 비어있지 않고 실제 심어진 seed 레코드들과 정확히 대응한다; (3) 조각 배열이 빈 배열이면 seed 0건·에러 없이 정상 종료하고, 빈/공백-전용 조각은 drop되어 seed로 심어지지 않는다(대비 fixture 2건); (4) 같은 상태에 게이트를 2회 실행하면 두 번째 실행은 새 seed를 0건 심는다 — 차원 개수와 기존 seed가 불변(idempotent, 중복 seed 금지); (5) 실재하지 않는 차원 노드를 가리키는 매핑 항목은 커버로 인정되지 않아 그 조각이 여전히 미커버로 seed된다(실재 노드만 커버 인정 — 유령 노드 매핑 fixture); (6) 강판 — state='open'인 discovered seed(미커버 조각)가 하나라도 존재하면 readiness 판정이 실제로 차단된다(준비도 boolean false + 잠금/진행 경로가 fail-closed로 거부 — 표시-전용 플래그로는 통과 불가); 대비 fixture에서 모든 조각이 실재 차원에 커버되거나 seed가 open 아닌 상태로 해소되면 이 입력으로 인한 차단이 해제된다(2-state 대비). 검사는 전부 enum 값·배열 비어있지 않음·개수 불변·노드 실재 대조·boolean 차단/해제 같은 결정적 술어이며, 매핑 내용의 프로즈를 채점하지 않는다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/completeness/fragment-mapping.ts",
+    "src/interview/completeness/seed-uncovered.ts",
+    "src/interview/readiness/readiness-gate.ts"
+  ],
+  "red_test_path": "acceptance/ac-25.test.ts",
+  "depends_on": ["ac-1", "ac-3"],
+  "residual": [
+    "조각 분절의 의미적 정확성 — 원 의도를 어떤 조각들로 나누는가는 기계화되지 않는다; 테스트는 fixture가 고정한 조각 목록 위에서 게이트 동작만 검사하므로 실제 발화의 분절 품질은 닫히지 않는다.",
+    "매핑의 의미 정합성 — 조각→차원 매핑이 '이 차원이 그 조각을 정말 커버한다'는 옳은 판단인가는 기계화되지 않는다; 기계는 매핑 대상 노드의 실재 여부·미커버 조각의 seed 배선·readiness 차단 boolean만 검사한다(§3-1 되풀이 패턴: LLM이 매핑을 방출하고 순수 게이트가 라우팅)."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 205행(묶음3 Tier A 제목 201행 아래). 첫 문장: '**ac-25 · A1 차원 완전성 게이트**: 원 의도 조각↔차원 역매핑, 미커버는 `origin:''discovered''` `state:''open''` seed(prism `seedUncoveredFragments` engine.ts:326-360 이식).' 보조 근거: 211행 — evidence_required: A1–A5 전부 test(정규식·정수 집계·게이트 순서·해시·그래프 연산); 404행 §6-1 — A1 강/약 판 닫힘: 강한 판으로 확정(미커버 조각 seed가 readiness를 하드-블록, 잠긴 문안이 이 형태이므로 열린 항목 아님); 251행 — ac-B1이 ac-25의 origin enum을 확장(별개 AC)."
+}

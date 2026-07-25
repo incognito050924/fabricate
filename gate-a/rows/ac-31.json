@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-31",
+  "oracle_statement": "bun test acceptance/ac-31.test.ts를 실행해 다음 단언이 전부 green이면 통과. (1) 1회 실행(fixpoint 아님): 답변 레코드가 있는 인터뷰 fixture에서 잠금 경로에 진입하면 교차-답변 일관성 패스가 정확히 1회 실행된다 — 패스 실행 기록의 실행 횟수가 1이고, 주입된 판정기가 conflict를 보고해도 재실행(수렴 반복)이 일어나지 않음을 실행 기록으로 단언한다. (2) 잠금 전 순서: 패스 실행 기록이 잠금 레코드보다 앞선 순서로 남고, 잠금 산출물이 그 패스 결과를 참조한다(잠금 후 실행된 패스는 이 조건을 충족하지 못함). (3) conflict 리스트=포인터: 테스트가 주입한 결정적 판정기가 모순 쌍을 보고하면 conflict 리스트의 각 엔트리는 관련 답변 레코드들을 가리키는 포인터(레코드 id 참조 ≥2개, 산문 복사 아님)를 담고, 그 포인터 전부가 실재 답변 레코드로 해석(resolve)되며, 실재하지 않는 레코드를 가리키는 엔트리는 결정적으로 거부된다. (4) count가 A4 conflicting을 대체: 준비도 하한(floor)에 공급되는 conflicting 값이 상수가 아니라 conflict 리스트 길이와 정확히 일치한다 — n개 conflict fixture로 conflicting=n을, 0개로 conflicting=0을 단언한다. (5) floor 실효화: 패스가 conflict n>0을 산출하면 준비도 하한이 잠금을 실제로 차단하고, 패스를 돌려 conflict 0이면 conflicting 성분은 하한을 통과함을 단언한다(하한이 죽은 상수 0 위에 있지 않음). (6) 미실행 정직 기록(ADR-0018): 패스를 돌리지 않은 채 잠금 경로에 도달한 fixture에서는 기록에 명시적 미실행 마커가 남고, 미실행 상태가 '검증된 conflict 0'으로 위장되지 않는다 — 미실행과 실행-후-0이 기록상 결정적으로 구별됨을 단언한다. 모든 단언은 테스트가 주입한 결정적 판정기 위에서 수행되며, 두 답변이 실제로 의미상 모순인지의 판단(모순 내용 판단)은 문안이 스스로 잔여로 선언했으므로 이 판정이 검사하지 않는다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/consistency/contradiction-pass.ts",
+    "src/interview/consistency/conflict-list.ts",
+    "src/interview/readiness/conflicting-input.ts"
+  ],
+  "red_test_path": "acceptance/ac-31.test.ts",
+  "depends_on": ["ac-27", "ac-29"],
+  "residual": [
+    "모순 내용 판단 — 두 답변이 실제로 의미상 모순인지 판별하는 것은 LLM/사람 판단이다. 문안이 '모순 내용 판단은 잔여다'로 스스로 선언했고, 테스트는 결정적 판정기를 주입해 1회 실행·포인터 구조·count 배선·미실행 기록이라는 기계 성질만 닫는다.",
+    "실사용 판정기의 모순 검출 품질(재현율·정밀도 — 놓친 모순, 과잉 검출)은 이 판정 기준으로 닫히지 않는다. 검출이 0건이어도 구조상 pass가 가능하므로, 검출 품질은 별도 회고/보정 루프(묶음7)의 소관이다.",
+    "A4 준비도 하한의 나머지 입력(unsure 답 수·강등 리뷰·characterize 판정)과 하한 전체의 완결은 ac-28 소관 — 이 판정은 conflicting 성분의 대체·실효화까지만 닫고, ac-28이 이 조건을 신호 공급원으로 의존한다(초안 53행 A4←B2 화살표)."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음4 — 굳히기 블록, 216행: '- **ac-31 · B2 모순 패스**: 잠금 전 교차-답변 일관성 1회 → conflict 리스트(포인터)·count가 A4 `conflicting` 대체·floor 실효화·미실행은 정직 기록(ADR-0018). 1회(fixpoint 아님).' 증거 어휘(220행): 'evidence_required: B1·B2·B3 **test**; C6 design 노드(산출=spec+red 테스트).' 보조 구절: 53행 '묶음3 A4(conflicting 되살리기) ← 묶음4 B2(모순 패스가 신호 공급). **B2 없이 A4만 하면 conflicting은 여전히 0** — B2가 A4의 소스'; 208행 ac-28이 '**B2(모순 패스) 의존**' 명시; 310행 ac-D1이 ac-31을 사실 채널(B2)로 참조."
+}

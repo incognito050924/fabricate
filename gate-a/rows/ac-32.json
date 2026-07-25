@@ -1,0 +1,16 @@
+{
+  "criterion_id": "ac-32",
+  "oracle_statement": "acceptance/ac-32.test.ts를 실행해 다음 네 가지가 전부 관측되면 통과한다. (1) 비교쌍 존재: buildIntentDissentBrief가 산출하는 brief에 resolved_reading이 추가되어, 원 의도(원문 독해)와 해소된 독해가 하나의 비교쌍으로 함께 담긴다 — 어느 한쪽이라도 빠지면 실패. (2) 비교쌍 도달: 원 의도와 다르게 해소된 독해(오-해소 모사 픽스처)로 인터뷰를 finalize까지 진행하면, 그 비교쌍이 finalize 이견 블록의 입력에 그대로 도달함을 단언한다 — 오-해소 의도가 결론을 보지 못하고 사라지면 실패. (3) host-absent degrade 보존: host 부재 상태에서 brief 생성·finalize 경로가 기존 degrade 동작대로 예외 없이 완주함을 단언한다(resolved_reading 추가가 degrade 경로를 깨면 실패 — 회귀 가드). (4) INTENT_DISSENT_CONSTRAINT 보존: brief에 INTENT_DISSENT_CONSTRAINT 제약이 계속 적용되어 이견 채널이 범위 확장 채널로 쓰일 수 없음을 단언한다(제약 부재 또는 범위 확장 내용의 통과 시 실패). 해소된 독해가 실제로 오-해소인지의 실질 판단은 이 테스트가 검사하지 않는다 — 문안이 스스로 상관 맹점(잔여)으로 선언했다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/dissent.ts",
+    "src/interview/finalize.ts"
+  ],
+  "red_test_path": "acceptance/ac-32.test.ts",
+  "depends_on": ["ac-1", "ac-9"],
+  "residual": [
+    "오-해소 판단의 실질: 해소된 독해가 정말 원 의도의 오-해소인지를 알아보는 것은 비교쌍을 만든 것과 같은 모델 prior가 판정하므로 상관 맹점이다 — 전원이 같은 오독을 공유하면 비교쌍이 도달해도 잡지 못한다. 문안이 스스로 잔여로 선언한 부분이며 이 판정 기준으로 닫히지 않는다."
+  ],
+  "draft_passage_found": "contract-draft.md 217행, §4 AC 카탈로그 묶음4(굳히기): \"- **ac-32 · B3 이견이 결론을 봄**: `buildIntentDissentBrief`(interview-dissent.ts:55-68)에 `resolved_reading` 추가 — 원 의도 + 해소된 독해 비교쌍, 오-해소 의도가 finalize 이견 블록에 도달. host-absent degrade 보존·`INTENT_DISSENT_CONSTRAINT` 보존(범위 확장 채널 아님). **상관 맹점**.\" 같은 절 말미 evidence_required 선언 \"B1·B2·B3 **test**\". 부가로 379행 §4 기각 목록의 역-스코프 KEEP 판정에 \"ac-32(host-absent 회귀 가드)\"로 유지 확정. 초안의 interview-dissent.ts:55-68은 옛 나무 위치로, forward 판정 기준이므로 앵커로 쓰지 않았다."
+}

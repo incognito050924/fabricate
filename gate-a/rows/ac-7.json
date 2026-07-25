@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-7",
+  "oracle_statement": "bun test acceptance/ac-7.test.ts를 실행해 전부 green이면 통과. 테스트는 fixture 태그로 수반/전제/함축 분류를 고정하고 라우팅+기록만 단언한다: (1) 수반-심문 태그 fixture 질문이 fired되면 rejection.kind='entailment_interrogation'로 거부되고 그 거부 레코드의 reread_triggered가 true다; (2) 표현 거부 fixture는 reread_triggered=true가 아니어서 수반-심문 거부와 구분된다(2 fixture 대조); (3) 전제-심문 태그 fixture는 world_check로 라우팅되어 사용자 질문으로 표출되지 않고, world_check 성공 시 아무것도 표출되지 않으며 실패 시에만 표출된다; (4) 혼합 거부열을 만들면 거부 로그의 각 항목이 {kind, question_text, at} 타입 레코드로 기록되고(집계 카운트가 아님) kind로 조회하면 해당 kind의 항목들이 반환된다; (5) 자격 갖춘 발굴 질문(revises_goal_predicate 명시, ac-3 자격) fixture는 위생 거부 대상이 아니어서 거부열에 등재되지 않고 통과한다(carve-out); (6) unknowns 기록에 수반/전제/함축 분류기 순환(같은 prior) 항목이 명기되어 존재한다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/question-hygiene.ts",
+    "src/interview/rejection-log.ts",
+    "src/interview/world-check.ts",
+    "src/interview/unknowns.ts"
+  ],
+  "red_test_path": "acceptance/ac-7.test.ts",
+  "depends_on": ["ac-3", "ac-10"],
+  "residual": [
+    "수반/전제/함축 분류 자체의 정확성 — 문안이 스스로 기계화 불가로 선언; 테스트는 fixture 태그로 분류를 고정하고 라우팅+기록만 단언하므로 실제 발화가 수반-심문인지/전제-심문인지의 옳음은 이 판정 기준으로 닫히지 않는다",
+    "분류기 순환(분류기가 피검 대상과 같은 prior) 한계 자체 — unknowns에 명기가 존재하는지는 검사하나 순환의 해소는 아니다"
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 103–106행: \"**ac-7 · 질문 위생 (수반-심문 기각+오독 신호 재독해·전제-심문 세계확인 라우팅·유형별 기록·조회).**\" — TC(수반 심문 → rejection.kind='entailment_interrogation' 거부·reread_triggered=true·표현 거부와 2 fixture 구분, 전제 심문 → world_check 라우팅·실패 시만 표출, 혼합 거부열 {kind,question_text,at} 기록·kind 조회, 발굴 질문 carve-out)과 결정적/잔여 구분, evidence_required: test. 보조 구절: 119–120행(ac-10 수반/전제/함축 타이핑 표를 ac-7 위생이 입력으로 소비), 168행(ac-10i가 ac-7/finalize 통치), 355–358행(ac-G1이 ac-7 전제→world_check를 일반 규칙으로 승격, 분류기 순환 상속), 386·395행(G6 분류기 순환 unknowns — ac-7이 상속)."
+}

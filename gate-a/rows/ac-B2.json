@@ -1,0 +1,21 @@
+{
+  "criterion_id": "ac-B2",
+  "oracle_statement": "bun test acceptance/ac-B2.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) 시트 선행 존재 — 인터뷰 시작 경로가 선이해 외부화 시트 preunderstanding_sheet[]의 선행 존재를 강제한다: 시트 없는 fixture에서 인터뷰 시작이 거부되고, 시트 있는 대비 fixture에서는 시작이 진행되며 시트 기록이 첫 질문 턴보다 엄격히 앞선다; (2) enum — 시트 각 항목의 state가 {위험노출, 확정, 반박됨} 세 값만 허용되고, state 필드가 없거나 enum 밖 값인 항목을 담은 시트는 zod 파싱에서 거부된다(negative fixture); (3) leading_question 감지·재작성 — state가 '확정'이 아닌(미확정: 위험노출·반박됨) 시트 항목을 전제로 참조하는 질문 fixture에서 leading_question 플래그가 세워지고 원 질문이 그대로 방출되지 못하며 재작성 질문 레코드가 원 질문·해당 시트 항목을 참조해 산출된다; state='확정' 항목만 전제한 대비 fixture에서는 플래그·재작성 없이 통과한다; (4) 재투영 diff — 답 묶음마다 전체 의도 재투영 diff 산출물이 존재한다: 답 묶음 N건 fixture에서 각 묶음을 참조하는 diff 레코드가 정확히 N건 존재하고, diff 산출 없이 다음 묶음 처리로 진행하려는 fixture는 fail-closed로 거부된다; (5) reconfirm_required 마킹 — diff가 닿는(diff의 touched 참조 집합에 든) 이전 항목이 있는 fixture에서 그 항목 전부에 reconfirm_required가 마킹되고, diff가 닿지 않은 항목은 마킹되지 않는다(양방향 대비 fixture). 검사는 전부 존재·선행성·enum 파싱 거부·플래그 boolean·레코드 카운트·참조·마킹 boolean 같은 결정적 술어이며, 질문의 유도성 자체(전제-참조 태그가 옳은가)는 채점하지 않는다(문안이 스스로 잔여로 선언).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/preunderstanding/sheet.ts",
+    "src/interview/preunderstanding/leading-question-gate.ts",
+    "src/interview/preunderstanding/reprojection-diff.ts",
+    "src/interview/preunderstanding/reconfirm-marking.ts"
+  ],
+  "red_test_path": "acceptance/ac-B2.test.ts",
+  "depends_on": ["ac-1"],
+  "residual": [
+    "유도성 판단 — 질문이 실제로 미확정 선이해를 전제로 깔았는가(전제-참조 태그의 정확성)는 기계화되지 않는다; 테스트는 fixture가 고정한 참조 태그 위에서 플래그·재작성 라우팅만 단언한다(문안 스스로 잔여로 선언).",
+    "재작성 질문의 품질 — 재작성이 실제로 전제(유도성)를 제거했는가는 사람 판단이다; 기계는 재작성 레코드의 존재와 원 질문 차단만 검사한다.",
+    "시트 항목 state의 실질 정확성 — 어떤 선이해가 정말 확정/반박됐는가는 실제 사용자 답이 필요하다; 테스트는 fixture로 state를 고정하고 enum 강제와 라우팅만 단언한다.",
+    "재투영 diff의 의미적 정확성 — diff가 답 묶음이 전체 의도에 미친 영향을 진짜로 포착했는가(닿는 항목 집합의 내용이 옳은가)는 기계화되지 않는다; 기계는 묶음별 diff 존재와 touched 집합→마킹 라우팅만 검사한다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그, 커버리지 보강 그룹 B(§3.1 파악 기계) 247행 제목·249행 공통 머리말(전부 forced-artifact, evidence test, LLM이 태그를 방출하고 순수 게이트가 라우팅하는 패턴), 257–260행. 첫 문장(257–258행): '**ac-B2 · Gadamer 선이해 시트. [forced-artifact]** — 진술: 인터뷰 시작 전 선이해 외부화 시트 {위험노출|확정|반박됨} + 유도질문 감지·재작성 + 답 묶음마다 전체 재투영 diff → 닿는 이전 항목 재확인.' TC(259행): 인터뷰 시작 전 preunderstanding_sheet[] 각 항목 state ∈ {위험노출,확정,반박됨}; 미확정 선이해를 전제로 깐 질문 → leading_question 감지·재작성; 답 묶음마다 전체 의도 재투영 diff 산출, diff가 닿는 이전 항목 reconfirm_required. 260행: 결정적=시트 존재·enum·유도질문 감지 플래그·재투영 diff·재확인 마킹, 잔여=유도성 판단. 보조 근거: 28행 커버리지 보강(v2) 목록이 ac-B1..B7을 §3.1 파악으로 배치."
+}

@@ -1,0 +1,168 @@
+{
+  "narrow_ids": [
+    "ac-10j",
+    "ac-11",
+    "ac-34"
+  ],
+  "revised_ids": [
+    "ac-10j",
+    "ac-11",
+    "ac-34"
+  ],
+  "critic": {
+    "empty_or_missing_ids": [],
+    "duplicate_red_test_paths": [],
+    "unknown_depends_on": [],
+    "suspect_rows": [
+      {
+        "id": "ac-39",
+        "why": "module_plan의 동결 red 테스트가 src/interview/escalation/stuck-detector.test.ts — bun test 기본 glob(*.test.ts)에 걸린다(저장소에 bunfig.toml 없음, package.json test='bun test'). 오라클 스스로 '구현 노드는 spec 확정 후 열리므로' 검출기를 미구현으로 두므로 이 파일은 스위트에서 항구 red가 되어 ac-4 오라클 (6) '전체 bun test가 green(스위트 전체 exit 0)'과 직접 충돌한다. ac-33은 같은 제약을 '기본 테스트 glob에 안 걸리는 이름(prediction-gate.redtest.ts)'으로 명시 회피했으므로 판정표 자체가 이 제약을 인지하고 있다."
+      },
+      {
+        "id": "ac-36",
+        "why": "동결 red 테스트 경로가 src/interview/schedule/frontier.red.test.ts — '.test.ts'로 끝나 bun test 기본 glob에 걸린다. module_plan이 frontier.ts를 'ac-36 범위 안에서는 미구현으로 남아 red를 지탱'으로 명시하므로 이 파일은 스위트를 항구 red로 만들어 ac-4의 전체-스위트-green 단언과 충돌한다(ac-33의 .redtest.ts 회피와 불일치)."
+      },
+      {
+        "id": "ac-E2",
+        "why": "동결 red 테스트 경로가 src/interview/schedule/lindley.red.test.ts — bun test 기본 glob에 걸린다. module_plan이 interpretation-stop.ts를 'ac-E2 범위 안에서는 미구현으로 남아 red를 지탱'으로 명시하므로 ac-36·ac-39와 같은 이유로 ac-4의 전체-스위트-green 단언과 충돌한다."
+      },
+      {
+        "id": "ac-38",
+        "why": "잠긴 문안의 완료기준은 DESIGN 노드의 red 테스트 2건('fog→Decided 진술된-질문 포인터 필수'·'범위밖 재질문 제외')인데, 오라클 (3)(5)는 이를 동결 red 산출물이 아니라 acceptance 테스트의 green 행동 단언(승격 거부/수용, 재질문 거부가 실제로 동작)으로 번역했다 — 구현을 요구하는 셈이라 형제 DESIGN 행(ac-33·ac-36·ac-39·ac-E2가 전부 'spec+동결 red, 실동작은 미래 구현 몫')과 해석이 불일치한다. 부수: 오라클이 재스캔 대상으로 지정한 spec 문서 design/ac-38-three-ledger-state.md가 module_plan에 없다(형제 행들은 spec 경로를 module_plan에 올림)."
+      },
+      {
+        "id": "ac-10",
+        "why": "가족 공통 문안(초안 123행)은 ac-10a..10j가 'ac-10 코어와 같은 라운드-0 통합 독해 한 번의 패스'로 방출된다고 선언하는데, 그 단일 패스 산출물 모듈이 행마다 다른 5개 경로로 파편화됐다: reading/round0-artifacts.ts(ac-10), round0/reading-pass.ts(ac-10a·10f), reading/round-zero-reading.ts(ac-10c), reading/round0-reading-pass.ts(ac-10d), reading/round0-reading.ts(ac-10e·10g·10j). 같은 seam이 5개 파일로 갈라져 '한 패스 공유' 진술과 모듈 계획이 안 맞는다."
+      },
+      {
+        "id": "ac-14",
+        "why": "주입 디렉티브 모듈이 src/interview/charter/u-directives.ts로 단독 이탈 — ac-11·12·13·15·16·17·18·19·22는 전부 src/interview/charter/directives.ts를 같은 표면으로 쓴다. ac-11의 오라클은 U5 cue가 '같은 디렉티브 표면에 얹힌다'는 전제로 블록-격리 단언까지 설계했으므로, U4 cue만 다른 모듈에 두면 U-계열 cue 표면 seam이 갈라진다."
+      },
+      {
+        "id": "ac-23",
+        "why": "오라클 (4)의 U9 정산 연결이 ac-19가 세운 정산 모듈(src/ledger/retro-settlement.ts)이 아니라 src/interview/assumption/settlement.ts를 module_plan에 올렸다 — 같은 회고 정산 seam이 두 경로로 갈라진다. ac-40은 다시 제3의 경로 src/interview/calibration/settlement.ts를 쓴다(정산 단계). 세 행이 참조하는 '정산'이 한 seam인지 세 모듈인지 미정."
+      },
+      {
+        "id": "ac-40",
+        "why": "정산 단계 모듈이 src/interview/calibration/settlement.ts — ac-19(src/ledger/retro-settlement.ts)·ac-23(src/interview/assumption/settlement.ts)과 함께 같은 회고-정산 seam의 세 번째 경로다. ac-40의 spec 목표 (a)가 ac-19의 가정 장부·정산을 심화하는 것이므로 모듈 계획이 한 seam으로 수렴해야 하는데 갈라져 있다."
+      },
+      {
+        "id": "ac-8",
+        "why": "69행 중 유일하게 red_test_path(acceptance/ac-8.test.ts)가 오라클에 결속되지 않는다 — 판정 수단은 로그 파일(dogfood/interview-session.log.jsonl) rescan이고 오라클은 그 테스트 파일의 역할을 어디서도 지정하지 않는다(다른 68행은 전부 'bun test <경로> 실행'이 오라클의 첫 절). method=rescan·evidence=file 자체는 결정 0001의 log→file 매핑과 정합하나, 조각 2-B(69개 빨간 테스트+동결 해시)와의 접합이 이 행에서만 미정의다."
+      },
+      {
+        "id": "ac-26",
+        "why": "잠긴 문안은 '인터뷰 dimensionState enum 확장(22 consumer 영향)으로 배선한다'고 확정했는데, residual 2번이 '22 consumer'를 옛 나무 서술로 규정해 '이 수치 자체는 재검증 대상이 아니'라고 오라클 범위에서 제외했다 — 문안이 잔여로 선언하지 않은 절을 residual로 이동시킨 사례(사유는 기록돼 있으나 잠긴 문안 절이 판정에서 탈락)."
+      },
+      {
+        "id": "ac-10j",
+        "why": "잠긴 문안(criteria.json)의 라우팅 테이블에는 '만'(배타성)이 없는데 오라클 (3)이 초안 원문(173행 'pass/pass만 채택')을 근거로 fail/pass→비채택 단언을 추가했다 — 행 스스로 주석으로 인정. ac-15·ac-20·ac-22가 '잠긴 문안에 없는 요구 추가 금지'를 명시적으로 지킨 것과 내부 규범이 불일치한다."
+      },
+      {
+        "id": "ac-32",
+        "why": "depends_on이 빈 배열인데 오라클 (2)는 '인터뷰를 finalize까지 진행'을 요구하고 module_plan이 src/interview/finalize.ts를 ac-9와 공유한다 — 최소 ac-1(세션·턴 기계) 내지 ac-9(finalize 게이트) 의존 누락 의심. 대조: 같은 finalize 표면을 만지는 ac-9·ac-B1·ac-D2는 의존을 선언했다."
+      },
+      {
+        "id": "ac-10d",
+        "why": "잠긴 문안이 잔여로 선언한 것은 '대응·정합 판정 내용'뿐인데 residual 3번이 '문법·장르 판정 내용'을 추가로 잔여에 담았다 — 문안이 잔여로 선언하지 않은 항목의 추가(행 스스로 '정직하게 기록한다'로 명시; 결정적 검사 범위를 줄이지는 않으므로 경미)."
+      }
+    ],
+    "summary": "69행 전수 검사 완료. 완전성: 행 파일 69/69 존재, criterion_id 전부 파일명과 일치, oracle_statement 전부 실질 검사 술어 포함(동어반복·검사 불가 서술 없음) → empty_or_missing_ids 0건. red_test_path 중복 0건(전부 acceptance/<id>.test.ts 패턴). depends_on의 미지 id 0건, 순환 0건, 자기참조 0건. 증거 어휘는 결정 0001 매핑과 완전 정합(test→test 62행, doc→file+test 6개 DESIGN 행, log→file/rescan 1행=ac-8; 계약의 비-test 조건 7개와 정확히 일치). 의심 행 12건: 최중대는 동결-red 설계 테스트 파일명이 bun test 기본 glob에 걸려 ac-4의 '전체 스위트 green' 단언과 충돌하는 ac-39·ac-36·ac-E2(ac-33은 .redtest.ts로 명시 회피 — 판정표 스스로 아는 제약), 그리고 red-테스트 완료기준을 green 행동 단언으로 번역해 형제 DESIGN 행과 어긋난 ac-38. 다음으로 seam 파편화 3건(라운드-0 단일 패스 산출물이 5개 모듈 경로로: ac-10 가족; U-디렉티브 표면 이탈: ac-14; 회고 정산 모듈 3갈래: ac-23·ac-40), red_test_path가 오라클에 결속되지 않은 유일 행 ac-8, 잠긴 문안 절을 residual로 이동/추가한 ac-26·ac-10j·ac-10d, 의존 누락 의심 ac-32."
+  },
+  "repaired": [
+    {
+      "id": "ac-36",
+      "change_summary": "동결 red 테스트 파일명을 src/interview/schedule/frontier.red.test.ts에서 frontier.redtest.ts로 변경(ac-33 관례, bun test 기본 glob 회피). oracle_statement (5)·module_plan·residual의 경로 인용을 일관 갱신하고 glob-회피 명명임을 명시.",
+      "task": "design-red-convention"
+    },
+    {
+      "id": "ac-38",
+      "change_summary": "oracle_statement를 형제 DESIGN 행 규약으로 재번역 — red 테스트 2건('fog→Decided 포인터 필수', '범위밖 재질문 제외')을 green 행동 단언(구현 요구)에서 동결 red 산출물 검사(파일 존재·비어있지 않음·red 관측 기록 exit≠0·동결 해시 일치)로 변경. 문안이 명시한 spec 재스캔(필수 섹션 ①~⑥)과 새 enum additive 마이그레이션 검사는 그대로 유지. 독립 green 단언이던 '승격 시험=진술-가능성' 항목은 spec 섹션 ②와 red 테스트 판정 대상 서술로 흡수. module_plan에 promotion.redtest.ts·out-of-scope.redtest.ts(glob-회피 명명) 추가. residual에 '게이트 실행 행동은 동결 red가 후속 구현에서 green이 될 때 닫힘' 항목 추가 및 기존 항목의 픽스처-단언 표현을 red 테스트 판정 대상 표현으로 정리.",
+      "task": "design-red-convention"
+    },
+    {
+      "id": "ac-39",
+      "change_summary": "동결 red 테스트 파일명을 src/interview/escalation/stuck-detector.test.ts에서 stuck-detector.redtest.ts로 변경(ac-33 관례, bun test 기본 glob 회피). oracle_statement (2)와 module_plan을 일관 갱신. 문안이 완료기준으로 직접 선언한 (3) 3안 구조적 상이 게이트·(4) 침묵 계속질문 차단의 green 단언은 잠긴 문안 근거이므로 유지.",
+      "task": "design-red-convention"
+    },
+    {
+      "id": "ac-E2",
+      "change_summary": "동결 red 테스트 파일명을 src/interview/schedule/lindley.red.test.ts에서 lindley.redtest.ts로 변경(ac-33 관례, bun test 기본 glob 회피). oracle_statement (5)·module_plan·residual의 경로 인용을 일관 갱신하고 glob-회피 명명임을 명시.",
+      "task": "design-red-convention"
+    },
+    {
+      "id": "ac-10",
+      "change_summary": "module_plan의 라운드-0 단일 패스 산출물 모듈 경로를 src/interview/reading/round0-artifacts.ts에서 통일 경로 src/interview/reading/round0-reading.ts로 교체. 고유 검증 모듈(frame-role-table, token-effect-audit, commitment-typing) 유지.",
+      "task": "round0-family-unification"
+    },
+    {
+      "id": "ac-10a",
+      "change_summary": "module_plan의 src/interview/round0/reading-pass.ts를 통일 경로 src/interview/reading/round0-reading.ts로 교체. 고유 모듈 vendler-aspect.ts 유지.",
+      "task": "round0-family-unification"
+    },
+    {
+      "id": "ac-10b",
+      "change_summary": "오라클이 '라운드-0 통합 독해 패스의 산출물'에 candidate_readings[] 등의 존재를 단언하는데 module_plan에 그 산출물 모듈이 없어, 통일 경로 src/interview/reading/round0-reading.ts를 추가(가족 필드가 편입되는 단일 패스 산출물 스키마 모듈). 기존 4개 고유 모듈 유지.",
+      "task": "round0-family-unification"
+    },
+    {
+      "id": "ac-10c",
+      "change_summary": "module_plan의 src/interview/reading/round-zero-reading.ts를 통일 경로 src/interview/reading/round0-reading.ts로 교체. 고유 모듈(mischief, skinner, defect-removed-check, plan-entailment) 유지.",
+      "task": "round0-family-unification"
+    },
+    {
+      "id": "ac-10d",
+      "change_summary": "① module_plan의 src/interview/reading/round0-reading-pass.ts를 통일 경로 src/interview/reading/round0-reading.ts로 교체. ② 문안이 잔여로 선언하지 않은 '문법·장르 판정 내용의 정합성' residual 항목 제거 — 문안 선언 잔여인 '대응·정합 판정 내용' 항목과 비평 대상이 아니었던 meaning_vs_my_position 분류 정확성 항목은 유지.",
+      "task": "round0-family-unification"
+    },
+    {
+      "id": "ac-10f",
+      "change_summary": "module_plan의 src/interview/round0/reading-pass.ts를 통일 경로 src/interview/reading/round0-reading.ts로 교체. 고유 모듈(abduction-residual, tie-question-emitter) 유지.",
+      "task": "round0-family-unification"
+    },
+    {
+      "id": "ac-10j",
+      "change_summary": "잠긴 문안에 '만'(배타성)이 없으므로 문안에 없는 요구를 제거: ① oracle_statement에서 (3) 채택 배타성 단언(fail/pass→비채택) 전체 삭제 — 존재 검사와 문안이 지정한 세 조합 라우팅 테이블만 남김; ② module_plan의 skopos-gate 설명에서 '채택 반환은 pass/pass 조합에서만…' 배타성 절 삭제; ③ residual 3번에서 '단, 오라클 (3)이 배타성을 닫는다' 문장 삭제하고 fail/pass 조합 라우팅 전체가 오라클 판정 밖임을 명시; ④ draft_passage_found에서 초안의 '만'이 문안의 일부라는 주석 삭제(초안 원문 인용 자체는 기록 목적상 유지).",
+      "task": "round0-family-unification"
+    },
+    {
+      "id": "ac-23",
+      "change_summary": "module_plan의 회고-정산 모듈 경로를 src/interview/assumption/settlement.ts에서 src/ledger/retro-settlement.ts로 통일. 나머지 모듈 계획(pain-case/ledger.ts, pain-case/regression.ts, glossary/landing.ts)은 유지. oracle_statement는 정산 파일 경로를 언급하지 않아 변경 불필요.",
+      "task": "settlement-seam-unification"
+    },
+    {
+      "id": "ac-40",
+      "change_summary": "module_plan의 회고-정산 모듈 경로를 src/interview/calibration/settlement.ts에서 src/ledger/retro-settlement.ts로 통일. 보정-고유 모듈(c4-spec.md, confidence.ts, voi-feedback.ts)과 하네스 모듈(plugin.ts, baseline.ts, recall-metric.ts)은 유지. oracle_statement가 언급하는 유일한 고정 경로는 spec 문서(src/interview/calibration/c4-spec.md)로 정산 경로가 아니어서 변경 불필요.",
+      "task": "settlement-seam-unification"
+    },
+    {
+      "id": "ac-14",
+      "change_summary": "module_plan의 주입 디렉티브 모듈을 src/interview/charter/u-directives.ts에서 형제 U 계열(ac-11·12·13·15·16·17·18·19·22)이 공유하는 src/interview/charter/directives.ts로 정합. oracle_statement의 '신규 인터뷰 표면의 주입 디렉티브' 언급에 공유 표면(src/interview/charter/directives.ts)임을 명시하는 괄호 보강 — ac-11의 U5 cue 블록-격리 단언이 전제하는 '같은 디렉티브 표면' 조건과 일치시킴. 나머지 필드(criterion_id, method=run, evidence_kinds=[test], red_test_path, depends_on, residual, draft_passage_found)는 변경 없음.",
+      "task": "directive-surface"
+    },
+    {
+      "id": "ac-8",
+      "change_summary": "oracle_statement 첫 절에 acceptance/ac-8.test.ts의 역할을 결속 — 'bun test acceptance/ac-8.test.ts 실행이 green이면 통과'하되, 그 테스트는 증거를 생성하는 수단이 아니라 이미 산출된 로그 파일(dogfood/interview-session.log.jsonl)을 다시 스캔해 세 결정적 술어(존재·비어있지 않음, 4개 스팬 마커 순서, user_confirmation ≥1)를 기계로 재검사하는 실행 수단이며, 판정 증거는 여전히 로그 파일 자체(rescan/file, 결정 0001의 log→file 번역)임을 명시. 세 술어 본문·method(rescan)·evidence_kinds([\"file\"])·module_plan·depends_on·residual·draft_passage_found는 변경 없음.",
+      "task": "ac-8-binding"
+    },
+    {
+      "id": "ac-26",
+      "change_summary": "비평 타당 인정 후 수리. (1) residual에서 \"'22 consumer 영향'은 옛 나무 서술\" 항목을 제거 — 잠긴 문안은 이 절을 확정 배선 요구로 포함했고 잔여로 선언한 것은 '해소 내용 판단'뿐이므로, 문안-미선언 residual 이동이었다. (2) oracle_statement 술어 (4)를 '전-소비자 배선' 검사로 확장: (4a) 테스트가 새 저장소 src/ 전체를 결정적으로 스캔해 dimensionState 분기 소비 지점을 전부 열거하고(목록 비어있지 않음 단언으로 진공 통과 방지) 각 지점이 unevaluated를 명시 처리(직접 unevaluated 팔 또는 값 누락 시 컴파일 실패하는 exhaustive 매처 경유)함을 위반 0건으로 단언, (4b) 신규 표면 소비자(준비도·종결 집계) 각각의 unevaluated 명시-분기 픽스처 유지. 옛 22곳 재현 요구 없이 문안 취지(모든 consumer 배선)를 새 표면 결정적 술어로 번역했고 문안 약화 없음. (3) draft_passage_found에 '22'가 초안의 옛 나무 소비자 수이되 잠긴 문안이 절을 확정했으므로 (4a)로 번역-검사한다는 근거를 추기. 제거된 residual이 언급하던 옛 드라이버 영속 레코드 호환은 별도 residual이 아니라 오라클 (5)의 기존-형상 레코드 파싱 검사로 이미 조작화되어 있어 유실 없음.",
+      "task": "ac-26-residual"
+    },
+    {
+      "id": "ac-32",
+      "change_summary": "depends_on을 []에서 [\"ac-1\", \"ac-9\"]로 수정. 근거: 잠긴 문안·오라클 (2)절이 '오-해소 모사 픽스처로 인터뷰를 finalize까지 진행'해 비교쌍이 finalize 이견 블록 입력에 도달함을 단언하므로, 세션·턴 기계(ac-1: recordTurn/goal_state — 인터뷰 진행의 전제)와 finalize 게이트 표면(ac-9: src/interview/finalize.ts를 module_plan에서 공유, finalize 도달은 ac-9의 fail-closed 게이트 통과를 전제)이 먼저 서야 한다. (3)절 host-absent degrade 보존도 finalize 경로 완주를 요구해 같은 표면에 걸린다. 과잉 추가 없음: dissent.ts는 ac-32 자신의 신규 표면이라 그 외 의존은 넣지 않았다.",
+      "task": "ac-32-deps"
+    }
+  ],
+  "repair_notes": [
+    "design-red-convention: 비평가 지적 4건 전부 타당하다고 판정해 소유 행 4개를 모두 수리했다. 근거: (1) contract/criteria.json의 잠긴 문안 확인 — ac-36·ac-39·ac-E2·ac-38 모두 DESIGN 노드로 완료기준에 red 테스트 '산출'이 포함되고, ac-38 완료기준은 'additive 마이그레이션 + red 테스트 2건'이지 게이트 행동 green이 아님. (2) contract-draft.md 36행 — design 노드 완료기준='검사 가능한 spec + 실패(red) 테스트 산출', spec 확정 후에야 하위 구현 노드 개방 — 이므로 동결 red는 설계상 조각 3 이후에도 red로 남고, *.test.ts 명명이면 전체 스위트를 항구 red로 만들어 ac-4와 충돌한다는 지적이 맞음. (3) ac-33 행이 이미 *.redtest.ts + '기본 테스트 glob에 안 걸리는 이름' 관례를 확립했음을 확인하고 동일 관례를 적용. 유지한 것: red_test_path는 4행 모두 acceptance/<id>.test.ts 고정(수용 테스트는 스위트에 포함되는 것이 의도), ac-38의 spec 재스캔·enum additive 마이그레이션 green 검사(문안 명시 완료기준), ac-39의 3안 구조적 상이 게이트·침묵 계속질문 차단 green 검사(문안이 red 테스트와 별개 완료기준으로 명시). 수리 후 4개 행 모두 JSON 파싱·필수 9필드·glob-회피(acceptance/ 밖 *.test.ts 경로 0건)를 기계 확인했다. contract/는 수정하지 않았고 다른 행은 읽기만 했다(ac-33). 파일 경로: /Users/incognito/dev/projects/fabricate/gate-a/rows/ac-36.json, ac-38.json, ac-39.json, ac-E2.json.",
+    "round0-family-unification: 비평 3건 모두 타당으로 판정하고 수리했다. 통일 경로는 가장 많은 행(ac-10e·10g·10j 3행)이 이미 쓰던 src/interview/reading/round0-reading.ts를 선택해 가족 전반에 적용했고, 다른 4개 파편 경로(reading/round0-artifacts.ts, round0/reading-pass.ts, reading/round-zero-reading.ts, reading/round0-reading-pass.ts)는 전부 소거했다. 수정하지 않은 소유 행과 근거: ac-10e·ac-10g — 이미 통일 경로를 사용 중이고 비평 지적 대상이 아니어서 변경 불요. ac-10h·ac-10i — 통일 경로를 추가하지 않았다: 잠긴 문안이 ac-10h를 '계획-수용 시점 게이트'(planAdmissibilityGate), ac-10i를 'finalize 종단 시점' 규칙으로 못 박고 있고 두 행의 오라클은 라운드-0 패스 산출물에 대해 아무것도 단언하지 않으므로, 초안 123행의 '전부 한 번의 패스' 서술만 근거로 산출물 모듈을 밀어 넣으면 초안이 문안을 이기는 역전(문안에 없는 요구 추가)이 된다. 비평가가 지적한 파편화도 '패스 산출물 모듈을 가진 행들 간 경로 불일치'였지 이 두 행의 모듈 부재가 아니었다. 검증: 11행 전부 JSON 유효, 스키마 9필드 정확히 유지, method=run·evidence_kinds=[\"test\"]·red_test_path=acceptance/<id>.test.ts 불변, 파편 경로 잔존 0건, 기존 코드 파일:줄 앵커 없음. ac-10j에 남은 'pass/pass만 채택' 문자열 1건은 draft_passage_found 안의 초안 원문 인용(기록 목적)이며 규범적 효력을 주장하던 주석은 삭제했다. 파일: /Users/incognito/dev/projects/fabricate/gate-a/rows/ac-10{,a,b,c,d,f,j}.json",
+    "settlement-seam-unification: 비평가 지적은 타당하다고 판정했다. 세 행 모두 같은 U9 회고-정산 seam을 가리키는데(ac-23 오라클의 '(4) U9 정산 연결', ac-40 오라클의 '(2) 정산 단계'와 depends_on ac-19), module_plan이 세 경로로 갈라져 있었다. 통일 경로로 src/ledger/retro-settlement.ts를 선택한 근거: ac-19의 잠긴 문안(criteria.json)이 '회고 정산이 인터뷰-비한정으로 적용'을 결정적 검사 대상으로 선언하고, ac-19 오라클 (3)이 비인터뷰-출처 가정의 대상 집합 포함을 단언하므로, src/interview/ 하위 경로는 이 전역성과 구조적으로 모순된다 — 인터뷰 밖의 장부 계층(src/ledger/)이 유일하게 문안과 정합하는 자리다. ac-19는 이미 이 경로를 쓰고 있어 수정하지 않았다(rows_updated에서 제외). 수리 후 세 행 모두 JSON 유효성·9개 스키마 필드·red_test_path 고정값(acceptance/<id>.test.ts)을 재확인했고, evidence_kinds는 결정 0001 번역(ac-19/ac-23 test→test, ac-40 doc→file+test→test)과 일치 상태 그대로다. contract/ 는 수정하지 않았다.",
+    "directive-surface: 비평가 지적을 검증한 결과 타당했다. 형제 행 module_plan을 직접 확인하니 ac-12·13·15·16·17·18·19·22 전부 src/interview/charter/directives.ts를 첫 모듈로 쓰고 ac-14만 u-directives.ts로 단독 이탈해 있었다. 초안 179행(묶음2 Tier U 공통 머리말)도 U 계열이 하나의 얹는 자리(헌장 §4 + per-turn 훅 + 응답 규범 §8)를 공유함을 명시하고, ac-11 오라클은 U5 cue가 같은 디렉티브 표면에 얹힌다는 전제로 U1 블록-격리 단언을 설계했으므로 표면 분리는 형제 오라클의 전제를 깨는 결함이었다. 잠긴 문안(criteria.json ac-14 statement)은 모듈 경로를 지정하지 않으므로 표면 통일은 문안과 충돌 없음. residual·depends_on·검사 술어는 지적 범위 밖이라 손대지 않았다. 수리 후 재읽기로 JSON 유효성·스키마 필드 완전성 확인 완료. 형제 행 파일은 읽기만 했고 수정하지 않았다.",
+    "ac-8-binding: 비평가 지적은 타당했다: 수리 전 ac-8의 oracle_statement는 red_test_path(acceptance/ac-8.test.ts)를 어디서도 언급하지 않아 69행 중 유일하게 테스트 파일이 오라클에 결속되지 않은 행이었다(다른 행들은 전부 'bun test <경로> 실행'이 첫 절 — ac-1/ac-7/ac-9로 확인). 잠긴 문안(criteria.json의 ac-8 statement)은 판정 술어와 잔여 선언만 규정하므로, 테스트 파일을 rescan의 실행 수단으로 명시하는 것은 문안에 없는 요구를 추가하는 것이 아니라 판정 수단의 운반체를 지정하는 것이다. 초안(contract-draft.md line 108–111 log-evidence AC, line 379 KEEP 판정)과도 정합. method=rescan, evidence_kinds=[\"file\"]은 결정 0001(log→file) 그대로 유지했고, 기존 코드 위치 앵커는 추가하지 않았다(markers.ts 등 module_plan 경로는 forward 계획 경로로 기존 그대로). 수리 후 JSON 유효성과 스키마 필드 전부를 기계 검사로 확인했다. 수정 파일: /Users/incognito/dev/projects/fabricate/gate-a/rows/ac-8.json",
+    "ac-26-residual: 비평가 지적은 타당했다: 잠긴 문안(contract/criteria.json ac-26)은 '인터뷰 dimensionState enum 확장(22 consumer 영향)으로 배선한다'를 확정 절로 포함하며 스스로 잔여로 선언한 것은 '해소 내용 판단'뿐인데, 기존 행은 '22 consumer' 절을 residual 2번으로 밀어 오라클 밖에 뒀다. 수리로 해당 residual을 제거하고 오라클 (4)를 새 표면 기준 전-소비자 배선 술어(소비 지점 전수 스캔 + 진공 통과 방지 + exhaustive 처리 단언 + 신규 표면 소비자 픽스처)로 확장했다. 수리 후 재검증: JSON 유효, 스키마 9필드 전부 존재, method=run·evidence_kinds=[test](결정 0001 번역 일치), red_test_path 고정값 유지, oracle_statement에 기존 코드 file:line 앵커 없음(residual의 engine.ts:143-187 언급은 prism 원본 이식-충실성이 범위 밖임을 설명하는 기존 항목으로, 비평 범위 밖이라 보존). 소유 행은 ac-26 하나뿐이며 그 행을 수정했다. contract/ 는 읽기만 했다.",
+    "ac-32-deps: 비평가 지적은 타당했다. ac-9.json(module_plan에 src/interview/finalize.ts 포함, depends_on=[ac-1])과 ac-1.json(세션·턴 기계: record-turn/goal-state 등)을 직접 읽어 표면 공유를 확인했다. ac-9가 ac-1에 의존하므로 ac-1은 추이적으로도 보장되지만, ac-32 오라클이 인터뷰 진행(턴 기계)을 직접 행사하므로 명시 나열했다 — 같은 표(예: ac-8이 ac-4·ac-6과 함께 ac-1을 직접 나열)의 관례와 일치하며, finalize 블록 의존을 ac-9로 나열한 ac-33 관례와도 정합. 수리 후 /Users/incognito/dev/projects/fabricate/gate-a/rows/ac-32.json 을 다시 파싱해 JSON 유효성과 스키마 필드 보존(criterion_id, oracle_statement, method, evidence_kinds, module_plan, red_test_path, depends_on, residual, draft_passage_found)을 확인했다. depends_on 외 다른 필드는 변경하지 않았고, contract/ 및 타 행 파일은 수정하지 않았다."
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-6",
+  "oracle_statement": "`bun test acceptance/ac-6.test.ts`를 실행(run)해 전부 green이면 통과. 테스트는 확정된 goal_state·미충족 술어 M개(M≥1)·자율 결정 로그 1건 이상을 가진 인터뷰 세션 fixture로 IntentSummary를 한 번 렌더하고 다음을 단언한다: (1) 그 단일 렌더 산출 안에 goal_state·confirmed·remaining_gap·autonomous_decisions 4키가 동시에 존재한다(별개 렌더 4회로 흩어지면 실패); (2) goal_state 섹션이 비어있지 않다; (3) confirmed(확정된 것) 섹션이 기존 확정 기록대로 유지되어 존재한다; (4) remaining_gap이 fixture에 기록된 미충족 술어 M개를 나열하고 count가 정확히 M과 일치한다(M을 바꾼 fixture에서도 count가 따라감 — 하드코딩 불가); (5) autonomous_decisions 배열 길이가 1 이상이다. 결정적 검사 범위는 문안이 선언한 그대로 4필드 존재·gap count==미충족 술어수·로그 길이까지다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/session.ts",
+    "src/interview/remaining-gap.ts",
+    "src/interview/intent-summary.ts"
+  ],
+  "red_test_path": "acceptance/ac-6.test.ts",
+  "depends_on": ["ac-1", "ac-5"],
+  "residual": [
+    "남은 간극의 의미적 완전성 — remaining_gap이 실제 남은 간극을 빠짐없이 담는가는 문안 스스로 잔여 판단으로 선언; 기계는 기록된 미충족 술어집합 대비 나열·count 일치까지만 검사한다.",
+    "autonomous_decisions 항목 내용의 의미적 정확성(그 로그가 실제 자율 결정을 옳게 기술하는가)은 검사하지 않는다 — 문안이 결정적으로 선언한 것은 로그 길이뿐이다."
+  ],
+  "draft_passage_found": "contract-draft.md line 98 (§4 AC 카탈로그): \"**ac-6 · 수렴 가시성 (목표 상태·확정·남은 간극·자율 결정 로그).** TC: `IntentSummary` 확장 — `goal_state` 섹션 비어있지 않음; `confirmed` 유지; `remaining_gap`가 미충족 술어 M개 나열(count==M); `autonomous_decisions` ≥1; 한 렌더에 4키 동시 존재.\" 관련 구절: line 93 (ac-5 — fork_class `other` → 자율+가시 로그가 ac-6로 공급), line 59·365-367 (ac-G3이 ac-6에 cap 기각 회귀 단언 추가 — 별개 AC로 분리, 부모 참조)."
+}

@@ -1,0 +1,16 @@
+{
+  "criterion_id": "ac-G1",
+  "oracle_statement": "bun test acceptance/ac-G1.test.ts 를 실행해 전부 green이면 통과. 테스트가 단언하는 것: (1) fixture 태그로 '환경에서 조회 가능한 사실'로 표시된 질문을 라우터에 넣으면 world_check/서브에이전트 조회 레코드가 남고 사용자 질문 발화는 0건이다(사실→world_check 라우팅, 사용자에게 묻지 않음); (2) world_check 조회가 성공한 fixture에서는 사용자 표면화 레코드가 0건이고, 조회가 실패한 fixture에서만 표면화 레코드가 생성된다(실패 시에만 표출); (3) 이 라우팅이 ac-7의 전제-심문 전용 경로가 아니라 일반 규칙임을, 전제-심문이 아닌 일반 사실 질문 fixture가 동일하게 world_check로 라우팅되는 것으로 확인한다. '사실 vs 결정' 분류 자체는 검사하지 않으며 테스트는 fixture 태그를 입력으로 소비해 라우팅과 표출만 단언한다(잔여로 선언).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/question-routing.ts",
+    "src/interview/world-check.ts"
+  ],
+  "red_test_path": "acceptance/ac-G1.test.ts",
+  "depends_on": ["ac-7"],
+  "residual": [
+    "'사실 vs 결정' 분류 자체는 기계화 불가 — ac-7의 수반/전제/함축 분류기 순환(같은 모델 prior)을 상속한다. 테스트는 fixture 태그로 분류를 주입해 라우팅+표출만 단언하며, 실제 발화에서 분류가 맞는지는 이 판정 기준으로 닫히지 않는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 '커버리지 보강 그룹 G — §2 mattpocock 기계 (ac-G1..ac-G3)' 355–358행. 첫 문장: '**ac-G1 · 사실-대-결정 규칙. (ac-7 전제→world_check를 일반 규칙으로)** — 진술: 환경에서 찾을 수 있는 사실은 world-check/서브에이전트 조회로 라우팅하고 사용자에게 묻지 않는다(실패 시에만 표면화).' 부수 언급: 25행(범위 요약), 59행(부모 참조 ac-G1→ac-7), 386행(§5 상관 맹점 — G6 분류기 순환을 ac-7·ac-G1이 상속)."
+}

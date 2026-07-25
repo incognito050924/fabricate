@@ -1,0 +1,20 @@
+{
+  "criterion_id": "ac-F1",
+  "oracle_statement": "bun test acceptance/ac-F1.test.ts를 실행해 전부 green이면 통과. 그 테스트는 문안의 각 절을 다음 결정적 술어로 단언한다: (1) 불일치 지도 존재 — 위원회 산출(fixture로 고정한 복수 위원의 독해 산출)에서 disagreement_map이 산출되어 존재하고, 영역 키별로 그 영역에서 갈리는 위원 산출들의 포인터를 담으며(영역별 불일치), 영역별 항목 없이 단일 스칼라 점수만 담은 산출은 스키마 파싱에서 거부된다(점수 아님 — negative fixture로 단언). (2) 최대영역→질문 — 영역별 불일치 크기가 서로 다른 fixture에서 최대-불일치 영역이 다음 질문 표적으로 지정되고 방출된 질문 표적 레코드가 그 영역을 참조한다(최대가 아닌 영역이 표적이 되면 fail; 같은 입력 반복 호출 → 같은 표적). (3) 진단 분기 라우팅 — 라우팅은 진단 입력의 순수 함수이며(모델 호출 없음, 같은 입력 → 같은 분기), 위원 전원이 합의했으나 외부 검증 신호와 어긋났다고 태깅된 fixture(consensus-but-wrong)는 검증 라우팅으로, 위원 산출이 갈린 fixture(disagreement)는 추출 문제 라우팅으로 분기함을 대비 fixture 2건으로 단언하고, 두 분기 밖 미정의 경로로 새지 않는다. 문안이 결정적으로 선언한 것은 불일치 지도 존재·최대영역→질문·진단 분기 라우팅까지이며, 불일치 원인 판단(왜 갈렸는가의 내용)은 문안이 스스로 잔여로 선언했으므로 이 판정에 포함되지 않는다(잔여 참조).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/calibration/committee-output.ts",
+    "src/interview/calibration/disagreement-map.ts",
+    "src/interview/calibration/max-disagreement-target.ts",
+    "src/interview/calibration/diagnosis-router.ts"
+  ],
+  "red_test_path": "acceptance/ac-F1.test.ts",
+  "depends_on": ["ac-35", "ac-40"],
+  "residual": [
+    "불일치 원인 판단(문안 자체 선언): 왜 위원 산출이 갈렸는가 — 진짜 추출 문제인가, 요청 자체의 모호성인가, 표집 잡음인가 — 의 내용 판단은 기계화 불가다. 오라클은 지도 존재·최대영역 표적·분기 라우팅이라는 구조만 닫는다.",
+    "consensus-but-wrong의 '틀림' 신호 실질: 테스트는 fixture가 고정한 외부-검증-어긋남 태그에 대한 라우팅만 단언한다(태그 방출→순수 라우팅 패턴, ac-35와 동형). 실운용에서 합의가 틀렸음을 알아채는 것 자체는 외부 검증 신호(사용자 정정·world-check·회고 정산)에 의존하는 별도 판단이며 이 판정 기준으로 닫히지 않는다.",
+    "상관 맹점(§5 전역 한계, 초안이 위원회(F1)를 명시 지목): 위원 전원이 같은 모델 prior를 공유하므로 전원이 같은 오독에 합의하면 disagreement_map은 불일치 0으로 조용히 통과한다 — consensus-but-wrong 분기가 그 완화 채널이나 '틀림' 신호가 외부에서 와야만 작동하고, 다양성 강제는 완화지 제거가 아니다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 '커버리지 보강 그룹 F — §3.5 보정 (ac-F1)'(343–349행). 첫 문장(345행): '**ac-F1 · QbC 불일치 지도. (ac-40/C4 또는 ac-35 확장) [forced-artifact]**' — 진술(346행): '위원회 산출에서 불일치 지도(점수 아님) + 최대-불일치 영역 = 다음 질문 표적 + 진단 분기(합의했는데 틀림 → 검증 라우팅 / 불일치 → 추출 문제).' TC(347행): 'disagreement_map(영역별 불일치, 점수 아님) 산출; 최대-불일치 영역 → 다음 질문 표적; 진단 분기 라우팅 — consensus-but-wrong → 검증 라우팅, disagreement → 추출 문제.' 결정적/잔여 선언(348행): '결정적: 불일치 지도 존재·최대영역→질문·진단 분기 라우팅. 잔여: 불일치 원인 판단.' 증거 어휘(349행): 'evidence_required: **test**'. 부수 구절: 25행(커버리지 보강 v2 — §3.5 보정(ac-F1)), 59행(커버리지 매핑 'ac-F1→ac-35/ac-40' — 부모 AC의 test 표적을 오염시키지 않도록 별개 AC로 분리·부모 참조), 385행(§5 형식 보장 비전이 — '불일치 표적화는 ac-F1' AC 포인터, α-통제·완전성 주장 금지), 386행(§5 상관 맹점 — 위원회(F1)가 같은 모델 prior를 공유)."
+}

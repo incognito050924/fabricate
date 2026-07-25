@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-23",
+  "oracle_statement": "bun test acceptance/ac-23.test.ts를 실행해 다음 단언이 전부 green이면 통과. (1) 즉시 채록: 실패 사례(내부-영어→표면-한국어 렌더링/번역 고통 사례)로 태그된 fixture 턴을 투입하면 그 턴의 처리 결과 안에서 고통-사례 레코드가 생성되고, 레코드가 발생 턴 포인터를 담아 같은 턴 채록임이 단언되며, 사례 발생 후 채록 없이 다음 턴으로 진행하는 지연-채록 fixture에서는 위반이 결정적으로 검출된다(즉시성 = 발생 턴과 채록 턴의 일치라는 검사 가능한 술어). (2) 제품 랜딩: 채록 레코드가 제품 glossary/회귀목록 산출물 경로에 기록되고, 개인 메모리 경로에는 기록되지 않음을 랜딩 경로 상수와 기록 산출물 양쪽에서 단언한다(개인 메모리 아님). (3) grep 회귀 연결: 회귀목록의 각 채록 항목에 grep 가능한 패턴 필드가 비어있지 않게 존재하고, 그 패턴을 포함한 렌더 출력 fixture에는 grep 회귀 검사가 위반을 결정적으로 검출(fail)하며 미포함 렌더 출력 fixture에는 통과(pass)한다(2 fixture, 결정적 grep). (4) U9 정산 연결: 채록 레코드에 U9 가정 장부(ac-19) 정산 연결 필드가 비어있지 않게 존재하고, 회고 정산 실행 시 그 사례가 정산 대상 집합에 포함됨을 단언한다. 사례의 원인 판단(왜 실패했는가)은 이 판정에 포함되지 않는다(잔여 필드 참조).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/pain-case/ledger.ts",
+    "src/interview/pain-case/regression.ts",
+    "src/interview/glossary/landing.ts",
+    "src/ledger/retro-settlement.ts"
+  ],
+  "red_test_path": "acceptance/ac-23.test.ts",
+  "depends_on": ["ac-1", "ac-19", "ac-21"],
+  "residual": [
+    "사례 원인 판단 — 채록된 실패 사례가 왜 실패했는가(오역·강제 번역·어휘 표류 등 원인 분류)는 문안이 스스로 잔여로 선언한 판단이며, 이 판정 기준은 채록·랜딩·grep 회귀·정산 연결 구조까지만 닫는다.",
+    "실제 대화에서 무엇이 '실패 사례'인지의 감지 자체는 LLM 판단이다 — 테스트는 fixture가 고정한 실패-사례 태그로 즉시 채록·랜딩 경로·연결 배선만 단언하며, 픽스처 밖 실제 턴에서의 감지 정확성·누락 없음은 이 판정 기준으로 닫히지 않는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음2 역방향 블록 193–199행. 'ac-23' 문자열 직접 grep은 0건 — (c)는 ac-21..ac-24 묶음 블록 안에 있음을 블록 헤더로 확인. 공통 틀(193행): '**ac-21..ac-24 (역방향 a–d)** — 공통: 내부(영어)→표면(한국어) 번역 압력이 뿌리, 현행 지시(charter.ts:83 \"translationese 금지\")가 이미 있는데도 실패 → 구조 필요.' 해당 항목(196행): '- (c) 고통-사례 장부: 실패 사례 즉시 채록→glossary/회귀목록(제품 랜딩, 개인 메모리 아님), grep 회귀 + U9 정산 연결.' 증거 어휘(199행): 'evidence_required: U/역방향 전부 **test** (operative-cue grep + 픽스처-턴; avoid/고통장부는 grep 회귀).' 보조 근거: 190행 U9(ac-19) '가정 장부 전역화(Brier) — 회고 정산이 인터뷰-비한정'이 (4) 정산 연결의 상대편 seam."
+}

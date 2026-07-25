@@ -1,0 +1,17 @@
+{
+  "criterion_id": "ac-12",
+  "oracle_statement": "acceptance/ac-12.test.ts를 bun test로 실행해 전부 green이면 통과. 테스트가 검사하는 술어: (1) 신규 인터뷰 표면의 개정 디렉티브/헌장 원문(src/interview/charter/directives.ts가 내보내는 문자열)에 U2 operative-cue — 말한것/추론/가정 3분류 표기 지시 — 가 결정적 grep(부분 문자열 단언)으로 존재한다. (2) 같은 원문에 발동 조건 '계획·요약 문턱만'이 명시되어 결정적 grep으로 검출된다. (3) 픽스처-턴 구조 관찰(반결정적): 계획·요약 문턱으로 태그된 픽스처 턴의 기록 구조에 3분류 표기 필드(말한것/추론/가정 각 구획)가 존재해 발동이 확인되고, 문턱이 아닌 일반 픽스처 턴에는 그 표기가 발동하지 않는다 — '계획·요약 문턱만' 게이팅이 턴 구조로 관찰된다. 개별 내용이 세 칸 중 올바른 칸에 들어갔는가(분류 정합성)는 이 판정에 포함되지 않는다(잔여 필드 참조).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/charter/directives.ts",
+    "src/interview/turn/attribution.ts"
+  ],
+  "red_test_path": "acceptance/ac-12.test.ts",
+  "depends_on": ["ac-1"],
+  "residual": [
+    "분류 정합성 — 어떤 내용이 실제로 말한것/추론/가정 중 올바른 칸에 분류됐는가(Grice 적합성)는 문안이 스스로 잔여로 선언한 사람-판정 술어다",
+    "픽스처 밖 실제 대화에서의 발동 준수 — 픽스처-턴 관찰은 반결정적이어서 태그된 픽스처 케이스의 구조만 확인하며, 실제 턴이 '계획·요약 문턱'에 해당하는지의 판별 자체는 기계화되지 않는다"
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음2(Tier U) 177–183행. 공통 틀(181행): \"**ac-11..ac-20 (U1–U10)** — 각 AC: (진술) + (개정 디렉티브/헌장에 operative-cue 존재 + 발동 조건 명시가 결정적 단언) + (픽스처-턴 구조 관찰이 반결정적) + (잔여 판단).\" U2 항목(183행): \"- U2 말한것/추론/가정 구분 표기(Grice): 3분류 표기 cue + \\\"계획·요약 문턱만\\\".\" 179행 헤더가 검사 성격(주입 디렉티브 문자열의 operative-cue 존재 grep + 발동 게이팅 명시 + 픽스처-턴 구조 관찰 반결정적)을, 199행이 evidence_required: U 전부 test임을 확인한다. 'ac-12' 문자열 직접 언급은 262행 ac-B3(\"Grice 함축 원장. (ac-12/U2 확장)\")뿐 — 이는 ac-B3이 ac-12를 확장한다는 하류 참조다."
+}

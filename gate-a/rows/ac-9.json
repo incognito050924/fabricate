@@ -1,0 +1,20 @@
+{
+  "criterion_id": "ac-9",
+  "oracle_statement": "bun test acceptance/ac-9.test.ts 를 실행해 다음 결정적 단언이 전부 green이면 통과. (1) fail-closed 거부 3종: synthesis_provenance 부재 fixture로 finalize를 호출하면 결과가 missing_synthesis_provenance 거부 변이(FinalizeResult)이고 intent 산출물이 기록되지 않으며 CLI finalize arm이 0이 아닌 종료 코드로 끝난다; preservation_judgment 부재 fixture면 finalize가 거부한다; preservation_judgment.verdict='fail' fixture면 preservation_failed 거부 변이다. (2) 통과 경로: verdict='pass' fixture면 finalize가 진행한다(거부 변이 아님). (3) 판정 brief 형태: 보존 판정 brief 산출물이 source_request(원 요청과 verbatim 일치)와 후보 문안 필드만 담고, questions[] 필드·dimension notes 필드가 존재하면 스키마(zod)가 거부하며, judge_context 값이 'driver'면 거부되고 통과 fixture에서는 judge_context !== 'driver'가 관측된다. (4) 재합성 라우팅: verdict='fail'의 라우팅 타깃이 fresh 재합성 요청 변이이고 드라이버 편집 경로 변이가 아니다(드라이버-편집 라우팅 타깃 부재 단언 포함). 모든 단언은 fixture가 고정한 레코드 필드·변이 태그에 대한 결정적 검사이며 프로즈 채점이 없다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/finalize.ts",
+    "src/interview/preservation-judgment.ts",
+    "src/interview/synthesis-provenance.ts",
+    "src/interview/resynthesis.ts",
+    "src/cli/interview-finalize.ts"
+  ],
+  "red_test_path": "acceptance/ac-9.test.ts",
+  "depends_on": ["ac-1"],
+  "residual": [
+    "보존 판정의 정확성(후보 문안이 원 의도를 실제로 보존하는가)은 판정자가 드라이버와 같은 모델 prior라 기계화 불가 — 문안 스스로 잔여로 선언(초안 unknowns[2]/§8.5 상관 맹점). 구조는 기록 부재→거부·fail→재합성 라우팅만 단언한다.",
+    "세션-맹검의 실재(판정 맥락에 드라이버 세션 내용이 실제로 새지 않았는가)는 judge_context 필드 태그와 brief 형태 검사로 근사할 뿐, 실제 격리 여부는 기계 검사 대상이 아니다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그(묶음1 Tier G) 113–115행. 첫 문장: \"**ac-9 · finalize는 세션-맹검 보존 판정 통과 문안만 수용 (fail-closed).**\" — TC(114행)가 synthesis_provenance 부재→missing_synthesis_provenance·intent 미기록·CLI 비정상 종료, preservation_judgment 부재→거부, verdict fail/pass 분기, brief 형태(source_request verbatim+후보 문안만·questions[]/dimension notes 없음·judge_context!=='driver'), fail→fresh 재합성 라우팅을 명시하고, 115행이 보존 판정 정확성 기계화 불가를 잔여로 선언. 부속 근거: 386행 상관 맹점 목록이 '세션-맹검 보존 판정(ac-9)'을 같은-prior 한계 항목으로 명시."
+}

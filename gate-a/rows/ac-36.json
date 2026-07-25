@@ -1,0 +1,20 @@
+{
+  "criterion_id": "ac-36",
+  "oracle_statement": "bun test acceptance/ac-36.test.ts를 실행해 다음 단언이 전부 green이면 통과 — DESIGN 노드이므로 판정 대상은 frontier 구현 행동이 아니라 문안이 완료기준으로 선언한 세 설계 산출물(spec + frontier-empty⇒dry 매핑 + red 테스트)의 존재와 결정적 성질이다. (1) spec 존재: frontier 계산 spec 문서가 계획 경로 src/interview/schedule/frontier-spec.md 에 존재하고 비어있지 않다(이 파일이 doc→file 증거로 함께 제출된다). (2) 의존성 frontier로 질문 스케줄 + orderPendingBranchWork 위: spec의 기계-판독 선언 블록이 zod 파싱을 통과하고 seam 필드가 'orderPendingBranchWork'를 가리키며(spec이 그 위에 얹힘), frontier 정의 절이 존재해 ac-29의 branch-edge 전제 그래프를 입력으로 참조하고 '미해소 선행이 없는 pending 노드 집합'으로 frontier 소속을 정의한다 — 절 존재·seam 참조 문자열·branch-edge 참조는 전부 결정적 검사. (3) frontier-empty=종결 신호, 기존 diminishing_returns 재사용·새 enum 아님: 선언 블록의 dry_signal 필드가 정확히 'diminishing_returns'이고 introduces_new_enum === false이며, frontier-empty⇒dry 매핑 절이 존재하고, spec 본문 스캔에서 새 종결 enum 멤버 선언이 검출되지 않는다(신규 enum 이름 도입 = fail). (4) 점수의 강등: 선언 블록의 scoring_scope 필드가 정확히 'frontier-internal'이고, 점수가 frontier 밖 후보를 스케줄하지 못하며 frontier 내 선택(동률 해소)로만 쓰인다는 강등 절이 존재한다. (5) red 테스트 산출: frontier 행동을 판정할 design 산출 red 테스트 파일 src/interview/schedule/frontier.redtest.ts 가 존재하고(기본 테스트 glob(*.test.ts)에 안 걸리는 이름으로 green 스위트를 오염하지 않음 — ac-33과 같은 관례), 그 테스트의 구현-선행 red 관측 기록(exit ≠ 0)이 존재한다 — 미래 C1 구현을 기다리는 동결 red. 검사는 전부 파일 존재·비어있지 않음·필드 정확값·절/참조 존재·기록 존재 같은 결정적 술어이며 spec 프로즈의 설계 품질은 채점하지 않는다.",
+  "method": "run",
+  "evidence_kinds": ["file", "test"],
+  "module_plan": [
+    "src/interview/schedule/frontier-spec.md — frontier 계산 spec 문서(DESIGN 산출물, doc→file 증거 원본; 기계-판독 선언 블록 포함)",
+    "src/interview/schedule/order-pending-branch-work.ts — 질문 스케줄 순서화 seam(spec이 그 위에 얹히는 표면; ac-29의 src/interview/graph/branch-edge.ts를 소비)",
+    "src/interview/schedule/frontier.ts — 의존성 frontier 계산 표면(spec의 구현 표적이자 red 테스트의 import 표적; ac-36 범위 안에서는 미구현으로 남아 red를 지탱)",
+    "src/interview/schedule/frontier.redtest.ts — design 산출 red 테스트(frontier 스케줄·frontier-empty⇒dry·점수 강등 행동 판정; 동결 red, 기본 테스트 glob에 안 걸리는 *.redtest.ts 명명)"
+  ],
+  "red_test_path": "acceptance/ac-36.test.ts",
+  "depends_on": ["ac-29"],
+  "residual": [
+    "spec 내용의 설계 적절성 — frontier 정의가 의존성 구조를 옳게 포착해 질문 스케줄을 실제로 통치하기에 충분한가는 사람 판단이다. 결정 0001은 문서 품질 판단을 증거 종류 완화가 아닌 별도 human 판정으로 분리하라고 명시했으나, 이 조건의 계약 어휘(doc·test)에 사람-증거(observation/repro)가 없으므로 이 판정 기준으로는 닫을 길이 없다.",
+    "frontier 스케줄·frontier-empty⇒dry·점수 강등의 실제 실행 동작 — DESIGN 노드의 완료기준은 spec+red 테스트까지다(문안 자체 선언). 구현 행동은 산출된 red 테스트(src/interview/schedule/frontier.redtest.ts)가 후속 구현에서 green이 될 때 닫히며 이 판정 기준 밖이다.",
+    "branch-edge seam(ac-29)이 frontier 계산에 의미적으로 충분한가 — 이 판정은 spec이 seam을 참조한다는 구조 검사까지만 닫는다(ac-29 행이 잔여로 넘긴 seam 적합성의 design-노드 쪽 몫 중 의미 판단 부분)."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 묶음5(222행 heading '### 묶음5 — 질문 경제 (ac-34..ac-36)'), 226행: '- **ac-36 · C1 frontier (DESIGN 노드)**: 목표=의존성 frontier로 질문 스케줄, frontier-empty=종결 신호, 점수는 frontier 내 선택으로 강등. 완료기준=frontier 계산 spec(`orderPendingBranchWork` 위)+\"frontier-empty⇒dry\"(기존 `diminishing_returns` 재사용, 새 enum 아님)+red 테스트. **의존=A5(같은 branch_edges seam, A5 먼저)**.' 증거 어휘 228행: 'evidence_required: B4·B5 **test**; C1 design 노드.' 보조 구절: 54행(의존 척추 — '묶음3 A5(branch_edges 확장) → 묶음5 C1(frontier) / ac-E2(Lindley separates). 같은 seam, **A5 먼저**'), 331–333행(ac-E2가 이 frontier design spec에 접힐 수 있음 — ac-E2 소관, 이 조건의 요구 아님), 239행(ac-38/C2가 C1의 'fog vs frontier'에 의존 — 역방향 의존)."
+}

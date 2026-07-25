@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-8",
+  "oracle_statement": "재스캔 판정: bun test acceptance/ac-8.test.ts 를 실행해 green이면 통과 — 단, 이 테스트는 판정 증거를 스스로 생성하는 수단이 아니라, 이미 산출된 도그푸드 인터뷰 로그 파일(로그 기록기 모듈이 쓰는 단일 고정 경로 — 계획: dogfood/interview-session.log.jsonl)을 다시 스캔하여 아래 세 결정적 술어를 기계로 재검사하는 실행 수단이다. 판정 증거는 여전히 로그 파일 자체다(rescan/file — 결정 0001의 log→file 번역). 재검사 술어: (1) 존재·비어있지 않음 — 해당 경로에 파일이 존재하고 내용 바이트 길이 > 0. (2) 4개 스팬 마커 순서 — 되말하기 마커 → user_confirmation.confirmed=true 레코드 → remaining-gap 렌더 마커 → goalStateGate 호출 기록 마커가 정확히 이 순서로 등장한다(마커 하나라도 누락되거나 순서가 뒤집히면 실패; 마커 문자열은 src/interview/log/markers.ts의 단일 정의를 기록기와 판정기가 공유해 문자열 드리프트를 차단). (3) 확인 레코드 수 — user_confirmation 레코드 개수 ≥ 1. 문안이 스스로 선언한 대로 이 판정은 log-evidence AC로서 산출물 존재+마커까지만 닫는다(게이트 아님) — 진짜 도그푸드인지·스팬의 의미적 실재는 residual로 남는다.",
+  "method": "rescan",
+  "evidence_kinds": ["file"],
+  "module_plan": [
+    "src/interview/log/markers.ts",
+    "src/interview/log/session-log.ts",
+    "src/interview/log/dogfood-scan.ts"
+  ],
+  "red_test_path": "acceptance/ac-8.test.ts",
+  "depends_on": ["ac-1", "ac-4", "ac-6"],
+  "residual": [
+    "진짜 도그푸드 세션인지(합성·조작된 로그와의 구분)는 사람-판정 술어다 — 계약 증거 어휘가 log(→file/rescan)뿐이고 사람-증거(observation/repro)가 없으므로 이 판정 기준으로는 닫을 길이 없다(문안 스스로 잔여로 선언).",
+    "4개 스팬의 의미적 실재(마커가 가리키는 되말하기·확인·간극 렌더·게이트 호출이 실제로 의미 있는 사건이었는지)는 잔여다 — 판정은 마커 존재+순서까지만(문안: '게이트 아님, 산출물 존재+마커만').",
+    "로그 산출 자체가 실제 사용자 답을 담은 도그푸드 인터뷰 실행을 요구한다 — 기계 재판정은 이미 산출된 파일만 검사하며 실행 행위를 강제하지 못한다."
+  ],
+  "draft_passage_found": "contract-draft.md §4 AC 카탈로그, line 108–111: \"**ac-8 · 도그푸드 인터뷰 기록 (되말하기→목표 확정→간극 표시→완료 검사, 사용자 확인 포함).**\" — TC: 로그 파일 존재·비어있지 않음; 4개 스팬 마커 순서대로 포함(되말하기·user_confirmation.confirmed=true·remaining-gap 렌더·goalStateGate 호출 기록); user_confirmation 레코드 ≥1; 잔여(명시, log-evidence AC). 보조 구절 line 379(역-스코프 KEEP 판정): \"ac-8(도그푸드 로그 = 검증 보조, 문서 조건은 아니나 무해·evidence 규율)\" — 유지(drop 아님)."
+}

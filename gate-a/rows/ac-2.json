@@ -1,0 +1,20 @@
+{
+  "criterion_id": "ac-2",
+  "oracle_statement": "bun test acceptance/ac-2.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) 명시-스킵 fixture('그냥 진행해' 태그 발화)를 턴 기록에 넣으면 delegation.kind === 'explicit_skip'인 위임 레코드가 생성된다. (2) 재촉 fixture와 부분답변 fixture 각각(2 fixture)에서는 delegation 레코드가 생성되지 않는다(무기록). (3) 기록된 delegation.raw_utterance가 입력 발화 원문과 바이트 단위로 일치한다(인코딩 후 바이트 비교). (4) delegation.interpretation이 빈값이 아니고, 사용자 대상 출력(렌더 결과 문자열)에 그 interpretation이 포함되어 표출된다. (5) 첫 상호작용에서 위임이 발생한 세션에서도 goal_state.predicates.length > 0이다 — 위임이 라운드-0 목표 도출을 건너뛰게 하지 않는다. (6) 위임 상태의 세션에서 goal_predicate_ref 없는 fired 질문을 투입하면 ac-3 고아 게이트가 여전히 거부한다(위임해도 목표의 자율 통치 유지).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/delegation.ts",
+    "src/interview/turn.ts",
+    "src/interview/goal-state.ts",
+    "src/interview/orphan-gate.ts",
+    "src/interview/render.ts"
+  ],
+  "red_test_path": "acceptance/ac-2.test.ts",
+  "depends_on": ["ac-1", "ac-3"],
+  "residual": [
+    "'명시 스킵인가'(재촉·부분답변과의 구분) 분류 자체는 기계화 불가 — 테스트는 fixture가 고정한 태그로 라우팅·기록만 단언하며, 실제 사용자 발화에 대한 분류 정확성은 이 판정 기준으로 닫히지 않는다.",
+    "delegation.interpretation의 내용이 그 발화의 올바른 해석인가는 사람-판정 술어다 — 기계 검사는 비어있지 않음 + 사용자 출력 표출까지만 닫는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그, 77-80행. 첫 문장: '**ac-2 · 명시 스킵만 위임 기록·verbatim·해석 되비침·위임해도 목표 자율 통치.**' (TC: \"그냥 진행해\" → delegation.kind='explicit_skip'; 재촉/부분답변 → delegation 없음(2 fixture); raw_utterance 바이트 일치; interpretation 비어있지 않고 사용자 출력에 표출; 첫 상호작용 위임에도 goal_state.predicates.length>0; 위임 상태에서도 ac-3 고아 게이트 작동. 잔여: '명시 스킵인가' 분류 — fixture가 기록 라벨 고정.) 보조 근거: 같은 문서 61행 되풀이 구조 패턴이 delegation.kind를 LLM-태그 방출 + 순수 게이트 라우팅 목록에 포함."
+}

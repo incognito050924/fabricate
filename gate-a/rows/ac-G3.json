@@ -1,0 +1,16 @@
+{
+  "criterion_id": "ac-G3",
+  "oracle_statement": "bun test acceptance/ac-G3.test.ts를 실행(run)해 전부 green(exit 0)이면 통과한다. 테스트는 확정된 goal_state와 미충족 술어 M개(M≥1)를 가진 인터뷰 세션 fixture에서 문안의 각 절을 단언한다: (1) cap→종결 불가 — 질문 수가 어떤 cap 임계를 넘긴 상태에서 질문 수만을 근거로 한 종결 시도가 거부 결과를 반환하고 세션이 종결되지 않는다(질문 수 단독 종결 불가). (2) cap 재도입 차단 회귀 가드 — goal_state 충족 상태가 동일하고 질문 수만 다른 두 fixture(소수 vs cap 초과)가 동일한 종결 판정을 산출해, 질문 수가 종결 판정의 입력에 존재하지 않음을 회귀로 고정한다. (3) ac-4 완료=목표성립 회귀 단언 — 질문 수가 cap을 초과해도 미충족 술어가 남은 fixture에서 goalStateGate가 여전히 pass:false로 close를 차단한다(완료 판정이 질문 수로 대체·완화되지 않음). (4) ac-6 수렴 가시성 회귀 단언 — 질문 수가 cap을 초과한 fixture에서도 IntentSummary 렌더의 remaining_gap이 미충족 술어 M개를 그대로 나열하고 count==M이다(cap 도달이 남은 간극 표시를 소거하지 못함). 네 단언 전부 결정적이며, 문안 스스로 잔여 없음을 선언한다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/session.ts",
+    "src/interview/termination.ts",
+    "src/interview/goal-state-gate.ts",
+    "src/interview/intent-summary.ts"
+  ],
+  "red_test_path": "acceptance/ac-G3.test.ts",
+  "depends_on": ["ac-4", "ac-6"],
+  "residual": [],
+  "draft_passage_found": "contract/contract-draft.md 365-368행(§4 AC 카탈로그, '커버리지 보강 그룹 G — §2 mattpocock 기계' 351행), 첫 문장: \"**ac-G3 · cap 기각 회귀 가드. (ac-4/ac-6에 회귀 단언)**\" — 진술(366행): '질문 수 단독으로는 종결할 수 없다 — cap이 종결 판정에 재도입되지 않음을 회귀 가드로 못 박는다', TC(367행): 'GIVEN 질문 수만으로 종결 시도, THEN 종결 거부(cap 재도입 차단 회귀 가드); ac-4 완료=목표성립·ac-6 수렴 가시성에 회귀 단언 추가', 결정적 선언(368행): '전부 — cap→종결 불가 회귀 단언(순수 회귀 가드). 잔여: 없음'. 보조 참조: 59행(ac-G3→ac-4/ac-6 — 부모 AC의 test 표적을 오염시키지 않도록 별개 AC로 분리하고 부모를 참조), 388행(§5 정직한 한계 — '에코 금지·ac-10g 역번역·ac-4/G3 목표-대비 완료가 마지막 그물')."
+}

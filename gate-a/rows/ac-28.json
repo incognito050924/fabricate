@@ -1,0 +1,20 @@
+{
+  "criterion_id": "ac-28",
+  "oracle_statement": "acceptance/ac-28.test.ts를 bun test로 실행해 전부 green이면 통과. 테스트가 검사하는 결정적 술어: (1) conflicting 실입력화(이식 출처 prism의 하드코딩 0 대체) — 준비도 하한(A4) 게이트가 conflicting을 명시적 입력으로 받고 그 값은 모순 패스(B2, ac-31)가 산출한 conflict 리스트의 count에서 도출된다: conflict 포인터 N(≥1)개가 실린 픽스처 상태에서 게이트가 관측한 신호 레코드의 conflicting = N이고 하한 판정이 차단으로 바뀌며, conflict 0개인 동일 상태에서는 통과한다 — 입력 변화가 게이트 산출을 바꿈을 단언해 상수 0이 아님을 행위로 증명한다(입력과 무관하게 항상 0이면 실패). B2 의존 절은 이 소스-seam 배선 단언과 depends_on(ac-31)으로 반영된다. (2) unsure 답 수 배선 — 턴 기록에서 unsure 마커가 달린 답을 정수로 집계해 게이트 신호 레코드에 싣는다: k개 unsure 답 픽스처에서 집계값 = k이고, 이 값의 변화가 하한 판정 결과를 바꿈으로써 표시-전용이 아닌 실제 판정 입력임을 단언한다. (3) 강등 리뷰 배선 — 강등 리뷰 레코드의 존재·수가 게이트 신호에 정수로 집계되어 판정 입력이 된다: 강등 리뷰가 있는 픽스처와 없는 픽스처의 신호 레코드가 결정적으로 다르고 게이트가 그 차이를 읽는다. (4) characterize 판정 배선 — characterize 판정 레코드가 게이트 신호에 집계되어 판정 입력이 된다(존재/부재 픽스처 쌍으로 배선 관찰). (5) 정수 집계·게이트 배선 결정성 — 같은 픽스처에 대한 네 신호의 집계값과 게이트 산출이 재호출에도 항상 동일하며(순수 함수), 집계값은 전부 정수 ≥ 0이다. 신호의 의미적 옳음(실제 모순인가·실제 불확실한가 등)은 이 판정에 포함되지 않는다(잔여 필드 참조).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/readiness/signals.ts",
+    "src/interview/readiness/floor.ts",
+    "src/interview/readiness/review-records.ts"
+  ],
+  "red_test_path": "acceptance/ac-28.test.ts",
+  "depends_on": ["ac-31", "ac-1"],
+  "residual": [
+    "모순의 내용적 옳음 — 어떤 답 쌍이 실제로 모순인가는 ac-31(B2)의 잔여이며, 이 판정은 B2가 내놓은 conflict count를 소비하는 배선만 닫는다. B2가 미실행이면 conflicting 소스가 없어 여전히 0이라는 문안의 의존 선언은 depends_on(ac-31)으로 옮겨 적었고, 미실행의 정직 기록 의무는 ac-31 소관이다.",
+    "unsure 마커 부여의 의미적 옳음 — 답이 실제로 불확실한 답인가(마커를 다는 판단)는 사람/LLM 판정 술어다. 계약 증거 어휘가 test뿐이고 사람-증거(observation/repro)가 없으므로 이 판정 기준으로는 닫을 길이 없다. 테스트는 마커 달린 답의 집계·배선 구조만 강제한다.",
+    "강등 리뷰·characterize 판정의 의미적 실재 — 강등이 정당했는가, characterize 판정 내용이 옳은가는 사람-판정 술어다. 테스트는 레코드 존재·집계·게이트 입력화 구조만 판정한다.",
+    "하한 임계값의 적절성 — 어떤 수치가 준비도 하한으로 옳은가는 문안이 고정하지 않았다. 테스트는 신호가 실제 입력으로 배선되어 판정을 바꾼다는 것까지만 강제하고 임계 정책값의 옳음은 판정하지 않는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음3(Tier A) 208행: \"- **ac-28 · A4 준비도 하한 실존 신호**: `conflicting` 실입력화(현 gates.ts:91 하드코딩 0)·unsure 답 수·강등 리뷰·characterize 판정 배선. **B2(모순 패스) 의존** — B2 없이 A4만 하면 conflicting 소스 없어 여전히 0.\" 보조 구절: 211행 \"evidence_required: A1–A5 전부 **test** (정규식·정수 집계·게이트 순서·해시·그래프 연산 — 가장 강한 결정성).\"; 203행 헤더 주 \"§6 감사 재검증: 아래 file:line은 감사 1-패스 산출…\" — 문안의 gates.ts:91은 이식 출처(prism) 참조이지 대상 나무 코드 앵커가 아님(forward 오라클에 앵커로 쓰지 않음); 216행 ac-31 \"conflict 리스트(포인터)·count가 A4 `conflicting` 대체·floor 실효화\" — conflicting 소스 seam 확인."
+}

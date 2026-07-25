@@ -1,0 +1,20 @@
+{
+  "criterion_id": "ac-10c",
+  "oracle_statement": "bun test acceptance/ac-10c.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) 요청 fixture에 라운드-0 독해 패스를 돌리면 산출물에 mischief 4문답 기록이 존재하고 4필드 — 이전 상태(prior_state)·결함(defect)·처방(prescription)·처방 이유(prescription_rationale) — 가 전부 존재하며 비어있지 않다(요청을 그것이 고치려는 결함으로 읽은 기록); 4필드 중 하나라도 누락되거나 빈값인 fixture는 완전성 검사가 실패로 판정한다(대비 fixture). (2) defect_removed_check가 존재하고 계획 종결 상태 ⊨ 결함 제거를 결정적으로 검사한다(계획⊨술어 계열, 프로즈 채점 없음): 결함을 실제로 제거하는 종결 상태 fixture는 pass를 반환하고, '일부 이동'(부분 이행) 종결 상태 fixture는 결함 살아있음으로 fail을 반환한다(대비 fixture 2건). (3) Skinner 개입 읽기 산출물이 존재한다 — situation_snapshot이 존재하고 개행 분할 기준 정확히 3줄이며, intervention이 존재하고 정확히 1줄이며, resolution_check 필드가 존재한다(줄 수·존재 검사는 전부 결정적). 모든 단언은 fixture가 내용을 고정한 상태에서 필드 존재·완전성·검사 pass/fail 라우팅만 검사한다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/reading/round0-reading.ts",
+    "src/interview/reading/mischief.ts",
+    "src/interview/reading/skinner.ts",
+    "src/interview/reading/defect-removed-check.ts",
+    "src/interview/plan-entailment.ts"
+  ],
+  "red_test_path": "acceptance/ac-10c.test.ts",
+  "depends_on": ["ac-1", "ac-10"],
+  "residual": [
+    "결함 식별 내용은 잔여다(문안 자체 선언) — 기록된 defect가 요청이 실제로 고치려는 결함인가, 그리고 결함 제거 술어의 정식화가 그 결함을 옳게 포착했는가는 사람 판단으로 남는다; 테스트는 fixture가 내용을 고정한 상태에서 필드 완전성과 검사의 pass/fail 라우팅만 단언한다.",
+    "Skinner situation_snapshot·intervention·resolution_check의 의미적 적절성(스냅숏이 상황을 옳게 요약했는가, 개입이 요청의 개입을 옳게 읽었는가)은 존재·줄 수 검사로 닫히지 않는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 137-140행. 첫 문장: '**ac-10c · mischief 4문답 + Skinner 개입 읽기 (절차 ⑦). [forced-artifact]**' — 138행 진술(요청을 그것이 고치려는 결함으로 읽어 4문답 기록·종결 상태의 결함 제거 결정적 검사·Skinner 스냅숏/개입/해소), 139행 TC(mischief 4문답 필드 완전; defect_removed_check가 계획 종결 상태 ⊨ 결함 제거를 결정적으로 검사, 계획⊨술어 계열, '일부 이동'=결함 살아있음으로 실패; situation_snapshot 3줄·intervention 1줄·resolution_check 존재), 140행 결정적/잔여 경계(결정적: 4문답 완전성·결함제거 검사 존재·스냅숏/개입/해소 필드; 잔여: 결함 식별 내용). 보조 근거: 123행 — ac-10a..10j는 전부 라운드-0 통합 독해 절차의 한 번의 패스로 ac-10 코어와 함께 방출·1회 검사되는 forced-artifact이고 evidence는 test다."
+}

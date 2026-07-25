@@ -1,0 +1,17 @@
+{
+  "criterion_id": "ac-G2",
+  "oracle_statement": "bun test acceptance/ac-G2.test.ts를 실행해 다음 단언이 전부 green이면 통과. B4 도전의 발동 여부와 용어가 합의되었다는 사실 자체는 fixture로 고정한다(도전 발동·인용 구조는 부모 ac-34 소관, 합의 내용 판단은 채점하지 않는다): (1) [경계 시나리오 산출] B4 도전으로 고정된 fixture에서 도전 산출물에 boundary_scenario 필드가 필수로 존재하고 비어있지 않으며(.min(1)) 도전 대상(원 답변 턴 또는 도전된 용어)을 참조한다; boundary_scenario 없는 B4 도전 산출은 zod 파싱/승인 게이트에서 거부된다 — negative fixture로 거부를 단언; (2) [즉시 glossary 기록] 용어 합의로 고정된 fixture 턴에서 glossary 기록 레코드(ac-21의 glossary 항목 구조를 소비)가 그 자리에서 산출된다 — 기록 레코드의 recorded_at 턴 참조가 합의 턴 참조와 동일하다는 즉시성 술어를 단언; (3) [지연 시 플래그] 합의 턴과 기록 턴이 다른(지연) fixture에서 지연 플래그 레코드가 산출된다 — 플래그가 합의 턴과 지연된 기록 턴을 함께 참조하고, 즉시 기록된 fixture에서는 플래그가 산출되지 않음을 함께 단언; (4) [결정성] 경계-시나리오 게이트와 즉시성/지연-플래그 판정은 순수 함수로, 같은 입력이면 항상 같은 산출을 반환한다. 검사는 전부 필드 필수·비어있지 않음·참조 일치·턴 동일성·플래그 산출/부재 같은 결정적 술어이며, 발명된 시나리오가 실제로 경계를 찌르는가(적절성)는 채점하지 않는다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/challenge/boundary-scenario.ts — boundary_scenario zod 스키마(비어있지 않은 시나리오 본문 .min(1)·도전 대상 참조 필수, parse-or-refuse 진입점) + B4 도전 산출물에 필수 필드로 배선(부재 시 거부)",
+    "src/interview/glossary/immediate-record.ts — 합의 턴→glossary 기록 즉시성 판정 순수 함수(recorded_at 턴 == 합의 턴이면 즉시-기록 통과, 다르면 합의 턴·지연 기록 턴을 함께 참조하는 지연 플래그 레코드 산출; ac-21 glossary 항목 스키마 소비)"
+  ],
+  "red_test_path": "acceptance/ac-G2.test.ts",
+  "depends_on": ["ac-34", "ac-21"],
+  "residual": [
+    "시나리오 적절성 — 발명된 boundary_scenario가 실제로 경계를 찌르는 구체적이고 유효한 시나리오인가는 문안이 스스로 잔여로 선언; 기계는 존재·비어있지 않음·도전 대상 참조까지만 검사한다.",
+    "용어가 실제로 '합의'되었는가의 판단 — 테스트는 합의 사실을 fixture로 고정하고 그 뒤의 구조(즉시 기록·지연 플래그)만 닫는다; 실 대화에서 합의 감지의 재현율·정밀도는 이 판정 기준으로 닫히지 않는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 커버리지 보강 그룹 G(351행 헤더 '### 커버리지 보강 그룹 G — §2 mattpocock 기계 (ac-G1..ac-G3)', 353행 '> 전부 forced-artifact, evidence test.'), 360–363행: '**ac-G2 · 경계 시나리오 + 합의 즉시 glossary. (ac-34 확장)** — 진술: B4 도전에서 경계를 찌르는 구체 시나리오를 발명하고, 합의된 용어는 그 자리에서 즉시 glossary에 기록(지연 금지). / TC: B4 도전에서 boundary_scenario 발명 산출; 합의 용어는 그 자리에서 glossary 기록(즉시-기록 단언, 지연 시 플래그). / 결정적: 경계 시나리오 산출·즉시 glossary 기록. 잔여: 시나리오 적절성.' 부수 언급: 59행 커버리지 매핑 'ac-G2→ac-34 (각 부모 AC의 test 표적을 오염시키지 않도록 별개 AC로 분리, 부모를 참조)'. 초안 진술부의 '지연 금지'는 계약 문안(criteria.json)과 초안 TC에서 '지연 시 플래그'로 확정돼 있으므로, 판정은 계약 문안을 따라 지연 시 플래그 산출을 단언한다."
+}

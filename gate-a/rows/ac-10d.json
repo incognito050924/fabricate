@@ -1,0 +1,17 @@
+{
+  "criterion_id": "ac-10d",
+  "oracle_statement": "bun test acceptance/ac-10d.test.ts를 실행해 전부 green이면 통과. 그 테스트는 문안의 각 절을 다음 결정적 술어로 단언한다: (1) 존재 — 라운드-0 통합 독해 패스의 산출물에 hirsch_criteria 검증 체크리스트가 존재하고, 문법·대응·장르·정합 4개 기준 각각에 대한 판정 항목이 정확히 하나씩 있다(4개 미만·기준 누락·중복이면 독해 산출 스키마가 zod 파싱에서 거부); (2) 완전 — 4개 판정 각각의 판정 내용 필드가 비어있지 않다(빈 판정 하나라도 있으면 거부 — 존재+완전); (3) 분리 필드 — 같은 독해 산출물에 meaning_vs_my_position 필드가 존재하고, 그 안에 요청의 뜻(의미)과 에이전트 입장(의의)이 병합된 단일 텍스트가 아니라 구조적으로 분리된 두 하위 필드로 존재한다(분리 필드 부재 또는 병합 단일 필드면 거부); (4) 예시 fixture — 'rebuild 아직 안 됐는데'류 에이전트-입장 문장을 입장 필드에 담은 독해 산출은 스키마를 통과하고, meaning_vs_my_position 자체가 빠진 산출은 거부됨을 fixture 2건으로 구분한다(입장/뜻 분류의 의미적 정확성 자체는 잔여). 대응·정합 판정의 내용이 옳은가는 문안이 스스로 잔여로 선언했으므로 이 테스트의 단언 대상이 아니다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/reading/hirsch-verification.ts",
+    "src/interview/reading/round0-reading.ts"
+  ],
+  "red_test_path": "acceptance/ac-10d.test.ts",
+  "depends_on": ["ac-10"],
+  "residual": [
+    "대응·정합 판정 내용은 잔여다 — 문안 스스로 선언. 판정 기준은 4개 판정의 존재+완전(비어있지 않음)까지만 닫고, 대응(독해가 텍스트 전체에 대응하는가)·정합(독해가 내적으로 정합한가) 판정이 실제로 옳은가는 사람 판단이며 계약 증거 어휘(test)에 사람-증거가 없어 이 판정 기준으로는 닫을 길이 없다.",
+    "meaning_vs_my_position 분류의 의미적 정확성 — 어떤 문장('rebuild 아직 안 됐는데' 등)이 실제로 에이전트 입장이지 요청의 뜻이 아닌지의 분류가 맞는가는 필드 존재·구조 분리 검사로 닫히지 않는 사람-판정 술어다; 이 판정 기준은 분리 구조만 강제한다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 묶음1, 142–145행: \"**ac-10d · Hirsch 해석 검증 4기준 (절차 ⑨). [forced-artifact]**\" — 진술(143행) 첫 문장: '독해를 문법·대응·장르·정합 4기준 체크리스트로 검증하고, 요청의 뜻(의미)과 에이전트 입장(의의)을 분리 필드로 남긴다(\"rebuild 아직 안 됐는데\"는 내 입장이지 요청의 뜻이 아님).' TC(144행): hirsch_criteria 4개 판정 존재+완전; meaning_vs_my_position 분리 필드 존재. 결정적/잔여(145행): 4기준 완전성·분리 필드 존재 / 대응·정합 판정 내용. 가족 주석(123행): ac-10a..10j 전부 라운드-0 통합 독해 절차의 한 번의 패스로 ac-10 코어와 함께 방출·1회 검사, 전부 forced-artifact·evidence test."
+}

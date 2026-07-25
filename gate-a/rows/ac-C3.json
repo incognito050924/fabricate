@@ -1,0 +1,20 @@
+{
+  "criterion_id": "ac-C3",
+  "oracle_statement": "bun test acceptance/ac-C3.test.ts를 실행해(run) 다음 단언이 전부 green이면 통과한다. ac-C3는 forced-artifact AC(초안 289행: 그룹 C 전부 forced-artifact, evidence test)이므로 검사는 전부 결정적 술어이고 프로즈 채점이 없다. (1) [N-라운드 카운터] type='hard' 잎에 기록된 턴 사슬 fixture에서 추상-공방 카운터가 결정적 턴 태그(추상 문답임을 표시하는 필드 — 초안 공통 패턴: LLM이 태그 방출, 순수 게이트가 태그로 라우팅)만 소비해 그 잎의 추상 공방 라운드 수를 세는 순수 함수임을 단언: 추상 태그 턴 수와 카운트가 일치하고, 같은 fixture로 두 번 호출하면 같은 카운트(결정성). (2) [임계 발동] 추상 공방이 임계 N에 도달한 hard 잎 fixture에서 강제 하향 변환이 발동해 example_downshift 레코드가 산출됨을 단언하고, N-1 라운드 fixture에서는 발동하지 않음을 단언(임계 정확성). (3) [하향 프롬프트 형식 — '이 입력이면 이 출력인가요?'] example_downshift 레코드는 제안-입력 필드·제안-출력 필드(각각 비어있지 않음)·대상 hard 잎 참조·발동 시점 라운드 수(≥N)를 요구하는 zod 스키마로 파싱되고, 필드 하나라도 빠진 fixture는 파싱 거부된다 — 하향 산출물이 입력→출력 예시 형태임을 스키마로 강제. (4) [강제성 — 침묵 계속 불가] 임계에 도달한 hard 잎에 example_downshift 없이 추상 질문 턴을 계속 방출하려는 fixture는 게이트가 사유와 함께 거부하고, example_downshift가 산출돼 있으면 허용됨을 단언(하향 변환 '강제'의 결정적 의미). (5) [ac-39와의 구분 — 예시 하향] example_downshift는 예시-하향 레코드로서 ac-39 에스컬레이션 레코드 타입({type: prototype | three_alternatives})과 구별되는 자체 타입/형태를 가진다: prototype·three_alternatives 타입 레코드를 example_downshift 스키마로 파싱하려는 negative fixture가 거부됨을 단언. (6) [hard-잎 한정] 문안의 GIVEN이 hard 잎으로 한정하므로, soft 잎에 같은 라운드 수를 준 fixture에서는 이 하향 게이트가 발동하지 않음을 단언(스코핑 검사). (7) [발동의 결정성] (2)의 발동 판정은 순수 함수로 같은 입력이면 항상 같은 판정(문안: 'N-라운드 카운터·하향 변환 발동은 결정적'). 예시 내용(제안 입력/출력이 그 잎을 진짜 대표하는가)과 하향 후 실제 결과(즉시 풀림 vs 진짜 불일치)는 채점하지 않는다(문안이 잔여로 선언).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/mold/abstract-round-counter.ts — 추상-공방 N-라운드 카운터: hard 잎별 턴 사슬에서 결정적 추상 태그 턴을 세는 순수 함수(임계 N 파라미터화; ac-1의 턴 레코드를 소비)",
+    "src/interview/mold/example-downshift.ts — example_downshift 레코드 zod 스키마(제안-입력·제안-출력·hard 잎 참조·발동 라운드 수) + '이 입력이면 이 출력인가요?' 강제 하향 변환 산출기(ac-39 에스컬레이션 타입과 구별되는 자체 타입)",
+    "src/interview/mold/downshift-gate.ts — 강제성 게이트: 임계 도달 hard 잎에 example_downshift 없이 추상 질문 턴 계속 방출을 사유와 함께 거부(침묵 계속 불가), soft 잎 비발동 스코핑, 순수 함수"
+  ],
+  "red_test_path": "acceptance/ac-C3.test.ts",
+  "depends_on": ["ac-1", "ac-37"],
+  "residual": [
+    "예시 내용 — 문안이 스스로 잔여로 선언('예시 내용은 잔여다'): 하향 변환이 제안한 입력/출력이 그 hard 잎의 의도를 진짜 대표하는가는 사람-판정 술어이고, 이 조건의 계약 증거 어휘(test)에 사람-증거(observation/repro)가 없으므로 이 판정표로는 닫을 길이 없다. 오라클은 필드 존재·형식·발동만 강제한다.",
+    "하향의 실제 효과 — '즉시 풀리거나 진짜 불일치를 드러냄'은 실제 사용자 답이 있어야 성립하는 결과 술어다. 오라클은 발동과 example_downshift 산출까지만 닫으며, 사용자-판정을 실제로 받아내는 절차는 original-request가 범위 밖으로 선언(autopilot 완료 단계 소관)했다.",
+    "추상 태깅의 의미 정합성 — 어떤 턴이 진짜 '추상 공방'인가의 판단은 LLM/사람 판단이다. 카운터는 결정적 태그 필드만 소비하며(초안 공통 패턴: 태그 방출→순수 게이트 라우팅), 태그가 옳게 붙었는가는 채점하지 않는다.",
+    "N 값의 적절성 — 오라클은 fixture 임계에서의 정확 발동(N에서 발동, N-1에서 비발동)만 검사하고, 운영에서 어떤 N이 좋은가는 판단 잔여다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 '### 커버리지 보강 그룹 C — §3.2 구체화 (ac-C1..ac-C3)' 287행, 그룹 공통 증거 선언 289행('전부 forced-artifact, evidence test. 각 부모 AC를 참조하되 test 표적을 분리한다'), 본문 301–304행. 첫 문장(301–302행): '**ac-C3 · SbE N-라운드 강제 하향. (ac-37 확장; ac-39/C3 충실도 사다리와 구분)** — 진술: 추상 공방 N라운드에 도달하면 강제 하향 변환(\"이 입력이면 이 출력인가요?\")을 발동해 즉시 풀리거나 진짜 불일치를 드러낸다. ac-39(프로토타입·구조가-다른 3안 에스컬레이션)와 구분 — 이건 예시 하향.' TC 303행(GIVEN hard 잎 추상 공방 N라운드 도달 → 강제 하향 변환 프롬프트 발동, example_downshift 산출), 결정적/잔여 경계 304행(결정적: N-라운드 카운터·하향 변환 발동 / 잔여: 예시 내용). 보조 근거: 59행 커버리지 매핑 'ac-C2/C3→ac-37'(부모 AC test 표적 오염 금지, 별개 AC로 분리 — 그래서 이 행의 오라클은 ac-37의 예시-바닥 검사를 재검사하지 않고 하향 발동 기계만 표적으로 삼는다)."
+}

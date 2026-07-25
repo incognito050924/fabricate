@@ -1,0 +1,21 @@
+{
+  "criterion_id": "ac-1",
+  "oracle_statement": "bun test acceptance/ac-1.test.ts를 실행해 전부 green이면 통과. 그 테스트는 문안의 각 절을 다음 결정적 술어로 단언한다: (1) goal_state가 저장되기 전 fired 질문 턴을 recordTurn에 넣으면 거부된다(라운드-0 선행 게이트); (2) 저장된 goal_state.derived_at 타임스탬프가 첫 fired 질문의 asked_at보다 엄격히 앞선다; (3) predicates[].verification_means가 빈값인 goal_state는 zod .min(1)에서 파싱 거부되고, 검증수단 없는 술어에 대한 confirm 시도는 실패한다; (4) restatement가 원문과 토큰중복 임계를 초과하면 에코로 거부된다; (5) 라운드-0 초기 도출은 단일 상호작용(firedTurnCount=1)으로 기록되고, 초기 도출을 반복 fresh 상호작용으로 다시 돌리면 거부되며, revises_goal_predicate를 명시한 개정 경로(ac-3) 상호작용은 이 거부에 걸리지 않는다(FIX 1 carve-out — 초기-도출 거부 fixture와 개정-경로 통과 fixture 2건); (6) 합성 brief는 source_request verbatim과 확정기록만 담고 questions[] 키가 존재하지 않으며 synthesis_provenance.author_context !== 'driver'이다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/goal-state.ts",
+    "src/interview/record-turn.ts",
+    "src/interview/restatement-echo.ts",
+    "src/interview/round0-derivation.ts",
+    "src/interview/synthesis-brief.ts"
+  ],
+  "red_test_path": "acceptance/ac-1.test.ts",
+  "depends_on": [],
+  "residual": [
+    "되말하기의 '다른 말+구체 사례' 품질 — 토큰중복 임계는 에코를 걸러내는 구조적 근사일 뿐, 진짜 패러프레이즈인가는 사람 판단이다",
+    "도출된 goal_state 내용이 사용자 의도와 정합하는가(목표 내용 정합성) — 실제 사용자의 확정 답이 필요하며, 이 판정 기준은 에코 임계·provenance 필드라는 구조만 강제한다",
+    "synthesis_provenance.author_context !== 'driver'는 필드 값 검사일 뿐, 합성이 실제로 드라이버 외 fresh 컨텍스트에서 수행됐는가는 필드 검사로 닫히지 않는다(ac-9의 같은-prior 잔여와 동종)"
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 묶음1, 71–75행 (FIX 1 carve-out은 73행): \"**ac-1 · 라운드 0 충족 상태 스키마 도출·저장 (합성 소유권 분리 포함). [FIX 1 적용]**\" — TC 행(72행)이 문안의 6개 검사 절 전부를, 74행이 결정적/잔여 경계를 명시. 부수 언급: 34행(사전 test-case AC 분류), 158–159행(ac-10g가 ac-1 restatement와의 필드 분리를 참조)."
+}

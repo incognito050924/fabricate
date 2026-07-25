@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-21",
+  "oracle_statement": "acceptance/ac-21.test.ts를 bun test로 실행해 전부 green이면 통과. 테스트가 검사하는 술어: (1) 필드 존재(결정적): 신규 glossary 항목 스키마(src/interview/glossary/entry.ts)가 개념·한국어·양성 사례·음성 사례·avoid 목록 다섯 필드를 강제한다 — 다섯 필드를 전부 갖춘 항목은 파싱 통과, 어느 하나라도 빠진 항목은 파싱 거부(parse-or-refuse). (2) 렌더링은 재번역 대신 소비(구조 단언): 렌더링 경로(src/interview/glossary/render.ts)는 glossary를 입력으로 받아, glossary에 항목이 있는 개념의 표면(한국어) 출력에 그 항목의 한국어 필드 문자열이 그대로(verbatim) 포함되고, 같은 출력에 그 항목의 avoid 목록 용어가 하나도 나타나지 않는다 — 앵커된 용어를 소비하며 재번역 산출로 대체하지 않음을 픽스처로 단언. (3) avoid 위반 grep 검출(결정적): avoid 스캐너(src/interview/glossary/avoid-scan.ts)에 avoid 용어를 포함한 표면 텍스트를 주면 위반이 해당 항목·용어 포인터와 함께 보고되고, avoid 용어가 없는 텍스트는 위반 0건으로 보고된다 — 검출은 부분 문자열/정규식 grep으로 결정적이다. 세 검사 모두 지시문 존재가 아니라 구조(스키마 강제·소비 경로·결정적 스캐너)를 단언한다 — 문안의 '현행 지시가 있는데도 실패하므로 구조가 필요하다' 절의 이행. 어휘 선택 정합성(앵커된 한국어·양성·음성·avoid 내용이 합의 어휘로서 적절한가)은 이 판정에 포함되지 않는다(잔여 필드 참조).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/glossary/entry.ts",
+    "src/interview/glossary/render.ts",
+    "src/interview/glossary/avoid-scan.ts"
+  ],
+  "red_test_path": "acceptance/ac-21.test.ts",
+  "depends_on": [],
+  "residual": [
+    "어휘 선택 정합성 — 앵커된 한국어 용어·양성/음성 사례·avoid 목록의 내용이 사용자와 실제로 합의된 어휘로서 적절한가는 문안이 스스로 잔여로 선언한 사람-판정 술어다",
+    "픽스처 밖 실제 렌더링에서의 소비 준수 — 렌더링 소비 단언은 픽스처 케이스의 구조 검사이며, glossary에 없는 개념의 즉석 번역이나 avoid 목록에 오르지 않은 translationese까지 전수로 닫지는 않는다(avoid grep은 목록에 있는 위반만 결정적으로 검출한다)"
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음2(Tier U + 역방향) 193–194행. 공통 틀(193행): \"**ac-21..ac-24 (역방향 a–d)** — 공통: 내부(영어)→표면(한국어) 번역 압력이 뿌리, 현행 지시(charter.ts:83 \\\"translationese 금지\\\")가 이미 있는데도 실패 → 구조 필요.\" (a) 항목(194행): \"- (a) 합의 어휘 앵커: glossary에 (개념·한국어·양성·음성·**avoid 목록**) 필드, 렌더링은 재번역 대신 소비. **avoid 위반은 grep로 결정적 검출**.\" 199행이 evidence_required: 역방향 전부 test(avoid는 grep 회귀)임을, 379행(§5 역-스코프 KEEP 판정)이 ac-21~24 유지(역방향 grep/ADR = §5 Tier U 근거)를 확인한다."
+}

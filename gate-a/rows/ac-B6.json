@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-B6",
+  "oracle_statement": "bun test acceptance/ac-B6.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) 앵커 필드 스키마 — 주요 의도 주장 레코드 스키마에 artifact_anchor 필드가 있고, 존재할 때 그 값은 종류 kind ∈ {로그, 파일, 재현물}와 비어 있지 않은 참조(위치/경로/식별자)를 담아야 하며, kind가 enum 밖이거나 참조가 빈 anchor는 zod 파싱에서 거부된다(negative fixture); (2) 없으면 추상-전용 태그 — artifact_anchor가 없는 주요 의도 주장 fixture를 태깅 절차에 넣으면 abstract_only=true '추상-전용' 약한 가중 태그가 결정적으로 붙고, 앵커도 없고 abstract_only 태그도 없는 상태의 주장 레코드는 파싱/게이트에서 fail-closed로 거부된다('없으면 붙인다'가 선택이 아니라 전함수임을 강제); (3) 2-state 대비 — artifact_anchor가 있는 대비 fixture에서는 abstract_only=true가 붙지 않는다(앵커 있는 주장이 추상-전용으로 격하되지 않음 — 양방향 대비로 태깅 규칙이 앵커 존재 여부의 순수 함수임을 단언). 검사는 전부 필드 존재·enum 파싱 거부·태그 boolean·거부/통과 boolean 같은 결정적 술어이며, 앵커가 가리키는 로그·파일·재현물이 실제로 존재하고 그 주장을 실제로 뒷받침하는가(앵커 실재성)는 채점하지 않는다(문안이 스스로 잔여로 선언).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/anchor/artifact-anchor.ts",
+    "src/interview/anchor/abstract-only-tagger.ts"
+  ],
+  "red_test_path": "acceptance/ac-B6.test.ts",
+  "depends_on": ["ac-B1"],
+  "residual": [
+    "앵커 실재성 — artifact_anchor가 가리키는 로그·파일·재현물이 실재하고 그 의도 주장을 실제로 뒷받침하는가는 문안이 스스로 잔여로 선언한 부분이다; 테스트는 anchor 값의 스키마(종류 enum + 비어 있지 않은 참조)와 태깅 라우팅만 단언하고 참조 대상의 존재·내용은 검사하지 않는다.",
+    "'주요' 의도 주장의 식별 — 어떤 주장이 주요 의도 주장에 해당하는가의 분류는 기계화되지 않는다; 테스트는 fixture가 주요-주장으로 고정한 레코드 위에서 필드 강제와 태깅 규칙만 검사한다.",
+    "약한 가중의 하류 효과 — abstract_only=true 태그가 이후 판단에서 실제로 약하게 가중되는가(태그의 소비)는 이 판정으로 닫히지 않는다; 문안이 결정적으로 선언한 것은 태그 부착 규칙까지이고, 기계는 그 부착의 결정성만 검사한다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그, 커버리지 보강 그룹 B(§3.1 파악 기계) 247행 제목·249행 공통 머리말(전부 forced-artifact, evidence test, LLM이 태그를 방출하고 순수 게이트가 라우팅하는 패턴), 277–280행. 첫 문장(277–278행): '**ac-B6 · artifact_anchor. [forced-artifact]** — 진술: 주요 의도 주장에 artifact_anchor(실제 로그·파일·재현물); 없으면 추상-전용으로 약하게 가중.' TC(279행): 주요 의도 주장에 artifact_anchor 필드; 없으면 abstract_only=true 약한 가중 태그. 280행: 결정적=앵커 필드 존재·없으면 추상-전용 태그, 잔여=앵커 실재성. 보조 근거: original-request.md 28행 커버리지 보강(v2) 목록이 ac-B1..B7을 §3.1 파악으로 배치; 묶음6의 'B6 예시-판정'(ac-37)은 연구 보고서 넘버링의 다른 B6로 이 조건과 무관함을 확인."
+}

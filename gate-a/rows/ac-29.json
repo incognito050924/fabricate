@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-29",
+  "oracle_statement": "bun test acceptance/ac-29.test.ts를 실행해 다음 단언이 전부 green이면 통과. (1) 답↔질문 원문 원자쌍: 답을 기록하면 하나의 레코드 안에 질문 원문(verbatim)과 답 원문(verbatim)이 함께 담기고, 레코드의 질문 원문이 실제 물은 질문 텍스트와 정확히 일치하며, 질문 원문 없이 답만 쓰거나 답 없이 쌍을 완결하려는 fixture는 결정적으로 거부된다(원자성 = 둘 다 함께 기록되거나 아무것도 기록되지 않음). (2) 전제 DAG 뒤집힘→하류 stale 재개방: 전제 edge 모델이 양-극과 음-극 두 극성을 모두 받는다(음-극 신규 — 기존 interviewBranchEdge의 양-극 전용 한계 제거). 전제 DAG fixture에서 상류 답이 뒤집히는(극성 반전) 이벤트를 투입하면 그 노드에서 전제 edge로 도달 가능한 하류 전부가 stale로 표시되고 재개방(재질문 가능 상태)되며, 도달 불가능한 노드는 어떤 상태 변화도 겪지 않음을 단언한다(전파 = DAG 위 이행적 도달성). (3) 참조 무결성 가드: 존재하지 않는 질문 id를 가리키는 원자쌍, 존재하지 않는 노드를 끝점으로 갖는 전제 edge, DAG를 깨는 순환 edge 삽입이 각각 결정적으로 거부됨을 단언한다. (4) 결정성: 같은 fixture 그래프·같은 뒤집힘 이벤트로 stale 전파를 두 번 실행하면 stale 집합과 레코드가 완전히 동일하다(그래프 연산·원자쌍·stale 전파는 결정적 — 모델 호출 0). seam 공유 절('묶음5 C1·ac-E2와 seam 공유, A5 먼저')은 이 판정에서 branch-edge seam 모듈이 단일 정의로 존재한다는 것까지만 검사하며, 순서 강제는 ac-36·ac-E2가 이 조건을 depends_on으로 갖는 것으로 실현된다(잔여 참조).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/turn/atomic-pair.ts",
+    "src/interview/graph/branch-edge.ts",
+    "src/interview/graph/stale-propagation.ts"
+  ],
+  "red_test_path": "acceptance/ac-29.test.ts",
+  "depends_on": ["ac-1"],
+  "residual": [
+    "묶음5 C1(ac-36)·ac-E2와의 seam 적합성 — branch-edge seam이 frontier 계산·Lindley separates에 실제로 충분한지는 그 두 design 노드의 판정 소관이다. 이 판정은 seam 모듈의 존재와 A5 쪽 성질까지만 닫고, 'A5 먼저'라는 순서는 그 조건들의 depends_on으로 강제된다.",
+    "전제 '뒤집힘'의 감지 자체 — 실제 사용자의 새 답이 기존 전제를 의미적으로 부정하는지 판별하는 것은 LLM/의미 판단이다. 테스트는 fixture가 고정한 명시적 극성-반전 이벤트로 전파 기계만 단언하며, 자연어 답에서의 뒤집힘 감지 정확성·누락 없음은 이 판정 기준으로 닫히지 않는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음3 — Tier A 블록, 209행: '- **ac-29 · A5 질문-답 원자 기록 + 전제 stale 전파**: 답↔질문 원문 원자쌍(현 부분충족)·전제 DAG 뒤집힘→하류 `stale` 재개방(현 `interviewBranchEdge`는 양-극 전용, 음-극/stale 신규)·참조 무결성 가드. **묶음5 C1·ac-E2와 seam 공유 — A5 먼저**.' 증거 어휘(211행): 'evidence_required: A1–A5 전부 **test** (정규식·정수 집계·게이트 순서·해시·그래프 연산 — 가장 강한 결정성).' 보조 구절 54행: '묶음3 A5(branch_edges 확장) → 묶음5 C1(frontier) / ac-E2(Lindley separates). 같은 seam, **A5 먼저**'; 226행 ac-36: '**의존=A5(같은 branch_edges seam, A5 먼저)**.'"
+}

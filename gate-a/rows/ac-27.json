@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-27",
+  "oracle_statement": "acceptance/ac-27.test.ts를 bun test로 실행해 전부 green이면 통과. 테스트가 검사하는 술어: (1) 게이트 순서(결정적): 새 인터뷰 잠금 경로에서 acceptanceTestable 게이트(src/interview/lock/acceptance-testable.ts)가 intent write(src/interview/lock/intent-write.ts) 앞에 선다 — 게이트 불통 문안(모호 용어 포함)으로 intent write를 시도하면 어떤 쓰기도 발생하기 전에 거부되고(쓰기 부재를 픽스처 싱크로 단언, fail-closed) 거부 사유가 게이트를 가리키며, 게이트 통과 문안은 쓰기가 진행된다; 쓰기 경로는 게이트 통과 결과를 필수 입력으로 요구해 통과 없이 도달 자체가 불가능한 구조임을 단언한다. (2) 해시 바인딩(결정적): 사용자 확인 레코드(src/interview/lock/statement-digest.ts)는 확인 대상 문안의 sha256 다이제스트를 필수 필드로 나르고(누락 시 파싱 거부, parse-or-refuse), 잠금은 현재 문안의 sha256 다이제스트가 확인 레코드의 다이제스트와 일치할 때만 수용된다 — 확인 뒤 문안이 1바이트라도 바뀌면 다이제스트 불일치로 잠금이 거부되고, 동일 문안은 수용된다(prism finalize 패턴의 이식); sha256 계산 자체는 알려진 입력→알려진 다이제스트 고정 벡터로 검증한다. (3) 근사 정규식의 픽스처 거동(결정적 검사): VAGUE_TERMS 정규식에 걸리는 모호 용어 문안은 게이트 불통으로, OBSERVABLE 정규식을 충족하는 관찰-가능 술어 문안은 통과로 판정됨을 픽스처로 고정한다 — 단 이 정규식 거동 고정은 형식 보장이 아니며(문안 스스로 선언), 임의 문안의 실제 모호성 판단은 잔여다. 게이트 순서·해시 바인딩은 결정적으로 이 테스트가 닫고, 문안 모호성 판단의 근사성은 residual 필드가 나른다.",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/lock/acceptance-testable.ts",
+    "src/interview/lock/statement-digest.ts",
+    "src/interview/lock/intent-write.ts"
+  ],
+  "red_test_path": "acceptance/ac-27.test.ts",
+  "depends_on": [],
+  "residual": [
+    "문안 모호성 판단의 근사성 — VAGUE_TERMS·OBSERVABLE 정규식은 근사이며 형식 보장이 아니다(문안이 스스로 잔여로 선언). 테스트는 픽스처 케이스의 정규식 거동만 고정하며, 픽스처 밖 임의 문안이 실제로 검사 가능한지/모호한지의 판정은 이 판정 기준으로 닫히지 않는다",
+    "실제 사용자 확인 행위 — 다이제스트 바인딩은 확인된 문안의 바이트 동일성만 보장한다. 확인 레코드가 실제 사용자의 이해와 동의를 반영하는지는 픽스처로 닫을 수 없는 사람-판정 술어다(테스트는 픽스처 확인 레코드로 검사)",
+    "prism finalize 패턴 이식 충실성 — '정합'은 sha256 다이제스트 바인딩 의미론의 재현으로 이행하며, prism 원본 코드와의 축자 대조는 이 테스트의 범위가 아니다(prism 자체 동작 변경은 범위 밖)"
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음3(Tier A, ac-25..ac-29) 207행: \"- **ac-27 · A3 잠금 강화**: `acceptanceTestable`(gates.ts:181-198)를 intent write(interview-driver.ts:968) **앞**으로 + 사용자 확인을 문안 다이제스트(sha256)와 바인딩(prism finalize.ts:83). VAGUE_TERMS·OBSERVABLE 정규식은 근사(형식 보장 아님).\" 211행이 evidence_required: A1–A5 전부 test(정규식·정수 집계·게이트 순서·해시 — 가장 강한 결정성)임을, 203행(§6 감사 재검증 주석)이 위 file:line은 감사 1-패스 산출로 구현 착수 시 전부 재확인 대상임을 명시한다 — 따라서 forward 판정 기준은 그 위치에 앵커하지 않고 신규 모듈 계획으로 나른다."
+}

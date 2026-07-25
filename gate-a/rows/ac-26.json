@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-26",
+  "oracle_statement": "bun test acceptance/ac-26.test.ts를 실행해 전부 green이면 통과. 테스트가 단언하는 결정적 술어: (1) 세-마커 요구 — critical 차원의 resolved close 시도는 justifying_reason(비어있지 않음)·user-답 마커(해소가 사용자 답에 근거함을 표시하는 비어있지 않은 필드; 양성 픽스처에서는 기록된 사용자 답 턴을 가리킴)·refutation_attempted 세 필드가 전부 있을 때만 수용되어 dimensionState가 resolved가 된다. (2) 3값 게이트(prism 3값 이식) — 세 필드 중 어느 하나라도 빠진 critical resolved close 시도는 예외도 조용한 통과도 아니라 unevaluated로 남는다: 각 필드 단독 누락 3종 + 전부 누락 1종 픽스처 모두에서 결과 상태가 unevaluated이고, resolved·unevaluated·미해소(open) 세 상태가 서로 구분되는 enum 값임을 단언한다. (3) unevaluated는 닫힘 아님 — readiness/종결 집계 소비자가 unevaluated 차원을 closed로 세지 않음을 픽스처로 단언한다(unevaluated 차원이 남아 있으면 전-차원-닫힘 판정이 성립하지 않음). (4) 배선 = dimensionState enum 확장 + 전-소비자 배선 — unevaluated가 사이드채널 필드가 아니라 dimensionState enum 값으로 존재하고, 확장은 additive임을 enum 값 집합 검사로 단언(기존 값 전부 보존, 제거·개명 없음)한다. 문안의 '22 consumer 영향' 절은 새 표면 기준의 전-소비자 배선 술어로 검사한다: (4a) 테스트가 새 저장소 src/ 전체를 결정적으로 스캔해 dimensionState 값을 분기하는 소비 지점 전부를 열거하고(열거 목록이 비어 있지 않음을 함께 단언해 진공 통과를 방지), 각 지점이 unevaluated를 명시 처리함 — unevaluated 팔을 직접 갖거나, 전 enum 값의 핸들러를 타입으로 강제해 값 누락 시 컴파일이 실패하는 exhaustive 매처를 경유 — 을 단언한다. 위반 지점 0건이 통과 조건이며, 이로써 어떤 소비자도 unevaluated를 default-fallthrough로 삼킬 수 없다. (4b) 열거된 소비자 중 신규 표면 소비자(준비도 집계·종결 집계) 각각이 unevaluated 입력에서 명시 분기로 동작해 미지 값이 closed로 fallthrough되지 않음을 픽스처로 단언한다. (5) backward-compat — non-critical 차원의 resolved close는 세 필드 없이도 기존대로 닫히고(셸은 critical resolved close에만 발동), 신규 세 필드가 없는 기존-형상 close 레코드 파싱이 깨지지 않는다(신규 필드는 critical-resolved 경로에서만 필수, 스키마상 optional). 해소 내용의 옳음(사유가 실제로 정당한가, 가리킨 답이 실제로 그 차원을 해소하는가, 반박 시도가 진짜였는가)은 이 판정에 포함되지 않는다(잔여 필드 참조).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/dimension/state.ts",
+    "src/interview/dimension/resolution-shell.ts",
+    "src/interview/dimension/close.ts"
+  ],
+  "red_test_path": "acceptance/ac-26.test.ts",
+  "depends_on": ["ac-1"],
+  "residual": [
+    "해소 내용 판단 — justifying_reason이 실제로 close를 정당화하는가, user-답 마커가 가리킨 답이 실제로 그 차원을 해소하는가, refutation_attempted가 진짜 반박 시도였는가는 문안이 스스로 잔여로 선언한 사람-판정 술어다('3값 게이트·마커 요구는 결정적, 해소 내용 판단은 잔여다'). 테스트는 세 필드의 존재·비어있지 않음과 3값 상태 전이 구조만 강제한다",
+    "prism 3값(engine.ts:143-187)과의 이식 충실성 — 이 오라클은 prism 원본 코드를 대조하지 않으므로(prism 동작 변경은 범위 밖, 이식은 패턴 복제) 원본과의 동작 등가 자체는 닫히지 않고, 이식된 3값 게이트의 동작만 검사한다"
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음3(Tier A, 201–211행), ac-26 항목은 206행: \"- **ac-26 · A2 해소 셸**: critical `resolved` close에 justifying_reason + user-답 마커 + refutation_attempted 요구, 없으면 `unevaluated`(닫힘 아님)(prism 3값 engine.ts:143-187 이식). backward-compat. **결정 필요: 인터뷰 `dimensionState` enum 확장 방식**(22 consumer 영향).\" 211행이 evidence_required: A1–A5 전부 test(가장 강한 결정성)임을 확인. 부수 언급: 239행(ac-38/C2 세-장부가 dimensionState 파급과 A2 의존을 참조), 34행(묶음3 A1–A5는 사전 test-case AC 분류). 유의: 초안 206행은 enum 확장 '방식'을 결정-필요로 뒀으나 잠긴 ac-26 문안은 '인터뷰 dimensionState enum 확장(22 consumer 영향)으로 배선한다'로 확정했고 §6 사용자 결정 필요 목록에도 이 건이 없으므로, 오라클은 enum 확장을 결정된 형태로 검사한다. '(22 consumer 영향)'의 수치 22는 초안이 옛 나무의 소비자 수를 센 것이지만 잠긴 문안이 이 절을 확정 배선 요구로 포함했으므로, 오라클 (4a)가 그 취지(모든 dimensionState 소비자에 배선)를 새 표면의 전-소비 지점 스캔 술어로 번역해 검사한다 — 옛 22곳 재현을 요구하지 않되 절 자체를 잔여로 밀지도 않는다."
+}

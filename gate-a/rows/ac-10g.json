@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-10g",
+  "oracle_statement": "bun test acceptance/ac-10g.test.ts를 실행해 전부 green이면 통과. 그 테스트는 문안의 각 절을 다음 결정적 술어로 단언한다: (1) 라운드-0 독해 산출물에 backtranslation_echo가 ac-1의 restatement와 구분되는 별도 필드로 존재한다 — 두 필드가 같은 산출물 안에 서로 다른 키로 공존하고, backtranslation_echo가 없으면 산출물 스키마 파싱이 거부된다(forced-artifact fail-closed). (2) backtranslation_echo의 되번역 텍스트는 비어있지 않은 한국어(한글 포함 검사)이고, fresh-context(원문 미열람) provenance 표식이 필수 필드로 존재하며, 원문 열람 컨텍스트로 표기된 되번역은 스키마가 거부한다(구조적 근사 — 실재성은 잔여). (3) 되번역이 원 요청 원문과 결정적으로 diff되어 diff 산출이 backtranslation_echo 안에 남는다. (4) 기계적 불일치 fixture — 원문의 요구('파일 옮겨줘'류)에 대해 되번역이 '일부 파일 옮겨줘'처럼 내용어·한정어 수준에서 기계 검출 가능한 축소/불일치를 담은 경우 — 에서 fidelity_failed 플래그가 true로 선다. (5) 기계적 불일치 없는 충실 되번역 fixture에서는 fidelity_failed가 서지 않는다(허위 양성 가드 fixture 2건). '완전'을 강조사로 죽이는 과장 독해 여부의 최종 판단은 이 오라클이 검사하지 않는다(문안 명시 잔여).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/reading/backtranslation-echo.ts — backtranslation_echo zod 스키마(한국어 되번역 텍스트 .min(1)+한글 포함, fresh-context provenance 필수 필드, diff 결과 필드, fidelity_failed 플래그, parse-or-refuse 진입점)",
+    "src/interview/reading/backtranslation-diff.ts — 되번역 vs 원 요청 원문의 결정적 diff 계산 + 내용어·한정어 수준 기계적 불일치 검출('일부' 삽입류 축소 감지)이 fidelity_failed를 세우는 순수 함수",
+    "src/interview/reading/round0-reading.ts — 라운드-0 통합 독해 산출물 스키마(ac-10 코어와 한 패스 공유)에 backtranslation_echo를 ac-1 restatement와 별도 키의 필수 필드로 편입"
+  ],
+  "red_test_path": "acceptance/ac-10g.test.ts",
+  "depends_on": ["ac-1", "ac-10"],
+  "residual": [
+    "'완전' 과장 여부의 최종 판단 — '완전'을 강조사로 죽이는 과장 독해였는지는 문안이 스스로 잔여로 선언; 역번역 diff는 마지막 그물일 뿐 완전 제거는 불가(초안 398행).",
+    "fresh-context 실재성 — provenance 필드가 원문 미열람을 선언하는 것까지만 기계 검사이고, 되번역이 실제로 원문 미열람 컨텍스트에서 생성됐는가는 필드 검사로 닫히지 않는다(ac-1 synthesis_provenance 잔여와 동종).",
+    "되번역 내용 정합성 — 기계적 diff는 내용어·한정어 수준 불일치만 잡는 구조적 근사이며, 그 너머의 의미 충실성(패러프레이즈가 독해를 정확히 담았는가)은 사람 판단이다(초안 159행 '잔여: 되번역 내용 정합성')."
+  ],
+  "draft_passage_found": "contract/contract-draft.md 157–159행, §4 AC 카탈로그 묶음1의 ac-10a..10j 블록(123행 헤더: 전부 라운드-0 통합 독해 한 패스로 ac-10 코어와 함께 방출, forced-artifact, evidence test). 첫 문장: \"**ac-10g · 역번역 메아리 (별도 산출물). [forced-artifact]** — 진술: 독해를 fresh-context(원문 미열람)로 한국어 되번역해 원문과 diff한 산출물을 **ac-1의 restatement와 구분되는 별도 필드**로 남긴다. '완전'을 강조사로 죽이는 과장 독해의 마지막 그물이다.\" 부수 언급: 388행·397–398행(0번째-판단 잔여 위험 — 에코 금지·ac-10g 역번역이 마지막 그물, '완전'=과장 독해 그물이나 완전 제거는 불가)."
+}

@@ -1,0 +1,21 @@
+{
+  "criterion_id": "ac-E2",
+  "oracle_statement": "bun test acceptance/ac-E2.test.ts를 실행해 다음 단언이 전부 green이면 통과 — DESIGN 노드이므로 판정 대상은 Lindley 기계의 실행 행동이 아니라 문안이 완료기준(design)으로 선언한 네 설계 산출물(살아있는-해석 집합 열거 스키마 + 후보질문 separates 필드 + 정지 게이트 spec + red 테스트)의 존재와 결정적 성질이다. (1) spec 존재 + ac-36/C1 접합: ac-E2 design spec 문서가 계획 경로 src/interview/schedule/lindley-spec.md 에 존재하고 비어있지 않으며(이 파일이 doc→file 증거로 함께 제출된다), spec의 기계-판독 선언 블록이 zod 파싱을 통과하고 seam 필드가 ac-36의 frontier spec(src/interview/schedule/frontier-spec.md)의 후보질문 표면을 가리킨다 — 접합은 같은 seam 위 저술이라는 구조 검사까지만 닫고, 'A5 먼저' 순서는 이 행의 depends_on(ac-29)으로 강제된다. (2) 살아있는-해석 집합 열거 스키마: src/interview/schedule/interpretation-set.ts 가 존재하고, 해석 집합을 닫힌 열거(명시된 해석 원소들의 유한 목록, 각 원소에 id + 살아있음/제거됨 상태)로 파싱하며, 빈 집합·중복 id·열거 밖 자유형 입력 fixture를 각각 파싱 시점에 결정적으로 거부한다. (3) 후보질문마다 separates 정당화: src/interview/schedule/separates.ts 의 후보질문 스키마가 separates:[해석 i, 해석 j] 필드(집합 안의 서로 다른 두 해석 id 참조)와 정당화 문구를 필수로 강제하고, separates 누락·i=j 자기쌍·집합에 존재하지 않는 해석 id 참조 fixture가 각각 결정적으로 거부된다('마다' = 필드가 optional이 아님을 스키마 수준에서 단언). (4) 정지 게이트 spec: spec 선언 블록의 stop_when 필드가 정확히 'no_candidate_reduces_set'이고, '축소'의 정의 절(후보질문의 separates가 살아있는-해석 집합의 크기를 줄일 수 있는가)이 존재하며, 게이트의 구현 표적으로 src/interview/schedule/interpretation-stop.ts 표면을 참조한다. (5) red 테스트 산출: 정지 게이트·separates 강제·집합 축소 행동을 판정할 design 산출 red 테스트 파일 src/interview/schedule/lindley.redtest.ts 가 존재하고(기본 테스트 glob(*.test.ts)에 안 걸리는 이름으로 green 스위트를 오염하지 않음 — ac-33과 같은 관례), 그 테스트의 구현-선행 red 관측 기록(exit ≠ 0)이 존재한다 — 미래 구현을 기다리는 동결 red. 검사는 전부 파일 존재·비어있지 않음·zod 파싱 통과·필드 정확값·거부 fixture·기록 존재 같은 결정적 술어이며, 해석 집합 완전성과 separates 정당화의 의미적 타당성은 채점하지 않는다(잔여 참조).",
+  "method": "run",
+  "evidence_kinds": ["file", "test"],
+  "module_plan": [
+    "src/interview/schedule/lindley-spec.md — ac-E2 design spec 문서(DESIGN 산출물, doc→file 증거 원본; 기계-판독 선언 블록 + frontier-spec 접합 seam 필드 + 정지 게이트 절 포함)",
+    "src/interview/schedule/interpretation-set.ts — 살아있는-해석 집합 열거 스키마(zod; 닫힌 열거, 살아있음/제거됨 상태, 빈 집합·중복 id 거부)",
+    "src/interview/schedule/separates.ts — 후보질문 separates:[해석 i, 해석 j] 필드 스키마(zod; interpretation-set 참조 무결성 + 정당화 필수)",
+    "src/interview/schedule/interpretation-stop.ts — '어떤 후보도 집합 축소 못 하면 정지' 게이트 표면(spec의 구현 표적이자 red 테스트의 import 표적; ac-E2 범위 안에서는 미구현으로 남아 red를 지탱)",
+    "src/interview/schedule/lindley.redtest.ts — design 산출 red 테스트(정지 게이트·separates 강제·집합 축소 행동 판정; 동결 red, 기본 테스트 glob에 안 걸리는 *.redtest.ts 명명)"
+  ],
+  "red_test_path": "acceptance/ac-E2.test.ts",
+  "depends_on": ["ac-29", "ac-36"],
+  "residual": [
+    "해석 집합 완전성 판단 — 살아있는 해석을 빠짐없이 열거했는가는 문안이 스스로 잔여로 선언한 사람 판단이다. 이 조건의 계약 어휘(doc·test)에 사람-증거(observation/repro)가 없으므로 결정 0001에 따라 증거 종류를 완화하지 않고 잔여로 둔다.",
+    "separates 정당화의 의미적 타당성과 spec 설계 적절성 — 그 후보질문이 해석 i와 j를 실제로 가르는가, 그리고 열거·separates·정지 게이트 spec이 Lindley 구조를 옳게 이식했는가는 필드 존재·참조 무결성 검사로 닫히지 않는 사람 판단이다.",
+    "정지 게이트·separates·집합 축소의 실제 실행 동작 — DESIGN 노드의 완료기준은 spec+red 테스트까지다(문안 자체 선언). 실행 동작은 산출된 red 테스트(src/interview/schedule/lindley.redtest.ts)가 후속 구현 노드에서 green이 될 때 닫히며, 특히 실제 인터뷰에서 어떤 후보가 집합을 축소하는지는 실제 사용자 답에 의존하므로 이 판정 기준 밖이다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 커버리지 보강 그룹 E(320행 heading '### 커버리지 보강 그룹 E — §3.4 종결 기계 (ac-E1..ac-E3) — 가장 날카로운 갭'), 331–335행: '**ac-E2 · Lindley 열거 해석집합 + separates. (DESIGN 노드; ac-36/C1과 접합)** — 진술: 열거된 살아있는-해석 집합 + 후보질문마다 `separates:[해석 i, 해석 j]` 정당화 + 어떤 후보도 집합을 못 줄이면 정지. ac-36/C1 frontier design spec에 접거나 신규 design 노드로 저술. 완료기준(design): 살아있는-해석 집합 열거 스키마 + 후보질문 `separates` 필드 + \"어떤 후보도 집합 축소 못 하면 정지\" 게이트 spec + red 테스트. C1(frontier)과 seam 공유(A5 먼저). 결정적(설계 산출): spec + red 테스트 산출. 잔여: 해석 집합 완전성 판단. evidence_required: **design**(design 노드 — 유일하게 test 아님)' — 초안은 증거를 design으로 표기했으나 창립 계약 contract/criteria.json의 ac-E2는 evidence_required [\"doc\",\"test\"]로 고정돼 있고 결정 0001의 doc 목록(ac-33·ac-36·ac-38·ac-39·ac-40·ac-E2)에 포함된다 → doc→file·test→test 번역. 보조 구절: 36행(DESIGN 노드 진입 목록에 ac-E2 — '각 design 노드의 완료 기준 = 검사 가능한 spec + 실패(red) 테스트를 산출'), 54행(의존 척추 '묶음3 A5(branch_edges 확장) → 묶음5 C1(frontier) / ac-E2(Lindley separates). 같은 seam, **A5 먼저**'), 209행(ac-29가 '묶음5 C1·ac-E2와 seam 공유 — A5 먼저'), 385행(§5 한계 — '열거된 해석집합·separates는 ac-E2(design)'라는 AC 포인터)."
+}

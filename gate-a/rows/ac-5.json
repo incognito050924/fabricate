@@ -1,0 +1,20 @@
+{
+  "criterion_id": "ac-5",
+  "oracle_statement": "bun test acceptance/ac-5.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) premortemItem 스키마가 fork_class ∈ {criterion_setting, other}를 additive로 파싱한다 — fork_class가 있는 항목은 enum으로 검증되어 두 값만 수용·그 외 값은 거부되고, fork_class가 없는 레거시 항목도 파싱에 성공한다; (2) fork_class='criterion_setting' 항목은 라우터가 사용자 질문 승격으로 라우팅한다; (3) fork_class='other' 항목은 사용자 질문 승격 없이 자율 처리로 라우팅되고 가시 로그(자율 결정 로그)에 그 항목의 엔트리가 기록된다; (4) goal_unachievable=true 판정은 fork가 0건인 fixture에서도 강제 사용자 확인을 발동한다(fork 유무와 무관한 독립 게이트); (5) fork가 존재하고 goal_unachievable=false인 fixture에서는 그 강제 확인이 발동하지 않는다(직교성); (6) 기계적 가역성 태그('며칠 치 코드 폐기'·git·백업·외부 협조)만 단독으로 붙은 fixture는 fork_class='criterion_setting'으로 라우팅되지 않아 질문 승격이 일어나지 않고, 이해관계 얽힘(다른 동작들이 그 위에 쌓이는 기준-설정) 태그가 붙은 fixture는 승격된다. 모든 단언은 fixture가 태그를 고정한 상태에서 라우팅 결과와 기록만 검사한다(프로즈 채점 없음).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/premortem/premortem-item.ts",
+    "src/interview/premortem/fork-routing.ts",
+    "src/interview/premortem/goal-unachievable-gate.ts",
+    "src/interview/log/autonomous-log.ts"
+  ],
+  "red_test_path": "acceptance/ac-5.test.ts",
+  "depends_on": ["ac-1"],
+  "residual": [
+    "'기준-설정인가'(fork_class 분류) 판단 자체 — 실제 분류기가 이해관계 얽힘의 폭·깊이를 옳게 판정하는지는 기계화 불가; 테스트는 fixture가 태그를 고정한 상태에서 라우팅만 단언한다",
+    "'목표 달성 불가인가'(goal_unachievable) 판정 자체의 정확성 — fixture 태그로 발동·불발만 단언한다",
+    "강제 확인에 대한 실제 사용자 답 수령 — 테스트는 확인 발동까지만 검사하고 실제 사용자 응답은 밖이다"
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 92-96행. 첫 문장: '**ac-5 · pre-mortem 결정-갈림길 클래스 (기준-설정만 질문 승격·그 외 자율+로그·목표 달성 불가 독립 확인). [FIX 2 적용]**' — 93행 TC(fork_class additive 파싱·승격/자율 라우팅·fork 0건 강제 확인·직교 불발), 94행 [FIX 2] 부정 단언(기계적 가역성 라우팅 금지, '며칠 치 코드 폐기' 단독 승격 금지, 이해관계 얽힘만 판정 기준), 95행 결정적/잔여 경계, 96행 evidence_required: test."
+}

@@ -1,0 +1,32 @@
+{
+  "criterion_id": "ac-38",
+  "oracle_statement": "bun test acceptance/ac-38.test.ts를 실행해 전부 green이면 통과. DESIGN 노드이므로 산출은 spec 문서 + red 테스트이며(초안 243행: 각 산출=spec+red 테스트), red 테스트는 형제 DESIGN 행들(ac-33·ac-36·ac-39·ac-E2)과 같은 규약의 동결 red 산출물로 판정한다 — 게이트 행동의 green 단언(구현 요구)이 아니라 파일 존재·red 관측 기록·동결 해시라는 결정적 술어까지만 닫는다. doc 증거는 테스트 안의 spec 파일 재스캔 단언으로, test 증거는 실행 자체로 성립한다. 테스트가 단언하는 결정적 술어: (1) spec 재스캔(doc 증거) — 세-장부 상태 spec 문서가 고정 경로 design/ac-38-three-ledger-state.md에 존재하고 비어있지 않으며(경로·필수 섹션 마커 문자열은 src/interview/dimension/three-ledger-spec.ts의 단일 정의를 spec 작성과 판정이 공유해 드리프트 차단), 필수 섹션 마커 전부를 담는다: ① 세 장부 정의(결정/미진술(fog)/범위밖) ② 승격 시험 정의 — '지금 질문을 정확히 진술 가능한가'이며 '답 가능한가'가 아님을 명시 ③ 범위밖 규칙(사유 필수·재질문 금지) ④ fog vs frontier 경계(C1/ac-36 접합) ⑤ A2(ac-26)의 unevaluated와의 상호작용 ⑥ dimensionState 소비 게이트(readiness 등) 파급 목록. (2) 새 enum additive 마이그레이션 — 확장 후 dimensionState enum 값 집합이 ac-26이 세운 기존 값 전부를 보존하고(제거·개명 없음, 값 집합 비교로 단언) 세 장부 상태가 서로 구분되는 값으로 존재하며, 신규 값이 없는 기존-형상 차원 레코드의 파싱이 깨지지 않음을 픽스처로 단언한다. (3) 'fog→Decided는 진술된-질문 포인터 필수' red 테스트 산출 — 그 승격 게이트 행동(포인터 부재·존재하지 않는 질문 id를 가리키는 포인터의 결정적 거부와 유효 포인터 승격 수용 — 참조 무결성, 그리고 승격 시험이 '진술된-질문 레코드 존재'만을 판정 입력으로 삼아 답-존재/답-가능성 신호에 불변임)을 판정할 design 산출 red 테스트 파일 src/interview/dimension/promotion.redtest.ts 가 존재·비어있지 않고(기본 테스트 glob(*.test.ts)에 안 걸리는 이름으로 green 스위트를 오염하지 않음 — ac-33과 같은 관례), 그 구현-선행 red 관측 기록(exit ≠ 0)이 존재하며 기록된 동결 해시가 현재 테스트 내용 해시와 일치한다 — 미래 구현을 기다리는 동결 red이며 이 판정은 그 게이트 행동의 green을 요구하지 않는다. (4) '범위밖 재질문 제외' red 테스트 산출 — 그 게이트 행동(비어있지 않은 사유 없는 범위밖 지정의 결정적 거부, 범위밖 상태 차원의 질문 후보 열거 제외, 범위밖 차원 직접 재질문 시도의 거부)을 판정할 design 산출 red 테스트 파일 src/interview/dimension/out-of-scope.redtest.ts 가 존재·비어있지 않고(같은 glob-회피 명명), red 관측 기록(exit ≠ 0)과 동결 해시 일치가 존재한다 — 동결 red. 문안의 의존 절(readiness/ambiguity 게이트·C1·A2)은 depends_on과 spec 필수 섹션 ④⑤⑥으로 반영되고, 승격 시험의 '진술-가능성(답-가능성 아님)' 구분은 spec 필수 섹션 ②와 (3)의 red 테스트 판정 대상 서술로 고정된다.",
+  "method": "run",
+  "evidence_kinds": [
+    "file",
+    "test"
+  ],
+  "module_plan": [
+    "src/interview/dimension/three-ledger.ts",
+    "src/interview/dimension/promotion.ts",
+    "src/interview/dimension/out-of-scope.ts",
+    "src/interview/dimension/three-ledger-spec.ts",
+    "src/interview/dimension/promotion.redtest.ts",
+    "src/interview/dimension/out-of-scope.redtest.ts"
+  ],
+  "red_test_path": "acceptance/ac-38.test.ts",
+  "depends_on": [
+    "ac-26",
+    "ac-28",
+    "ac-36"
+  ],
+  "residual": [
+    "spec의 설계 품질·내용 타당성 — 기계 판정은 고정 경로 존재+필수 섹션 마커까지만 닫는다. 세-장부 설계가 실제로 옳은가·파급 목록이 빠짐없는가는 사람 판정 술어이며, 결정 0001대로 증거 종류 완화가 아니라 잔여로 남긴다(계약 어휘 doc·test에 사람-증거 observation/repro가 없어 이 판정 기준으로는 닫을 길이 없다).",
+    "'지금 질문을 정확히 진술 가능한가'의 의미적 판정 — 진술된 질문이 실제로 정확한 진술인가는 LLM/사람 판단이다. 산출된 red 테스트는 이를 '진술된-질문 레코드 존재 + 참조 무결성 있는 포인터'로 조작화하며, 진술의 정확성 자체는 닫히지 않는다.",
+    "범위밖 사유의 내용적 정당성 — 기록된 사유가 실제로 범위밖 지정을 정당화하는가는 사람 판정 술어다. red 테스트의 판정 대상은 사유의 존재·비어있지 않음까지다.",
+    "승격 거부·범위밖 제외의 실제 실행 동작 — DESIGN 노드의 완료기준은 additive 마이그레이션 + red 테스트 산출까지다(문안 자체 선언). 게이트 행동은 산출된 동결 red 테스트(src/interview/dimension/promotion.redtest.ts·src/interview/dimension/out-of-scope.redtest.ts)가 후속 구현에서 green이 될 때 닫히며 이 판정 기준 밖이다.",
+    "실제 인터뷰에서의 장부 분류 옳음 — 어떤 차원이 fog인지/범위밖인지의 분류 행위 자체는 LLM 판단이며, 전이·제외 기계는 동결 red 테스트의 판정 대상으로 후속 구현 몫이다.",
+    "의존 절의 'ambiguity 게이트'는 옛 나무(gates.ts)의 게이트 이름으로, 재건 표면의 69개 조건에 전용 id가 없다 — readiness 게이트는 ac-28로 옮겨 적었고 ambiguity 쪽은 spec 필수 섹션 ⑥(dimensionState 소비 게이트 파급 목록)으로만 반영된다. 초안 239행의 '미리 못 쓰는 이유' 절(핵심 enum interview-state.ts:10 + 모든 게이트 파급)은 옛 나무 서술로 잠긴 문안에 없으며, forward 오라클이므로 코드 앵커로 쓰지 않는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음7(Tier C DESIGN 노드, 237–243행), ac-38 항목은 239행: \"- **ac-38 · C2 세-장부 상태 (DESIGN)**: 목표=`dimensionState`를 결정/미진술(fog)/범위밖(사유·재질문 금지)로, 승격 시험=\\\"지금 질문을 정확히 진술 가능한가\\\"(답 가능이 아니라). 미리 못 쓰는 이유=핵심 enum(interview-state.ts:10) + 그걸 읽는 모든 게이트 파급. 완료기준=새 enum additive 마이그레이션+\\\"fog→Decided는 진술된-질문 포인터 필수\\\" red 테스트+범위밖 재질문 제외 red 테스트. 의존=readiness/ambiguity 게이트·C1(fog vs frontier)·A2.\" 증거 어휘는 243행: \"evidence_required: C2·C3·C4 design 노드(각 산출=spec+red 테스트).\" 보조 구절: 377행(기각 목록 2번 — wayfinder 결정-티켓의 장부 절반은 이미 ac-38/C2가 담는다), 206행(ac-26/A2 — dimensionState enum 확장·unevaluated의 집), 226행(ac-36/C1 frontier — fog vs frontier 접합 상대)."
+}

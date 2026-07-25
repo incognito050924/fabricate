@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-10i",
+  "oracle_statement": "bun test acceptance/ac-10i.test.ts를 실행해 다음 결정적 단언이 전부 green이면 통과. 테스트는 finalize 시점의 생존 독해 집합과 각 독해의 '에이전트-유리(일 적은)/넓은' 방향을 fixture 태그로 고정하고 표면화·거부 라우팅만 단언한다: (1) 표면화 필수 — 복수 생존 독해(≥2) fixture로 종단 처리를 호출했을 때 terminal_tie[](생존 독해 나열) 표면화 산출물이 사용자-표출 경로에 존재하면 finalize가 진행하고, 같은 fixture에서 terminal_tie[] 표출이 없으면 finalize가 거부 변이를 반환한다(표출 없으면 finalize 거부). 단일 생존 독해(==1) 대조 fixture에서는 terminal_tie 요구 없이 finalize가 진행한다(복수일 때만 필수라는 조건부의 대조). (2) 조용한 축소 차단 — 에이전트-유리(일 적은) 태그가 붙은 좁은 독해로 terminal_tie 표출 없이 조용히 축소해 종단하려는 fixture에서 finalize가 거부한다. (3) 조용한 확장 차단 — 넓은 독해로 terminal_tie 표출 없이 조용히 확장해 종단하려는 fixture에서도 finalize가 거부한다(축소 금지가 확장 면허가 아님 — 양방향 침묵 금지 fixture 2건 대조). (4) ac-7/finalize 통치 배선 — 이 규칙이 finalize 게이트에 배선되어 위 거부가 finalize 결과 변이로 관측되고, terminal_tie로 표면화된 동률 갈림길 항목은 ac-7 질문 위생의 거부 대상이 아니라 질문 자격 라우팅으로 연결된다(원 요청 G6: 동률 갈림길만 질문 자격). 검사는 전부 fixture 태그·거부 변이·표출 존재에 대한 결정적 술어이며 어느 독해가 실제로 '에이전트-유리'인지는 채점하지 않는다(문안이 잔여로 선언).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/terminal-tie.ts",
+    "src/interview/contra-proferentem.ts"
+  ],
+  "red_test_path": "acceptance/ac-10i.test.ts",
+  "depends_on": ["ac-7", "ac-9", "ac-10b"],
+  "residual": [
+    "어느 독해가 '에이전트-유리(일 적은)' 방향인지의 판단 — 문안이 스스로 잔여로 선언; 테스트는 fixture 태그로 방향을 고정하고 침묵 차단 라우팅만 단언하므로 실제 독해의 유불리 판정은 이 판정 기준으로 닫히지 않는다.",
+    "종단까지 복수 독해가 '실제로' 남았는지 — 생존 독해 집합의 열거 완전성은 ac-10b 자비 토너먼트의 잔여를 상속하며, 이 판정은 fixture로 고정된 생존 집합에 대한 표면화·거부만 닫는다.",
+    "terminal_tie[] 표면화의 프로즈 내용(각 생존 독해 서술의 충실성)은 채점하지 않는다 — 기계 검사는 표출 존재·나열 항목 수까지다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 167–170행. 첫 문장: '**ac-10i · contra proferentem 종단 동률 규칙. [forced-artifact]**' — 진술(168행): 종단(finalize 시점)까지 복수 독해가 남으면 표면화 필수, 에이전트-유리(일 적은) 방향으로의 조용한 축소 금지 AND 조용한 확장 금지(축소 금지 전용, 확장 면허 아님), ac-7/finalize를 통치. TC(169행): GIVEN finalize 시점 복수 생존 독해, WHEN 종단 처리, THEN terminal_tie[] 표면화(표출 없으면 finalize 거부); 에이전트-유리 방향 조용한 축소 차단 AND 조용한 확장 차단(양방향 침묵 금지 fixture 2건). 170행: 결정적=표면화 필수·양방향 침묵 차단, 잔여=어느 독해가 '에이전트-유리'인지 판단. 보조 구절: 123행(ac-10a..10j 전부 forced-artifact·evidence test — 단 ac-10i의 검사 시점은 라운드-0이 아니라 finalize 종단), original-request.md 7행 G6('함축·재량·동률 갈림길만 질문 자격')이 동률 갈림길 항목의 질문 자격(ac-7 통치) 근거."
+}

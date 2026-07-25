@@ -1,0 +1,19 @@
+{
+  "criterion_id": "ac-35",
+  "oracle_statement": "bun test acceptance/ac-35.test.ts를 실행해 전부 green이면 통과. 그 테스트는 문안의 각 절을 다음 결정적 술어로 단언한다: (1) k-diff 레코드 스키마 — k개 해석 각각을 산출물→행동으로 투영해 diff한 결과가 {material: boolean, divergence_point?}로 파싱되고(zod), material 부재나 스키마 밖 형태는 거부된다(divergence_point는 optional). (2) 라우팅 결정성 — 라우팅은 {material, 위험태그} 입력의 순수 함수이며(모델 호출 없음, 같은 입력 반복 호출 → 같은 라우팅), 문안의 네 갈래가 다음 총함수로 실현됨을 fixture로 단언한다: 불변(material=false) → '가정+가시로그' 라우팅, 질문 미발생(over-ask 억제), 그 가시로그 레코드에 k-diff 레코드가 증거로 첨부됨(증거로 k-diff, 첨부 없는 가정 로그는 거부); 변함(material=true)·고위험 → 분기점 질문 라우팅, 발생한 질문이 divergence_point를 참조함; 변함(material=true)·저위험가역 → 가정로그 라우팅(질문 미발생); 어떤 {material, 위험태그} 조합도 미정의 분기로 새지 않음(총함수). (3) 다양성 바닥 — k 해석이 단일 해석으로 붕괴한 fixture(서로 구별되는 해석 수 < 2)에서는 material=false('비중대') 판정이 fail-closed로 거부되고, 서로 구별되는 해석 ≥2인 fixture에서는 같은 판정이 통과한다(2 fixture). 문안이 결정적으로 선언한 것은 라우팅과 다양성 바닥이며, 중대성 판단 자체(해석들이 진짜로 갈리는가·divergence_point가 진짜 분기점인가)는 같은 prior의 상관 맹점으로 문안이 스스로 잔여로 선언했다 — 이 판정에 포함되지 않는다(잔여 참조).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/materiality/k-diff.ts",
+    "src/interview/materiality/ask-router.ts",
+    "src/interview/materiality/diversity-floor.ts"
+  ],
+  "red_test_path": "acceptance/ac-35.test.ts",
+  "depends_on": ["ac-1", "ac-14"],
+  "residual": [
+    "중대성 판단의 실질(상관 맹점): k-해석 생성·산출물→행동 투영·diff 산정이 전부 같은 모델 prior에서 나온다 — 전 해석이 같은 오독을 공유하면 진짜 갈림이 '불변'으로 접혀도 이 판정은 잡지 못하고, divergence_point가 진짜 분기점인지도 같은 맹점에 속한다. 문안이 스스로 '같은 prior, 잔여'로 선언했다. 다양성 바닥은 단일-해석 붕괴만 막는 구조적 근사이며, 표면상 다르지만 같은 prior에 갇힌 해석 집합은 걸러내지 못한다.",
+    "위험 등급 라벨링: 저위험가역/고위험 분류 자체는 LLM/사람 판단이다 — 테스트는 fixture가 고정한 태그에 대한 라우팅만 단언한다(태그 방출→순수 게이트 라우팅 패턴).",
+    "over-ask 억제의 실효: 실사용에서 질문 수가 실제로 줄어드는가는 이 판정으로 닫히지 않는다. 문안이 스스로 'ClarifyGPT 80.8%는 그 하네스 수치'라고 명시했다 — 실측은 C4 보정 루프·합성-사용자 회귀 하네스(ac-40) 소관이다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음5(질문 경제, 222–228행), 항목 225행: \"- **ac-35 · B5 중대성 ask-트리거**: k-해석→산출물→행동 diff, `{material, divergence_point?}`. 불변=가정+가시로그(over-ask 억제, 증거로 k-diff)·변함=분기점 질문·저위험가역=가정로그·고위험=질문·다양성 바닥(단일 해석 붕괴는 \\\"비중대\\\" 불가). **상관 맹점(같은 prior)**. ClarifyGPT 80.8%는 그 하네스 수치.\" 증거 어휘는 228행 \"evidence_required: B4·B5 **test**\". 부수 근거: 59행(커버리지 매핑 ac-E3→ac-35, ac-F1→ac-35/ac-40), 337–340행(ac-E3가 ac-35/B5 확장이며 '계획 변경 여부 판단'을 ac-35 k-diff 소관 잔여로 명시), 345행(ac-F1이 ac-40/C4 또는 ac-35 확장), 218행(ac-33의 상관 맹점이 B5·C4와 공유), 241행(ac-40 의존 = U4/B5 VoI — B5가 U4 삼분류 계보임을 확인)."
+}

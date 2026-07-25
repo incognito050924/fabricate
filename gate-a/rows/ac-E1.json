@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-E1",
+  "oracle_statement": "bun test acceptance/ac-E1.test.ts를 실행해 다음 네 관측이 전부 green이면 통과한다. ① 사전등록: 인터뷰 시작 시점에 위험등급별 lock_threshold 사전등록이 존재하고(등록이 첫 턴보다 앞선다) 위험등급별 값이 조회 가능함을 관측한다. ② 하향 차단: 인터뷰 진행 중 lock_threshold를 사전등록값보다 낮추려는 시도('느낌상 됐다' 하향)는 거부 결과를 반환하고 임계값이 사전등록값 그대로 불변임을 관측한다. ③ 두 출구: 종결 exit ∈ {build, aporia_or_rescope} 두 값 각각으로 실제 종결되는 픽스처 2건이 통과해 두 출구의 실재를 보이고, 출구가 하나뿐인 종결 구성(단일 출구)은 거부됨을 관측한다. ④ 예산소진 공개: 예산 소진 상태의 종결은 비어있지 않은 shortfall_disclosure(부족분 공개)를 산출에 반드시 포함하고, 부족분 공개 없이 종료하려는 시도는 거부됨을 관측한다. 테스트의 위험등급은 픽스처가 부여한다(등급 판정 자체는 잔여).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/session.ts",
+    "src/interview/preregistration.ts",
+    "src/interview/termination.ts",
+    "src/interview/shortfall.ts"
+  ],
+  "red_test_path": "acceptance/ac-E1.test.ts",
+  "depends_on": ["ac-B1"],
+  "residual": [
+    "위험등급 판정(어떤 인터뷰·술어가 어느 위험등급인지)은 문안이 스스로 잔여로 선언 — 테스트는 픽스처가 부여한 등급 위에서 사전등록·하향차단·출구·공개 구조만 검사한다"
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 '커버리지 보강 그룹 E — §3.4 종결 기계' line 323: '**ac-E1 · Wald 사전등록 + 두 출구 + 예산소진 공개. [forced-artifact]**' — 진술 ①②③, TC1(사전등록+하향 거부)·TC2(두 출구 실재)·TC3(shortfall_disclosure 강제), 결정적/잔여 선언, evidence_required: test. 부가 언급: line 385 §5 정직한 한계('사전등록·두 출구·예산소진 공개는 ac-E1')."
+}

@@ -1,0 +1,22 @@
+{
+  "criterion_id": "ac-4",
+  "oracle_statement": "bun test를 실행해 acceptance/ac-4.test.ts와 전체 스위트가 green(exit 0)이면 통과다. 그 테스트는 문안의 각 절을 다음 fixture로 단언한다: (1) goal_state가 존재하고 미충족 술어가 있으며 완료계약이 pass인 item/completion fixture에서, 완료계약과 별도인 goalStateGate(item, completion)가 pass:false를 반환하고 work·stop 두 close 경로 모두에서 close가 차단된다. (2) 완료계약 pass 판정의 불변식은 goalStateGate 도입 후에도 불변이다 — 기존 완료계약 pass 케이스를 회귀 가드 테스트로 고정해 같은 입력이 여전히 pass임을 단언한다. (3) goal_state 부재 fixture에서는 goalStateGate가 no-op으로 pass:true를 반환하고 close가 기존대로 진행된다. (4) judge:'user' 술어에 사용자 판정 기록이 없는 fixture는 미검증으로 집계되어(default-deny) close가 차단되고, 같은 fixture에 판정 기록을 추가하면 차단이 해제된다. (5) 판별자 goal_state는 지속 필드(저장 스키마의 일부)로 존재하고, goalStateGate는 술어 충족 판단을 스스로 내리지 않는 순수 리더다 — 충족 판단은 oracleSatisfaction과 사용자-판정 기록이 보유하며, 게이트 호출이 입력 상태를 변형하지 않음(호출 전후 직렬화 동일)을 단언한다. (6) 전체 bun test가 green이다(스위트 전체 exit 0).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/goal-state.ts",
+    "src/interview/oracle-satisfaction.ts",
+    "src/interview/user-judgment.ts",
+    "src/interview/completion-contract.ts",
+    "src/interview/goal-state-gate.ts",
+    "src/interview/close/work.ts",
+    "src/interview/close/stop.ts"
+  ],
+  "red_test_path": "acceptance/ac-4.test.ts",
+  "depends_on": ["ac-1"],
+  "residual": [
+    "judge:'user' 술어의 실제 사용자 판정을 받아내는 오케스트레이션 절차는 범위 밖(autopilot 완료 단계 소관, original-request.md 범위 밖 명시) — 이 판정 기준은 판정 기록 fixture로 집계 규칙(판정 없으면 미검증, 자동 통과 불가)만 닫는다.",
+    "술어 충족 판단의 내용적 옳음은 문안 스스로 oracleSatisfaction/사용자-판정 기록이 보유한다고 한정했다 — 게이트는 순수 리더이므로 그 판단 자체가 틀린 경우는 이 판정 기준이 닫지 않는다(테스트는 fixture로 판단 값을 고정하고 게이트의 읽기·차단 동작만 단언한다)."
+  ],
+  "draft_passage_found": "contract/contract-draft.md 87-90행(§4 AC 카탈로그), 첫 문장: \"**ac-4 · 완료=목표 성립 (판별자 work-item.json·별도 goalStateGate·불변식 불변·사용자-판정 자동통과 불가·기존 테스트 통과).**\" — TC 행(88행)이 goal_state 유/무 분기·default-deny·bun test green을 열거하고 89행이 '결정적: 전부 — 판별자는 지속 필드, 게이트는 순수 리더'를 선언한다. 보조 참조: 38행·394행(계획⊨술어와 함께 순수 결정적 검사로 명명), 163-164행(ac-10h가 ac-4 완료 게이트와 구분됨), 365-367행(ac-G3가 ac-4에 회귀 단언 추가), 388·397행(ac-4가 0번째-판단 잔여의 마지막 그물). 단, 88행의 코드 앵커(work.ts:2214·stop.ts:933·completion-contract.ts:198-207)는 옛 나무 기준이라 forward 판정 기준에는 반영하지 않고 module_plan의 신규 경로로 대체했다."
+}

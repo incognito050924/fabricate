@@ -1,0 +1,18 @@
+{
+  "criterion_id": "ac-C1",
+  "oracle_statement": "bun test acceptance/ac-C1.test.ts를 실행해 다음 단언이 전부 green이면 통과: (1) 요구/가정 분리 필드 — 정련 잎 스키마가 kind ∈ {requirement, assumption} 두 값만 허용하고, kind 필드가 없거나 enum 밖 값인 잎은 zod 파싱에서 거부된다(negative fixture — '잎마다 분리 결정적 필드'는 필드 필수화로 강제); (2) refinement_complete 술어 — 모든 잎이 단일-담당 배정 가능 ∧ 검증 가능인 fixture에서만 true이고, 단일-담당 배정 불가 잎이 하나라도 있으면 false, 검증 불가 잎이 하나라도 있으면 false(두 실패 축 각각의 대비 fixture로 ∧ 결합과 '…일 때만 true'를 단언); (3) WHY-추출기 — 'so that'·'위해'·'목적' 세 키워드 각각을 포함한 발화 fixture에서 WHY 절이 추출되고(키워드 3종 각 1건 이상), 키워드 없는 발화에서는 추출 결과가 빈 값이다(결정적 키워드 매칭의 양·음 대비). 검사는 전부 enum 파싱 거부·boolean 술어값·추출 존재/부재 같은 결정적 술어이며, 잎의 실제 내용이 요구인가 가정인가(요구 vs 가정 분류)는 채점하지 않는다(문안이 스스로 잔여로 선언).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/refinement/refinement-leaf.ts",
+    "src/interview/refinement/refinement-complete.ts",
+    "src/interview/refinement/why-extractor.ts"
+  ],
+  "red_test_path": "acceptance/ac-C1.test.ts",
+  "depends_on": ["ac-3"],
+  "residual": [
+    "요구 vs 가정 분류 — 실제 잎 내용이 requirement인가 assumption인가의 분류는 문안이 스스로 잔여로 선언한 사람-판정 술어다; 테스트는 fixture가 고정한 kind 라벨 위에서 enum 강제와 술어·추출기 배선만 단언한다.",
+    "단일-담당 배정 가능·검증 가능의 실재성 — refinement_complete는 잎에 기록된 결정적 판정값 위에서 ∧ 결합만 계산한다; 잎이 현실에서 정말 단일 담당에게 배정 가능하고 검증 가능한지, 그리고 추출된 WHY 절이 실제 목적을 의미적으로 담는지는 이 판정으로 닫히지 않는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그, 커버리지 보강 그룹 C(§3.2 구체화) 287행 제목·289행 공통 머리말(전부 forced-artifact, evidence test, 부모 AC 참조하되 test 표적 분리), 291–294행. 첫 문장: '**ac-C1 · KAOS 확장. (ac-3 WHY-사슬 확장)** — 진술: 정련 잎마다 요구/가정 분리 결정적 필드 + 정련-완료 술어(모든 잎 단일-담당 배정 가능 ∧ 검증 가능) + \"so that/위해/목적\" WHY-추출기.' TC(293행): 잎마다 kind ∈ {requirement, assumption} 필드; refinement_complete 술어 = 모든 잎이 단일-담당 ∧ 검증 가능일 때만 true; 'so that/위해/목적' 키워드 WHY-추출기 존재. 294행: 결정적=요구/가정 필드·정련-완료 술어·WHY 추출기, 잔여=요구 vs 가정 분류. 보조 근거: 59행 — ac-C1→ac-3 매핑(부모 AC의 test 표적을 오염시키지 않도록 별개 AC로 분리, 부모를 참조); 25행 — 커버리지 보강(v2) §3.2 구체화(ac-C1..C3)."
+}

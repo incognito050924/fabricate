@@ -1,0 +1,21 @@
+{
+  "criterion_id": "ac-33",
+  "oracle_statement": "실행 판정: bun test acceptance/ac-33.test.ts가 전부 green이면 통과. 이 조건은 DESIGN 노드다 — 판정 대상은 C6 예측 probe의 실동작이 아니라 문안이 완료기준으로 선언한 4개 설계 산출물의 존재와 결정적 성질이다. 그 테스트는 다음 술어를 단언한다: (1) 스키마 — probe 레코드 스키마 모듈(src/interview/prediction-probe/probe-record.ts, zod strict)이 정확히 {counterfactual, predicted, actual, hit} 4필드를 요구하고(counterfactual·predicted·actual은 비어있지 않은 값, hit는 boolean), 필드 누락·여분 필드·빈 값 fixture는 파싱 거부된다; (2) '선예측 먼저·bare-yes 불통' 게이트 spec — 스펙 문서(계획 고정 경로: design/c6-prediction-probe.md)를 재스캔해 두 규칙이 결정적 규칙 절로 선언되어 있음을 단언한다: ①선예측 먼저 — predicted 기록이 해당 질문 제시 이전에 존재해야 유효(사후 예측 무효), ②bare-yes 불통 — actual이 bare-yes('네' 류 무내용 긍정)로 태그된 답만으로는 hit 인정·잠금 게이트 통과 불가; 아울러 게이트 계약 모듈(gate-contract.ts)이 같은 두 규칙의 시그니처(입력: probe 레코드 목록+위험등급, 출력: 잠금 통과 boolean+사유)를 선언만 하고 구현은 담지 않음을 단언한다(설계 노드 — 적중률이 잠금 게이트가 된다는 목표는 이 계약+red 테스트로 고정되고 실동작은 미래 구현 몫); (3) k/위험등급 정책 — 정책 모듈(policy.ts)이 위험등급 enum의 모든 등급에 대해 k(반사실 개수, 정수 ≥1)와 적중률 잠금 임계를 빠짐없이 매핑하는 동결 상수를 export하고(전 등급 커버리지 단언), 스펙 문서의 정책 표와 코드 상수 값이 일치한다(문서-코드 드리프트 차단); (4) red 테스트 산출 — 미래 C6 게이트 구현을 판정할 red 테스트 파일(src/interview/prediction-probe/prediction-gate.redtest.ts — 기본 테스트 glob에 안 걸리는 이름으로 green 스위트를 오염하지 않음)이 존재·비어있지 않고, 그 빨간 관측 기록(계획 경로: design/c6-prediction-probe.red-run.json)의 observed_red_exit_code ≠ 0이며 기록된 동결 해시가 현재 red 테스트 내용의 sha256과 일치한다(게이트④ red-first와 같은 술어 — 빨강 관측·해시 불변). 문서 재스캔은 절 존재·필드명 대조·표 값 일치 같은 결정적 술어까지만 하고 프로즈 품질은 채점하지 않는다. 증거 결속: green 실행이 계약 어휘 test의 test 증거로, 스펙 문서 자체가 계약 어휘 doc의 file 증거로 ac-33에 결속 제출된다.",
+  "method": "run",
+  "evidence_kinds": ["file", "test"],
+  "module_plan": [
+    "src/interview/prediction-probe/probe-record.ts",
+    "src/interview/prediction-probe/policy.ts",
+    "src/interview/prediction-probe/gate-contract.ts",
+    "src/interview/prediction-probe/prediction-gate.redtest.ts"
+  ],
+  "red_test_path": "acceptance/ac-33.test.ts",
+  "depends_on": ["ac-30", "ac-27", "ac-9"],
+  "residual": [
+    "상관 맹점(문안 스스로 선언, B5·C4 공유 — 초안 386행) — 반사실 생성·선예측·적중 판정이 전부 같은 모델 prior 위에 있다. 에이전트가 사용자를 오독하는 방향과 같은 방향으로 예측하면 적중률이 높게 나와 게이트가 열린다. 예측 probe는 완화이지 제거가 아니며, 이 판정 기준으로 닫을 길이 없다.",
+    "DESIGN 노드 한계 — 목표 문안(반사실 k개 선예측→질문→적중률이 잠금을 실제 차단, bare-yes '네'로 통과 불가)의 실동작은 이 판정으로 닫히지 않는다. 이 판정은 스키마·게이트 spec·정책·red 테스트의 존재와 결정적 형태까지만 닫고, 실동작은 산출된 red 테스트(prediction-gate.redtest.ts)가 미래 구현 시점에 green이 되는 것으로 닫힌다.",
+    "bare-yes 분류·반사실 품질·예측 진지성 — actual 답이 bare-yes인지의 분류 자체, 반사실이 판별력 있는 시나리오인지, 선예측이 진지한 예측인지(적중률 조작 가능성)는 LLM/사람 판단이다. 기계는 태그 위의 라우팅 규칙 선언과 spec 절 존재까지만 검사한다(§3-1 되풀이 패턴: 태그 방출→순수 게이트 라우팅).",
+    "spec 프로즈 품질 — 스펙 문서가 좋은 설계인가는 사람 판단이다. 결정 0001에 따라 증거 종류(doc→file/rescan)를 완화하는 우회로 쓰지 않고 잔여로 남긴다 — 계약 증거 어휘에 사람-증거(observation/repro)가 없으므로 human 오라클로도 닫을 길이 없다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음4(213–220행), 항목 218행. 첫 문장: '- **ac-33 · C6 예측 probe (DESIGN 노드)**: 목표=반사실 k개·에이전트 선예측 후 질문·적중률이 잠금 게이트(\"네\" 통과 불가). 완료기준=`{counterfactual,predicted,actual,hit}` 스키마+\"선예측 먼저·bare-yes 불통\"게이트+k/위험등급 정책+red 테스트. 의존=B1·finalize 블록. 상관 맹점(B5·C4 공유).' 증거 어휘는 220행: 'evidence_required: B1·B2·B3 **test**; C6 design 노드(산출=spec+red 테스트).' 보조 근거: 316행 — ac-D2 진술이 '예측형 확인은 ac-33/C6 소관'으로 경계 지정(즉시-확인 게이트는 ac-D2, 예측형은 ac-33); 386행 — §8 한계의 상관 맹점 명단에 '예측(C6)' 포함(B5·F1·C4·ac-9·B3와 같은 모델 prior, 다양성 강제는 완화지 제거 아님); 241행 — ac-40(C4)이 '상관 맹점(B5/C6 공유)'로 상호 참조."
+}

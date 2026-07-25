@@ -1,0 +1,21 @@
+{
+  "criterion_id": "ac-10b",
+  "oracle_statement": "bun test acceptance/ac-10b.test.ts를 실행해 다음 단언이 전부 green이면 통과. 테스트는 라운드-0 통합 독해 패스의 산출물을 fixture로 고정해 존재·집합 연산·라우팅만 단언한다: (1) 독해 산출물에 candidate_readings[]가 존재하고 각 항목에 elimination_reason 필드가 존재한다(스키마 파싱 — 필드 누락 항목이 있으면 산출 거부). (2) 생존수 라우팅이 결정적이다 — 생존 독해 수 ≥2인 fixture에서는 질문 후보가 방출되고, ==1인 fixture에서는 질문 후보 방출·재독해 없이 진행 라우팅이 반환되며, ==0인 fixture에서는 reread_triggered=true가 세워진다(세 분기 대비 fixture 3건, 같은 생존수 입력이면 항상 같은 분기). (3) language_parse_set·user_parse_set 두 집합이 산출물에 존재하고 그 교집합/diff 산출이 존재하며, diff가 비어있지 않은 fixture에서는 그 불일치 항목이 질문 표적으로 표기되어 방출된다. (4) 각 candidate_readings 항목에 후보별 rsa_speaker_score(Ŝ(u|m)) 수치 필드가 존재하고, 소거 대본 산출물이 존재한다. 검사는 전부 필드 존재·라우팅 분기·집합 연산 결과 같은 결정적 술어이며 소거 사유의 프로즈 내용은 채점하지 않는다(문안이 잔여로 선언).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/reading/charity-tournament.ts",
+    "src/interview/reading/survivor-routing.ts",
+    "src/interview/reading/parse-sets.ts",
+    "src/interview/reading/rsa-score.ts",
+    "src/interview/reading/round0-reading.ts"
+  ],
+  "red_test_path": "acceptance/ac-10b.test.ts",
+  "depends_on": ["ac-1", "ac-10"],
+  "residual": [
+    "소거 사유(elimination_reason)의 내용적 옳음 — 문안이 스스로 '소거 사유 내용은 잔여다'로 선언; 기계 검사는 필드 존재까지만 닫고 그 사유가 해당 독해를 정당하게 소거하는지는 사람 판단으로 남는다.",
+    "rsa_speaker_score 값이 실제 RSA 반사실 화자 점수 Ŝ(u|m)로 옳게 계산됐는지 — 문안은 필드 '존재'만 요구하므로 판정은 수치 필드 존재까지만 닫는다.",
+    "후보 독해 집합과 두 파싱 집합(language_parse_set·user_parse_set)의 내용적 완전성 — 살아있는 독해·파싱을 빠짐없이 열거했는가는 기계화되지 않는다; 테스트는 fixture로 집합을 고정하고 존재·교집합/diff·라우팅만 단언한다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 AC 카탈로그 130–135행. 첫 문장: '**ac-10b · 자비 토너먼트 (Davidson+Schleiermacher+RSA, 절차 ⑥). [forced-artifact]**' — 진술(131행): 후보 독해 집합과 각 소거 사유, 생존수 라우팅 게이트, 언어-파싱 ∥ 이-사용자-파싱 두 집합의 교집합/diff, RSA 반사실 화자 점수를 산출한다. TC1(132행): candidate_readings[] 각 항목 elimination_reason 존재 + 생존수 라우팅(결정적) survivors≥2→질문 후보 방출·==1→진행·==0→reread_triggered=true; TC2(133행): language_parse_set·user_parse_set 두 집합 존재·교집합/diff 산출 존재(불일치=질문 표적); TC3(134행): 후보별 rsa_speaker_score(Ŝ(u|m))와 소거 대본 존재; 135행: 결정적=생존수 라우팅 테이블·2집합 존재·점수 필드 존재, 잔여=소거 사유 내용. 보조 구절 123행: ac-10a..10j는 전부 라운드-0 통합 독해 절차의 한 번의 패스로 ac-10 코어와 함께 방출·1회 검사(전부 forced-artifact, evidence test)."
+}

@@ -1,0 +1,22 @@
+{
+  "criterion_id": "ac-30",
+  "oracle_statement": "bun test acceptance/ac-30.test.ts를 실행해 전부 green이면 통과. 그 테스트는 문안의 각 절을 다음 결정적 술어로 단언한다: (1) 답마다 되말하기 — 사용자 답 턴마다 다른-말+예시 필드를 가진 teach-back 레코드가 생성되어야 하며 레코드 없는 답은 confirmed 진행이 거부되고, 되말하기가 답 원문과 토큰중복 임계를 초과하면 에코로 결정적으로 거부된다(에코 fixture 거부·비에코 fixture 통과, 2 fixture); (2) confirmation_kind는 {paraphrase, verbatim} 두 값 enum으로만 파싱되고 그 외 값은 zod 거부되며, verbatim은 수량·식별자·삭제범위라는 인간-고정 리터럴 클래스 셋에 태그된 대상에만 허용되고 셋 밖 대상에 verbatim을 쓰면 거부되며, 그 클래스 셋이 코드에 동결된 리터럴 상수(런타임·에이전트 확장 불가, 셋 원소가 정확히 3개 클래스와 일치)임을 단언한다; (3) candidate→confirmed 상태기계 — teach-back 레코드는 candidate 상태로 생성되고 사용자 확인 발화 기록으로만 confirmed로 전이하며, confirmed로 직접 생성하거나 사용자 확인 기록 없이 전이시키는 fixture는 거부된다; (4) 미교정 불일치 잠금 차단 — 사용자가 불일치를 지적한 레코드가 교정 없이 남아 있으면 잠금(finalize/intent write) 시도가 fail-closed로 거부되고, 교정 기록 후에는 이 게이트가 해제된다(2 fixture); (5) intent_summary 누출 스캔 — intent_summary의 확정 항목이 confirmed teach-back 레코드 포인터 없이 존재하는 누출 fixture에서 스캔이 위반을 결정적으로 검출(fail)하고, 전 항목이 confirmed 레코드로 뒷받침된 깨끗한 fixture는 통과한다(누출 결함이 이 표면에 흡수됨). 문안이 결정적으로 선언한 것은 에코 임계·상태기계·누출 스캔이며, 되말하기 품질과 유비 전이 효능은 이 판정에 포함되지 않는다(잔여 참조).",
+  "method": "run",
+  "evidence_kinds": ["test"],
+  "module_plan": [
+    "src/interview/teachback/record.ts",
+    "src/interview/teachback/confirmation-kind.ts",
+    "src/interview/teachback/state-machine.ts",
+    "src/interview/teachback/mismatch-lock-gate.ts",
+    "src/interview/teachback/leakage-scan.ts"
+  ],
+  "red_test_path": "acceptance/ac-30.test.ts",
+  "depends_on": ["ac-1", "ac-6", "ac-27"],
+  "residual": [
+    "되말하기 품질 — '다른 말+예시'가 진짜 패러프레이즈이며 예시가 적절한가는 사람 판단이다. 토큰중복 임계는 에코를 걸러내는 구조적 근사일 뿐이며, 문안이 스스로 잔여(미검증)로 선언했다.",
+    "유비 전이 효능 — teach-back 20%/12% 의무화 근거는 임상 도메인 실증이고 소프트웨어 인터뷰로의 전이는 구조 유비다. 실측은 C4 하네스(ac-40) 이후까지 미검증이며, 문안이 스스로 잔여로 선언했다(초안 387행).",
+    "verbatim 클래스 라벨링 — 어떤 대상이 수량·식별자·삭제범위에 속하는가의 분류 자체는 LLM/사람 판단이다. 테스트는 fixture가 고정한 클래스 태그로 허용/거부 라우팅만 단언한다(되풀이 구조 패턴: 태그 방출→순수 게이트 라우팅).",
+    "실사용 불일치 지적 — 실제 사용자가 불일치를 알아채고 지적하는가는 fixture 밖의 사람 행위다. 이 판정 기준은 지적이 기록된 뒤의 미교정→잠금 차단 구조까지만 닫는다."
+  ],
+  "draft_passage_found": "contract/contract-draft.md §4 묶음4(213–220행), 항목 215행: \"- **ac-30 · B1 되말하기 계약**: 답마다 다른-말+예시(에코 임계 거부)·`confirmation_kind {paraphrase,verbatim}`(verbatim 소수 클래스=수량·식별자·삭제범위, 인간-고정 리터럴 셋)·`candidate→confirmed` 상태기계·미교정 불일치는 잠금 차단·intent_summary 누출 결함을 이 표면에 흡수(누출 스캔). teach-back 20%/12% 의무화 근거. **유비 전이 한계**.\" 증거 어휘는 220행 \"evidence_required: B1·B2·B3 **test**\". 부수 근거: 59행(ac-D2→ac-30 커버리지 매핑), 315–319행(ac-D2가 ac-30 확장으로 즉시-확인·teachback_confirmed 포인터 게이트를 분담하고 되말하기 품질을 ac-30 소관 잔여로 명시), 218행(ac-33이 B1에 의존), 387행(유비 전이 잔여 — B1 효능은 C4 하네스 이전 미검증)."
+}
