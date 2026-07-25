@@ -91,8 +91,8 @@ L.push(
 L.push(
   `- **동결된 빨간 테스트**: \`acceptance/*.test.ts\` ${freeze.entries.length}개 · 매니페스트 \`gate-a/red-freeze.json\``,
 );
-L.push(`- **심사 기록**: \`gate-a/review-summary.json\` (반박·비평·수리 내역)`);
-L.push(`- **증거 어휘 매핑 결정**: \`decisions/0001-contract-evidence-mapping.md\``);
+L.push("- **심사 기록**: `gate-a/review-summary.json` (반박·비평·수리 내역)");
+L.push("- **증거 어휘 매핑 결정**: `decisions/0001-contract-evidence-mapping.md`");
 L.push("");
 L.push("## 커버리지 (코드가 센 수)");
 L.push("");
@@ -109,14 +109,14 @@ L.push("");
 L.push("## 심사 이력");
 L.push("");
 L.push(
-  `1. **작성** — 조건 하나에 에이전트 하나. 각 에이전트가 계약 원문(criteria.json의 statement)과`,
+  "1. **작성** — 조건 하나에 에이전트 하나. 각 에이전트가 계약 원문(criteria.json의 statement)과",
 );
-L.push(`   초안 구절을 직접 읽었다. 요약본은 어디에도 개입하지 않았다.`);
+L.push("   초안 구절을 직접 읽었다. 요약본은 어디에도 개입하지 않았다.");
 L.push(`2. **반박(판정표)** — 다른 에이전트가 같은 원문만 보고 "좁게 읽었나"를 판정.`);
 L.push(
   `   narrow ${(review.narrow_ids ?? []).length}건 → 전부 수정 반영 (${(review.revised_ids ?? []).join(", ") || "없음"}).`,
 );
-L.push(`3. **완전성 비평** — 69개 id를 받아 빈/누락/중복/미지 의존을 지목. 빈·누락·중복 0건,`);
+L.push("3. **완전성 비평** — 69개 id를 받아 빈/누락/중복/미지 의존을 지목. 빈·누락·중복 0건,");
 L.push(`   의심 12건 지목 → 주제별 표적 수리로 ${(review.repaired ?? []).length}개 행 수리.`);
 L.push(`4. **반박(테스트)** — 구현이 없는 시점에 테스트만 보고 "빈 껍데기로도 통과하나"를 판정.`);
 if (flagged.length > 0) {
@@ -124,13 +124,37 @@ if (flagged.length > 0) {
     `   걸림 ${flagged.length}건 → 수정 ${flagged.filter((f) => f.revised).length}건: ${flagged.map((f) => `${f.id}(${f.verdict})`).join(", ")}.`,
   );
 } else {
-  L.push(`   걸림 0건 — 전부 honest 판정.`);
+  L.push("   걸림 0건 — 전부 honest 판정.");
 }
 if (rebutMissing.length > 0) {
   L.push(
     `   **반박이 돌지 못한 조건 ${rebutMissing.length}건**: ${rebutMissing.join(", ")} — 미검증으로 남는다.`,
   );
 }
+L.push("");
+L.push("## 직접 재검증하는 법 (이 문서를 믿지 말고 돌려라)");
+L.push("");
+L.push("```");
+L.push(
+  "bun tools/validate-oracle-table.ts   # 69행이 게이트①③·결정0001을 통과하는지 (위반 0건이어야 함)",
+);
+L.push(
+  "bun tools/render-gate-a-package.ts   # 이 문서 재생성 후 git diff — 수치가 바뀌면 문서가 낡은 것",
+);
+L.push(
+  "bun tools/verify-freeze.ts           # 진짜 게이트④로 동결 69개 재검사 (거부 0건이어야 함)",
+);
+L.push("bun test src                         # 방어 게이트 5개 — 초록이어야 함");
+L.push("bun test acceptance                  # 수용 테스트 69개 — 전부 빨강이어야 함 (설계상)");
+L.push("git diff --stat HEAD -- contract/    # 계약 원문 무변경 확인 (빈 출력이어야 함)");
+L.push("```");
+L.push("");
+L.push("**저장소 전체 `bun test`는 지금 빨강이다 — 설계상 그렇다.** 방어 게이트는 초록이고,");
+L.push("수용 테스트 69개는 아직 없는 모듈을 import하므로 전부 빨강이다. 조각 3의 구현이 하나씩");
+L.push(
+  "초록으로 만든다. `acceptance/`는 `tsconfig.json`의 include 밖이라 `tsc --noEmit`은 통과한다",
+);
+L.push("(없는 모듈을 향한 import를 타입 검사에 넣으면 조각 3 내내 영구 빨강이 되므로).");
 L.push("");
 L.push("## 조건별 요약");
 L.push("");
