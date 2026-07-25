@@ -624,11 +624,30 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
 (파싱 실패 시 빈 `Set`을 반환 → 올바르게 연결된 질문이 거부되고 고아 카운터가 부풀려진다,
 감사 A #4). 그러니 순서는:
 
-1. **`src/interview/goal-state.ts` — 두 형상을 화해시킨다.** `goalState`(술어별 `confirmed`, `text` 없음)
-   와 `goal-revision.ts:17-21`의 `RevisableGoalState`(상단 `confirmed` + `predicates[].text`)와
-   ac-4의 `goalStateSchema`/`persistedWorkItemSchema`가 **서로를 거부한다.** 진짜 ac-1 목표 상태를
-   `finalizeIntent`에 넣으면 **항상** `unconfirmed_goal_state`로 막힌다(probe E). 이걸 먼저 정하지
-   않으면 ac-1·ac-2·ac-3·ac-4·ac-B5 수리가 각자 다른 형상을 가정한다.
+1. **`src/interview/goal-state.ts` — 다섯 형상을 화해시킨다.** [2026-07-26 **부분 완료**, 아래
+   "0단계 1번 진행 상태" 참조] 목표 상태를 보는 렌즈가 **둘도 셋도 아니라 다섯**이다:
+   - **live** — `goal-state.ts`의 `goalState`/`goalPredicate`(술어별 `confirmed`, `statement`).
+   - **revisable** — `goal-revision.ts:17-31`의 `RevisableGoalState`(상단 `confirmed` +
+     `predicates[].text`). **런타임 검증이 없다** — 타입뿐이라 어떤 값도 들어온다.
+   - **persisted** — `goal-state.ts:67-101`의 `goalStateSchema`/`persistedGoalPredicateSchema`/
+     `persistedWorkItemSchema`(상단 `confirmed` + `judge` enum, `.strict()`). **src 소비자 0.**
+   - **gate** — `goal-state-gate.ts`(`judge`가 enum이 아니라 `string`).
+   - **session** — `session.ts:9-21`의 `SessionGoalState`/`SessionPredicate`(술어별 `satisfied`).
+
+   이것들이 **서로를 거부한다.** 진짜 ac-1 목표 상태를 `finalizeIntent`에 넣으면 **항상**
+   `unconfirmed_goal_state`로 막혔다(probe E). 이걸 먼저 정하지 않으면
+   **ac-1·ac-2·ac-3·ac-4·ac-6** 수리가 각자 다른 형상을 가정한다.
+
+   **[2026-07-26 정정] 이 목록에서 `ac-B5`를 빼고 `ac-6`을 넣었다.** 근거(독립 조사자 둘이 각각
+   확인, 기록 시 재확인):
+   - `grep -n "goal" acceptance/ac-B5.test.ts` → **0건.** ac-B5의 import는 `glossary/entry`와
+     `laddering/{bipolar-pair,glossary-record,ladder-updown,triadic-alternatives}`뿐이고,
+     `grep -rn "goal" src/interview/laddering/ src/interview/glossary/` 도 **0건**이다.
+     ac-B5는 목표 상태를 건드리지 않는다 — **0단계 5번(glossary 항목 형상) 소속**이다.
+   - ac-6이 빠져 있었다. `session.ts:9-21`의 `SessionGoalState`가 **다섯째 형상**이고,
+     `remaining-gap.ts:19`가 `predicate.satisfied !== true`로 거르기 때문에 **모든 술어가
+     `confirmed:true`인 목표 상태도 100% 미충족 갭으로 렌더된다**(`satisfied`가 없으니 전부
+     미충족). 확정과 충족이 다른 축인데 한쪽만 있는 레코드가 다른 렌즈로 넘어가면 그렇게 읽힌다.
 2. **`src/interview/turn.ts` — 참조 검사의 실패 모드를 정한다.** 파싱 실패를 "모두 고아"로 접지 말고
    fail-closed하게 거부하거나 명시적으로 보고한다.
 3. **`src/interview/finalize.ts` — 게이트를 기록 경로 앞으로 옮긴다(X2).** `finalizeIntent`의 검사를
@@ -645,6 +664,56 @@ X3(ac-13·ac-4·ac-32의 자기충족 가드)은 **코드 수리가 아니라 �
 **매 수리 뒤 4종**: `bun test acceptance/<건드린 조건들>.test.ts` · `bunx tsc --noEmit` ·
 `bun test src` · `bun tools/verify-freeze.ts`. 공유 이음매를 건드렸으면 §4 "이미 선 공유 이음매"의
 회귀 목록도 돌린다.
+
+#### 0단계 1번 진행 상태 — **부분 완료** (2026-07-26, 커밋 `1ec21c6`)
+
+**완료로 읽지 마라.** 구현 에이전트 1명이 짓고 다른 인스턴스의 검증 에이전트가 2라운드 독립
+재검해 `pass with findings`를 냈다. 화해된 것은 **읽기 경로뿐**이다.
+
+**닫힌 것 (실측)**
+
+- 진짜 목표 상태가 `finalizeIntent`를 통과한다(전: 항상 `unconfirmed_goal_state`).
+  `finalize.ts:50`이 `confirmed !== true` → `isGoalStateConfirmed(...)`.
+- 형상 불일치가 더는 "고아"로 접히지 않는다(감사 A #4). `turn.ts`가 `parseGoalState` 대신
+  `readPredicateIds`를 쓰고, 읽을 수 없는 목표 상태는 새 거부 종류 `unreadable_goal_state`로
+  거부하며 **고아 카운터를 올리지 않는다**(전: 올바른 참조도 고아 거부 + 카운터 부풀림).
+- 개정 채택 결과가 재파싱 가능해졌다 — `reword`가 `statement`/`text`를 함께 옮긴다
+  (전: 한쪽만 갱신돼 어느 렌즈로도 못 읽는 잡종이 남았다).
+- 자율 초안의 빈 술어 배열이 거부된다(`predicates` `.min(1)`).
+
+**닫히지 않은 것 (같은 커밋의 자백)**
+
+- **다섯 스키마는 여전히 서로를 거부한다.** live↔persisted가 `confirmed`/`judge`로 양방향
+  거부하고, ac-3 native 술어는 `statement`가 없어 live가 거부한다. 화해된 것은 읽기 경로뿐.
+- **새 비대칭이 생겼다** — live의 `derived_at`이 `.datetime({ offset: true })`이라 ac-4
+  `goalStateSchema`의 `.datetime()`보다 **느슨하다**. `+09:00` 타임스탬프는 live는 통과하고
+  ac-4 스키마는 거부한다. 긴축(`.min(1)`→`.datetime()`) 자체가 동결 테스트가 요구하지 않은 것이다.
+- **X1이 한 칸 악화됐다** — `parseGoalState`의 **src 호출자가 0이 됐다**(전에는 `turn.ts:77`이
+  유일한 호출자). 실기록 경로가 zod 검증을 완전히 벗어났다. 남은 호출자는 `acceptance/ac-1`·
+  `ac-2`뿐. **0단계 3번이 이것을 되돌려야 한다.**
+- **`ac-2` [파손]은 닫히지 않았다.** `.min(1)`은 `delegation.ts:76`의
+  `derivedGoalState === undefined` 분기 안에서만 작동해 자율 초안 경로 하나만 막는다.
+  실증된 우회로 둘이 그대로다 — (i) 세션이 이미 빈 `goal_state`를 들고 있으면 통과,
+  (ii) 태그 철자가 `explicit_skip`이 아니면 라운드-0을 통째로 건너뜀.
+
+#### 수리하며 새로 드러난 것 — 감사 원문에도 위 백로그에도 **없던** 항목 (0순위)
+
+- **`adoptDiscoveryQuestion`이 재확정 대가를 지울 수 있었다** `[닫음, 단 넓게 감]` — 상단
+  플래그만 리셋하면 술어별 `confirmed:true`가 옛 문안 기준으로 남아 파생 규칙이 "여전히 확정"으로
+  읽는다. 이번에 `unconfirm`으로 닫았으나 **개정 대상뿐 아니라 모든 술어를 리셋**했다.
+  `gate-a/rows/ac-3.json` 절5와 `contract/contract-draft.md:83`은 **상단 플래그만** 말하고,
+  `acceptance/ac-3.test.ts:36-45` 픽스처엔 술어별 `confirmed`가 없어 동결 테스트가 판정하지
+  못한다. 부작용: 개정과 무관한 술어의 확정 기록까지 지워져 재확정 비용이 커진다. **판단 필요.**
+- **파생 규칙의 두 번째 문** `[미해결 · 계약 대면 대상]` — `isGoalStateConfirmed`가 상단 플래그
+  부재 시 술어 전원 확정으로 판정하므로, `{predicates:[{confirmed:true}]}`처럼 **id·statement·
+  검증수단이 하나도 없는** 술어만으로도 `finalizeIntent`가 열린다. `finalizeIntent`가 목표 상태를
+  zod로 파싱하지 않기 때문이다. 코드 수리 전에 §7의 계약 근거 문제부터 판정해야 한다.
+- **`.datetime({offset:true})` vs ac-4 `.datetime()` 비대칭** `[미해결]` — 위 참조.
+- **`parseGoalState` src 호출자 0 (X1 악화)** `[미해결]` — **0단계 3번이 되돌려야 한다.**
+  `predicateText`는 호출자가 처음부터 0이다(태어날 때부터 모듈 섬).
+- **새 코드에 자기 테스트가 0이다** `[미해결]` — `bun test src`는 70/0으로 **불변**이었다.
+  `readPredicateIds`·`isGoalStateConfirmed`·`unconfirm`·`reword` 넷 다 동결 테스트로만 간접
+  보증된다. TDD의 Red 단계가 없었다. 이후 수리도 같은 길로 가면 `src` 게이트는 계속 70에 머문다.
 
 #### 수리도 새 운전 방식으로 한다
 
@@ -719,9 +788,13 @@ X3(ac-13·ac-4·ac-32의 자기충족 가드)은 **코드 수리가 아니라 �
   U1~U10 소비자는 전부 섰다(ac-19 포함). 이 블록의 문구를 고치면 위 회귀 목록 + ac-19를 돌릴 것.
 - `src/interview/charter/charter.ts` — 헌장 원문(비어있지 않은 줄 ≥20 유지).
 - `src/interview/glossary/{entry,render,avoid-scan,landing}.ts` — ac-B5가 `entry`를 쓴다.
-- `src/interview/goal-state.ts` — **두 형상이 공존한다.** 기존 `goalState`(술어별 confirmed)와
-  ac-4의 `goalStateSchema`(상단 confirmed + judge, 지속 저장용)·`persistedWorkItemSchema`. 어느 쪽도
-  깨지 말고 additive로만 붙여라.
+- `src/interview/goal-state.ts` — **[2026-07-26 정정] 형상은 둘이 아니라 다섯이다.**
+  live(`goal-state.ts`의 `goalState`) / revisable(`goal-revision.ts`, 런타임 검증 없음) /
+  persisted(`goal-state.ts:67-101`, src 소비자 0) / gate(`goal-state-gate.ts`, `judge`가 enum 아닌
+  `string`) / session(`session.ts`, 술어별 `satisfied`). 전체 대조는 §4 "수리 순서" 0단계 1번.
+  어느 쪽도 깨지 말고 additive로만 붙여라. live 쪽은 2026-07-26에 `.passthrough()`가 됐으므로
+  **미지 필드가 조용히 통과한다** — 오타 난 필드를 이 스키마가 더는 잡아 주지 않는다.
+  지속 스키마 3개는 `acceptance/ac-4.test.ts`가 동결하고 있어 손대면 빨개진다.
 - **`src/interview/finalize.ts` — 두 API가 한 파일에 산다.** ac-3의 `finalizeIntent`(목표상태·AC·차원
   블로커)와 ac-9의 `finalize`/`createIntentStore`/`listRecordedIntents`(보존 판정 fail-closed).
   ac-32가 후자를 더 쓴다.
@@ -827,4 +900,13 @@ ac-9로 `src/cli/interview-finalize.ts`의 finalize arm(거부 시 0 아닌 종�
 - **ac-4의 문안 절 (6)("전체 bun test가 exit 0")은 현재 거짓이다.** 스위트는 36 fail로 exit 1이다.
   조각 3이 끝나면 자동으로 닫히는 성격인지, 아니면 ac-4를 지금 초록으로 셀 수 없는지는
   **사용자 판단 사안**이다(§4 ac-4 항목).
+- **`isGoalStateConfirmed`의 파생 규칙에 계약 원문 근거가 없다** (2026-07-26, 커밋 `1ec21c6`).
+  그 규칙은 "상단 확정 플래그가 없으면 술어 전원 확정을 곧 목표 상태 확정으로 본다"이고,
+  `finalizeIntent`의 `unconfirmed_goal_state` 블로커가 이것을 판정한다. 계약에는
+  `contract/contract-draft.md:72`(술어별 confirm **행위** — "검증수단 없는 술어는 confirm 불가")와
+  `:73`·`:83`(상단 `confirmed=false` 리셋)이 **각각** 있으나 **둘을 잇는 대목이 없다.** 더구나
+  계약은 술어별 `confirmed` **필드의 존재조차 말하지 않는다** — 그 필드는 ac-1 구현이 도입했다.
+  즉 파생 규칙은 구현이 만든 필드 위에 구현이 세운 해석이며, 동결 테스트도 이것을 판정하지
+  않는다(ac-3 픽스처에 술어별 `confirmed`가 없다). **사용자 판정 사안이다.** 여기서 파생되는
+  구멍은 §4 0순위 "파생 규칙의 두 번째 문" 항목.
 - 실제 인터뷰를 한 번도 돌려 보지 않았다(관문 B). 표면이 서기 전까지는 돌릴 수 없다.
