@@ -100,14 +100,46 @@ verbatim 일치(처음 생성에서 줄바꿈 한 글자가 붙어 실패했고 
 증거 어휘 번역은 **결정 0001**(`decisions/0001-contract-evidence-mapping.md`)로 고정돼 있다 —
 test→test, doc→file, log→file. 매핑을 벗어나면 `src/gate/contract-evidence.test.ts`가 깨진다.
 
-## 4. 다음 행동 — 관문 A 승인 후 조각 3 (인터뷰 표면)
+### 관문 A 승인됨 (2026-07-26) — 조각 3 진행 중
 
-승인 전에는 착수하지 않는다. 승인이 떨어지면 물결 단위로, 같은 이음매끼리 묶어서 구현한다 —
-`gate-a/rows/*.json`의 `module_plan`(신규 모듈 경로 195개)과 `depends_on`이 물결 순서의 근거다.
-매 걸음을 조각 1의 게이트가 검사하고, 동결된 빨간 테스트를 하나씩 초록으로 만든다. 테스트를
-고쳐서 통과시키는 길은 게이트④가 막는다(`bun tools/verify-freeze.ts`로 상시 확인).
+**현재 12/69 초록.** 진행 상황은 언제든 `bun tools/progress.ts`로 확인한다(동결 테스트를 개별
+실행해 물결별로 센다). 완료된 것: 물결 1 전부(ac-1·13·21·22·27), 물결 2에서 7개(ac-11·12·15·
+16·17·18·B4).
 
-여기에 계약이 이름 부르지 않은 배선 하나가 붙는다: **명령줄 진입점** — 첫 명령이 곧 인터뷰다.
+## 4. 다음 행동 — 조각 3 계속
+
+물결 순서대로, 조건 하나씩 순차로 짓는다. **부챗살 금지**(락 없이 같은 파일을 덮어쓴다) —
+판단 작업만 부챗살로 뿌린다. 다음 대상은 `bun tools/progress.ts`가 물결 2에 남았다고 표시하는
+것들: ac-14 ac-20 ac-24 ac-26 ac-29 ac-3 ac-4 ac-5 ac-9 ac-B2 ac-B5 ac-B7.
+
+조건 하나를 짓는 절차:
+
+1. `gate-a/rows/<id>.json`의 `oracle_statement`와 `module_plan`을 읽는다.
+2. `acceptance/<id>.test.ts`를 읽는다 — **이것이 완료 정의다. 절대 수정하지 않는다.**
+   헤더 주석에 어떤 절이 잔여인지 적혀 있다.
+3. `module_plan`의 신규 모듈을 `src/` 아래에 쓴다.
+4. `bun test acceptance/<id>.test.ts`가 초록이 될 때까지.
+5. `bunx tsc --noEmit`, `bunx biome check --write src/`, `bun test src`(방어 게이트 회귀),
+   `bun tools/verify-freeze.ts`(동결 무결) 확인 후 커밋.
+
+**이미 선 공유 이음매**(다시 만들지 말고 확장할 것):
+
+- `src/interview/charter/directives.ts` — U1~U10 블록. 10개 테스트가 쓴다. `getDirectiveBlock(id)`은
+  미지 id에 throw(fail-closed), `extractCueBlock(text, id)`는 임의 표면에서 마커로 블록을 뽑는다.
+  새 cue가 필요하면 해당 블록에 줄을 **추가**한다 — 기존 문구 수정은 다른 테스트를 깬다.
+- `src/interview/charter/charter.ts` — 헌장 원문(≥20줄 유지).
+- `src/interview/glossary/{entry,render,avoid-scan,landing}.ts` — ac-B5가 `entry`를 추가로 쓴다.
+- `src/interview/goal-state.ts` — ac-4가 `goalStateSchema`·`persistedWorkItemSchema`를 추가로
+  요구한다(기존 `parseGoalState`·`confirmPredicate`를 깨지 말고 additive로 추가).
+- `src/interview/turn/{reconstruction,attribution,teachback,hearback,example-classification}.ts`
+- 주의: `src/interview/turn.ts`(ac-2·3·10f가 쓰는 `createSession`/`createTurnLog`/`recordFiredTurn`)는
+  위 `turn/` 디렉터리와 **다른 표면**이다. 아직 없다.
+
+**설계 노드 5개**(ac-33·36·38·39·E2)는 코드 구현이 아니라 spec 문서 + 동결 red 산출물이다.
+`*.redtest.ts` 명명이 bun 기본 glob에 안 걸린다는 것은 실측 확인했다.
+
+계약이 이름 부르지 않은 배선 하나가 남아 있다: **명령줄 진입점**(citty) — 첫 명령이 곧 인터뷰다.
+ac-9가 `src/cli/interview-finalize`를 요구하므로 그 지점에서 함께 선다.
 
 ## 5. 하지 말 것
 
