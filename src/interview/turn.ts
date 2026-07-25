@@ -14,8 +14,24 @@
  * orphan counter — a number that is supposed to mean "unattached questions
  * were fired" was reporting a schema mismatch instead. So an unreadable goal
  * state refuses the turn under its own rejection kind and leaves the orphan
- * counter alone. What the terminal failure mode should be (throw, or this
- * explicit report) is not settled here.
+ * counter alone.
+ *
+ * Separating the kind is only half of it: the refusal must also be countable.
+ * A refusal that only travels back to its immediate caller hands the log
+ * onward byte-identical, so nothing downstream can tell a turn was dropped —
+ * exactly the silent drop the orphan counter exists to prevent. Each refusal
+ * kind therefore has its own counter, and neither is ever incremented for the
+ * other's reason. What the terminal failure mode should be (throw, or this
+ * counted refusal) is still not settled here; counting it is what makes the
+ * choice observable either way.
+ *
+ * Both counters are incremented undefended: a log arriving without one would
+ * produce NaN rather than an error. That is deliberate. The type forbids such a
+ * log, nothing in this repo deserializes a turn log, and the defence one would
+ * reach for (`?? 0`) silently invents a count of zero for a record that was
+ * never a valid log — fail-quiet, in a module whose whole subject is refusing
+ * to swallow things silently. The fail-closed answer is a parse boundary for
+ * the log itself, which belongs with the goal-state re-wiring, not here.
  *
  * Every operation returns a new log — the caller cannot mutate history in place
  * — and the rest of the session (delegations, goal state) rides through
@@ -49,7 +65,15 @@ export type SessionTurn = FiredQuestionTurn | UserUtteranceTurn;
 
 export type TurnLog = {
   readonly turns: readonly SessionTurn[];
+  /** How many fired questions were refused for naming no goal predicate. */
   readonly orphan_rejection_count: number;
+  /**
+   * How many fired questions were refused because this log's goal state could
+   * not be read. Deliberately NOT the orphan counter: those questions may be
+   * perfectly well linked, and mixing them in is what made the orphan number
+   * report a schema mismatch.
+   */
+  readonly unreadable_goal_state_rejection_count: number;
   /** Present once round 0 has derived one; the orphan gate reads it. */
   readonly goal_state?: unknown;
 };
@@ -74,7 +98,7 @@ export type RecordFiredTurnResult<L extends TurnLog> = {
 };
 
 export function createTurnLog(): TurnLog {
-  return { turns: [], orphan_rejection_count: 0 };
+  return { turns: [], orphan_rejection_count: 0, unreadable_goal_state_rejection_count: 0 };
 }
 
 export function createSession(input: { source_request: string }): Session {
@@ -82,6 +106,7 @@ export function createSession(input: { source_request: string }): Session {
     source_request: input.source_request,
     turns: [],
     orphan_rejection_count: 0,
+    unreadable_goal_state_rejection_count: 0,
     delegations: [],
     goal_state: undefined,
   };
@@ -93,13 +118,28 @@ const UNREADABLE_GOAL_STATE =
 /**
  * The predicate ids this log's goal state holds.
  *  - `undefined` — no goal state at all, so there is nothing to check against.
- *  - `null` — a goal state exists but cannot be read.
+ *  - `null` — a goal state exists but cannot be judged against.
  *  - a set — the ids it names.
+ *
+ * An EMPTY predicate list joins the `null` arm rather than becoming an empty
+ * set, and that is a decision rather than a detail. An empty set would refuse
+ * every ref as an orphan, which is observationally the very defect that folding
+ * parse failures into "orphan" produced: a question that DID name a predicate
+ * lands on the counter the contract reserves for questions that named none.
+ * A goal state with no predicates is not a goal with nothing in it — the live
+ * lens refuses it outright (goal-state.ts's `.min(1)`) and ac-2 clause 5
+ * requires `predicates.length > 0` — so it is a defective standard, and the
+ * honest report is "this cannot be judged against", not "your ref is wrong".
+ *
+ * The structural reader stays honest about the distinction (`readPredicateIds`
+ * returns `[]`, which truthfully means "names no ids"); collapsing the two is a
+ * policy this gate owns, not a fact the reader should hide from other callers.
  */
 function predicateIdsOf(log: TurnLog): Set<string> | null | undefined {
   if (log.goal_state === undefined) return undefined;
   const ids = readPredicateIds(log.goal_state);
-  return ids === null ? null : new Set(ids);
+  if (ids === null || ids.length === 0) return null;
+  return new Set(ids);
 }
 
 export function recordFiredTurn<L extends TurnLog>(
@@ -119,10 +159,13 @@ export function recordFiredTurn<L extends TurnLog>(
   const predicateIds = predicateIdsOf(log);
   if (predicateIds === null) {
     // Not an orphan: the ref may well be correct — this module simply cannot
-    // tell. The orphan counter stays where it was.
+    // tell. The orphan counter stays where it was; this refusal gets its own.
     return {
       recorded: false,
-      log,
+      log: {
+        ...log,
+        unreadable_goal_state_rejection_count: log.unreadable_goal_state_rejection_count + 1,
+      },
       rejection: { kind: "unreadable_goal_state", reason: UNREADABLE_GOAL_STATE },
     };
   }
