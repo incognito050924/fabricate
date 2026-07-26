@@ -55,6 +55,8 @@ export type LockRecord = {
 };
 
 export type LockRefusalReason =
+  | "no-evidence"
+  | "evidence-without-a-stage"
   | "readiness-blocked"
   | "consistency-pass-not-run"
   | "conflicting-floor-blocked"
@@ -120,6 +122,26 @@ const refuse = (context: RefusalContext): LockOutcome => {
   return outcome;
 };
 
+/** Did the caller put anything at all on the table? */
+const hasAnyEvidence = (evidence: LockEvidence): boolean =>
+  evidence.dimensions !== undefined ||
+  evidence.answers !== undefined ||
+  evidence.judge !== undefined ||
+  evidence.statement !== undefined ||
+  evidence.gate !== undefined ||
+  evidence.confirmation !== undefined ||
+  evidence.sink !== undefined;
+
+/**
+ * Evidence only stage 3 can read, with stage 3 switched off. A gate verdict and
+ * a confirmation record are about writing; without a sink nothing reads either,
+ * so they would be carried past every check and end at the lock — including a
+ * gate verdict that says, in as many words, that this statement was refused.
+ */
+const hasWriteEvidenceWithoutSink = (evidence: LockEvidence): boolean =>
+  evidence.sink === undefined &&
+  (evidence.gate !== undefined || evidence.confirmation !== undefined);
+
 type WriteRefusal = { reason: LockRefusalReason; detail: string };
 
 /**
@@ -152,6 +174,21 @@ const attemptWrite = (
  */
 export function enterLock(evidence: LockEvidence): LockOutcome {
   const journal: JournalEntry[] = [];
+
+  // 0. Nothing on the table at all. Each stage below fires on its own evidence,
+  //    so a call carrying none skips every one of them — and a lock granted for
+  //    having asserted nothing is the cheapest way through the only door there
+  //    is. An empty collection is still evidence; no collection is not.
+  if (!hasAnyEvidence(evidence)) {
+    return refuse({ reason: "no-evidence", consistency: NOT_RUN, journal });
+  }
+
+  // 0b. Evidence whose only reader is a stage that will not fire. The caller
+  //     meant to write and did not say where — and a refused gate verdict
+  //     handed over this way would otherwise buy a lock outright.
+  if (hasWriteEvidenceWithoutSink(evidence)) {
+    return refuse({ reason: "evidence-without-a-stage", consistency: NOT_RUN, journal });
+  }
 
   // 1. Readiness — fires when a dimension structure is on the table.
   const blockers = evidence.dimensions ? blockingSeedIds(evidence.dimensions) : [];
