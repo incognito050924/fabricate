@@ -159,9 +159,17 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
 `:233`, CLI 배선은 `src/cli/interview-finalize.ts:25`), 여기에는 **ac-3의 고아/`confirmed`/열린 차원
 검사도, ac-27의 잠금 게이트(수용판정+다이제스트 결속)도 없다.** ac-3의 검사를 가진 `finalizeIntent`
 (`finalize.ts:47`)와 ac-27의 `lock/intent-write.ts`는 **비-테스트 호출자가 0**이다(감사 A #2,
-감사 E #5). 게다가 **잠금 진입점이 셋**이다 — `enterLockPath`, `proceedToLock`
-(`readiness-gate.ts:39`), `lockIntent` (`lock/intent-write.ts:66`); 뒤의 둘은 정합성 통과를 돌리지도
-기록하지도 않는다(감사 H, ac-31). ac-31의 "잠금 진입점은 정확히 하나"는 저장소 수준에서 거짓이다.
+감사 E #5). 게다가 **잠금 진입점이 셋**이다 — `enterLockPath`
+(`consistency/contradiction-pass.ts:35`), `proceedToLock` (`readiness/readiness-gate.ts:40`),
+`lockIntent` (`lock/intent-write.ts:56`); 뒤의 둘은 정합성 통과를 돌리지도
+기록하지도 않는다(감사 H, ac-31).
+**[2026-07-26 정정 둘]** ① 셋이 아니라 **다섯**이었다 — 위 셋 + `writeIntent`
+(`lock/intent-write.ts:43`) + 실제로 기록하는 `finalize`(`finalize.ts:158`·`:233`).
+② "ac-31의 '잠금 진입점은 정확히 하나'"는 **ac-31이 말한 적 없다** —
+`gate-a/rows/ac-31.json`의 oracle 6개 절에 그런 절이 없고, `acceptance/ac-31.test.ts:15`의
+테스트 작성자 산문일 뿐이다(아래 ac-31 항목 참조). 진입점 통합은 계약이 명령한 수리가 아니다.
+**[2026-07-26 진행]** 문 넷은 `lock/enter.ts`의 `enterLock` 하나로 통합됐다(커밋 `72b4c8e`).
+**`finalize`는 여전히 그 밖이고, 강제력도 통합되지 않았다** — 아래 "0단계 4번" 표 참조.
 
 **X3. 회귀 가드 여러 개가 자기충족이다.**
 "보존한다"는 그 동작이 **초록으로 만든 바로 그 커밋에서 처음 쓰였다.**
@@ -414,13 +422,18 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
 - 문제: 준비 게이트가 **`open` 말고 모든 상태에 눈이 멀었다.** `origin==="discovered" && state==="open"`
   만 보므로 `unevaluated`인 시드도, 존재하지 않는 상태값도 `{ready:true}`·`locked:true`가 된다.
   ac-25 자신의 절 6은 이를 용인하지만, **ac-26 절 3의 보증을 저장소 수준에서 거짓으로 만든다.**
-- 근거: `src/interview/dimension/readiness-gate.ts:24,39` · `src/interview/dimension/seed-uncovered.ts:38-48`
+- 근거: `src/interview/readiness/readiness-gate.ts:24,39` · `src/interview/completeness/seed-uncovered.ts:38-48`
+  ([2026-07-26 경로 오기 정정] 원 감사문은 둘 다 `dimension/` 아래로 적었으나 그런 파일은 **없다**.
+  행 번호는 감사 시점 기준이다.)
 - 확인: probe: `state:"unevaluated"`인 discovered 시드 → `{ready:true,blockers:[]}`,
   `proceedToLock(...).locked===true`. probe: 같은 `id:"f-1"` 조각 2개 → 같은 id의 차원 노드 2개.
   probe: 기존 `{id:"dim-seed-f-3"}` + 미커버 `f-3` → id 충돌.
-- 건드릴 파일: `src/interview/dimension/{readiness-gate,seed-uncovered}.ts`
+- 건드릴 파일: `src/interview/readiness/readiness-gate.ts` · `src/interview/completeness/seed-uncovered.ts`
 - 딸린 것: 게이트가 `drop_reason`을 안 봐서 **이유 없는 드롭이 하드 블록을 푼다** —
   `dimension.ts:42 isSettled`·`finalize.ts:70`과 모순.
+- → **[2026-07-26 부분 수리, 커밋 `7006843`]** 차단 술어를 `src/interview/readiness/seed-block.ts`로
+  떼어 내고 뒤집었다 — `unevaluated`·열거 밖 상태·상태 부재·이유 없는 drop 전부 차단.
+  **`seed-uncovered.ts`의 id 충돌은 손대지 않았다.** 하드닝에 계약 근거가 없다는 것은 §7 참조.
 
 **ac-26** `[의심]` — 감사 H
 - 문제: **절 4a의 "모든 소비자" 전수 스캔이 사실상 비어 있고, 이미 우회당했다.** 스캔은 상태 모듈을
@@ -434,7 +447,8 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
   probe: `{dimension_id,target_state,closed_at,actor}` → `success:false`(`.strict()`).
   probe: `close.refutation_attempted === false` → `missing_markers:["refutation_attempted"]`(있는 필드를
   없다고 보고).
-- 건드릴 파일: `src/interview/dimension/{close,resolution-shell,readiness-gate,seed-uncovered}.ts`,
+- 건드릴 파일: `src/interview/dimension/{close,resolution-shell}.ts` ·
+  `src/interview/readiness/readiness-gate.ts` · `src/interview/completeness/seed-uncovered.ts` ·
   `src/interview/dimension.ts`
 - 넓게 간 자리 셋: `dropped: () => true`(**닫힘 쪽으로 넓힌 것 — 위험한 방향**, `isSettled`와 충돌),
   `refutation_attempted !== true`(부재와 false를 구분하지 않음), `.strict()`(호환성 절의 목적과 정반대).
@@ -467,13 +481,26 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
   "돌았다"를 오직 `Array.isArray(conflicts)`로 판정한다 — 객체 리터럴 하나로 **안 돌린 검사가
   "검증된 0"으로 위장**된다(pass id 없음, 판정자 없음, 저널 없음). ADR-0018이 금지한 바로 그 위장이고,
   ac-28이 소비하기로 되어 있는 표면이다.
-- 근거: `src/interview/lock/conflicting-input.ts:26-30` · `src/interview/lock/contradiction-pass.ts:38,47`
+- 근거: `src/interview/readiness/conflicting-input.ts:26-30` ·
+  `src/interview/consistency/contradiction-pass.ts:38,47`
+  ([2026-07-26 경로 오기 정정] 원 감사문은 둘 다 `lock/` 아래로 적었으나 그런 파일은 **없다**.
+  행 번호는 감사 시점 기준이다.)
 - 확인: probe: `deriveConflictingInput({conflicts:[]})` → `{status:"ran",conflicting:0}`, 바닥은
   `{blocked:false}`. probe: `deriveConflictingInput({status:"ran",conflicting:5})` → `{status:"not-run"}`
   (fail-closed지만 **타입 시그니처가 거짓말을 한다**).
-- 건드릴 파일: `src/interview/lock/{conflicting-input,contradiction-pass}.ts`
+- 건드릴 파일: `src/interview/readiness/conflicting-input.ts` ·
+  `src/interview/consistency/contradiction-pass.ts`
 - 딸린 것: 모듈 전역 가변 카운터라 id가 프로세스 간 재현되지 않고 `pass_ref`에 어떤 답을 판정했는지
-  증거가 없다. 그리고 **"잠금 진입점 정확히 하나"는 거짓이다(X2 참조).**
+  증거가 없다.
+- **[2026-07-26 정정 — 이 자리에 있던 "ac-31의 '잠금 진입점 정확히 하나'는 거짓이다"를 지웠다.]**
+  기록자가 직접 확인했다: **`gate-a/rows/ac-31.json`의 oracle 6개 절 어디에도 그런 절이 없다.**
+  절 1~6은 1회 실행 · 잠금 전 순서 · conflict 리스트=포인터 · count가 A4 `conflicting` 대체 ·
+  floor 실효화 · 미실행 정직 기록(ADR-0018)뿐이다. "정확히 하나"는 `acceptance/ac-31.test.ts:15`의
+  **테스트 작성자 산문**("There is exactly one lock entry point — `enterLockPath`")일 뿐이고,
+  판정 기준이 아니다. 따라서 **0단계 4번(진입점 통합)은 계약이 명령한 수리가 아니라 X2에서 파생된
+  구조 위생 작업**이다.
+- → **[2026-07-26 수리, 커밋 `7006843`]** `deriveConflictingInput`이 이제 pass id를 요구한다.
+  `{conflicts:[]}`는 `not-run`이고 바닥이 막는다. 카운터 재현성·`pass_ref` 증거 부족은 **그대로다.**
 
 **ac-32** `[의심]` — 감사 B
 - 문제: **반대 블록이 `"engaged"` 정확히 그 문자열이 아닌 모든 상태에 fail-OPEN이다.** `status`가
@@ -678,7 +705,33 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
    X2 미해결은 **§7 미검증 + 관문 B 사람 판정 항목**으로 이월했고, ac-3·9·27·32는
    모듈 섬으로 남는다.
 4. **잠금 진입점 셋을 하나로(X2).** `enterLockPath`·`proceedToLock`·`lockIntent`.
-   그 전에는 ac-25·ac-27·ac-31 수리가 서로를 무효화한다.
+   → **[2026-07-26 완료, 커밋 `72b4c8e`(구조적) + `7006843`(동작적)] — 단, 구조만 하나가 됐고
+   강제력은 셋으로 갈라진 채다.** 완료로 읽되 아래 정정 네 개를 함께 읽어라.
+
+   **[정정 ①] 진입점은 셋이 아니라 다섯이었다.** 위 셋 + `writeIntent`(`lock/intent-write.ts:43`)
+   + 실제로 intent를 기록하는 `finalize`(`finalize.ts:158`·`:233`). 통합된 것은 **앞의 넷**이고,
+   `finalize`는 여전히 밖에 있다(X2 우회 결정, 위 3번 참조).
+
+   **[정정 ②] 이 통합은 계약이 명령한 것이 아니다.** `gate-a/rows/ac-31.json`의 oracle 6개 절에
+   "잠금 진입점 정확히 하나"는 **없다** — `acceptance/ac-31.test.ts:15`의 테스트 작성자 산문일
+   뿐이다. **X2에서 파생된 구조 위생 작업**으로 읽어야 한다.
+
+   **[정정 ③ · 가장 중요] 강제력은 통합되지 않았다.** `enterLock`의 세 단계는 각자 자기 증거에만
+   발동하고 네 문은 각자 한 종류의 증거만 넘기므로, **어느 경로도 두 단계 이상을 지나지 않는다**:
+
+   | 문 | 실제로 지나는 단계 |
+   | --- | --- |
+   | `proceedToLock` | 준비도만 |
+   | `enterLockPath` | 정합성만 |
+   | `lockIntent` / `writeIntent` | 수용판정 + 다이제스트만 |
+   | `finalize` (실기록 경로) | **아무것도 안 지난다 — `enterLock`을 부르지 않는다** |
+
+   즉 "진입점이 하나"는 참이지만 **"검사가 하나로 모였다"는 거짓**이다.
+
+   **[정정 ④] "그 전에는 ac-25·ac-27·ac-31 수리가 서로를 무효화한다"는 순서 제약으로서
+   반증됐다.** 이 자리에 원래 그렇게 적혀 있었다. 조사자가 감사 요구 수리 셋을 **진입점을 전혀
+   건드리지 않고 동시에 적용**해 `acceptance 570/36 · bun test src 87/0 · tsc 0 · 동결 69/0`을
+   얻었다. 순환은 계약이나 코드가 만든 것이 아니라 **"합치기"라는 선택이 스스로 만든 것**이다.
 5. **glossary 항목 형상(ac-21·ac-24·ac-B5)을 한 덩어리로.** `avoid` 목록의 단일 소유도 여기서 정한다.
 6. **`charter/directives.ts`(ac-11)는 마지막에, 단독으로.** 10개 테스트가 공유하는 최대 이음매다.
 
@@ -1046,6 +1099,13 @@ X3(ac-13·ac-4·ac-32의 자기충족 가드)은 **코드 수리가 아니라 �
   온다. **`1ec21c6`+`1f741db`가 늘린 것은 0건**이다(HEAD 워크트리 대조 301 = 작업 트리 301).
   → **동결 테스트를 타입으로 지키는 게이트는 없다.** `tsconfig.json`을 고쳐 넣지 마라(그러면 조각 3
   내내 영구 빨강이 된다) — 대신 "tsc 초록"을 acceptance 보증으로 인용하지 마라.
+- **이 하네스의 `grep`이 `acceptance/ac-27.test.ts`를 바이너리로 분류한다** (2026-07-26 기록자 실측).
+  파일 안의 이모지 때문에 `file`이 `data`로 판정하고, 그러면 `grep`은 그 파일을 **조용히 건너뛴다.**
+  실측: `grep -c "lock" acceptance/ac-27.test.ts` → **출력 없음, exit 1**. `grep -ac` → **19**.
+  `grep -rn "lockIntent" acceptance/` → **0건**, `grep -arn` → **8건**.
+  → **전수 조사에는 반드시 `-a`를 붙여라.** 그리고 **2026-07-26 감사와 이 문서의 grep 기반 전수
+  조사가 이 구멍을 지났을 수 있다** — "grep 0건이므로 호출자 없음"류의 결론은 `-a`로 재확인해야
+  한다.
 - **설계 노드 5개**(ac-33·36·38·39·E2)는 코드 구현이 아니라 **spec 문서 + 동결 red 산출물**이다.
   산출 red 테스트는 `*.redtest.ts`로 이름 짓는다 — bun 기본 glob에 안 걸린다는 것을 실측 확인했다.
 - **`bun tools/freeze-red-tests.ts`를 다시 돌리지 마라.** 동결은 이미 끝났다. 재실행은 지금 내용을
@@ -1148,4 +1208,44 @@ ac-9로 `src/cli/interview-finalize.ts`의 finalize arm(거부 시 0 아닌 종�
   예외가 된다. **착수 조건은 둘 중 하나다: (i) 새 거부 종류를 허용하거나, (ii) `throw`를 이
   표면의 최종 실패 모드로 확정하거나.** 둘 다 계약 근거가 없는 발명이므로 **사용자 판정
   사안**이다. 관련: §4 0순위의 F2(`?? 0` 거부).
+- **`ADR-0018`이 이 저장소에 없다** (2026-07-26 기록자 실측). `decisions/`에 있는 것은
+  `0001-contract-evidence-mapping.md` **하나뿐**이다. 그런데 `ADR-0018`을 인용하는 파일은
+  `c507da4` 시점에 **10곳**, 지금은 **12곳**이다(`grep -rla`):
+  `contract/criteria.json` · `contract/criteria.md` · `contract/contract-draft.md` ·
+  `contract/reviews/dialectic-1-design-approach.md` · `gate-a/oracle-table.md` ·
+  `gate-a/rows/ac-31.json` · `acceptance/ac-31.test.ts` · `audit/2026-07-26-piece3-audit.md` ·
+  `NEXT.md` · `src/interview/lock/enter.ts` · `src/interview/readiness/conflicting-input.ts` ·
+  `src/interview/readiness/conflicting-input.test.ts`. (수리 전에는 `src` 쪽 인용이
+  `src/interview/consistency/contradiction-pass.ts` 하나였다.) 즉 **"미실행 정직 기록"이라는 판정
+  기준 전체가 저장소에 없는 문서를 근거로 서 있고, 이번 수리가 그 인용을 더 늘렸다.**
+  ac-13의 "83행 헌장 부재"와 **같은 종류**이며, X3(계약 대면) 소관이다. 그 문서가 실제로 무엇을
+  정했는지 확인하기 전까지 ADR-0018 인용은 **미검증**이다.
+- **ac-31(영어 산문)과 ac-27(한국어 관찰-술어)의 동결 픽스처가 서로 모순이다** (2026-07-26).
+  "잠기는 모든 문안은 수용판정 게이트를 지난다"는 보증은 **동결을 깨지 않고는 성립 불가**다.
+  검증자 실측: 수용판정 게이트를 모든 잠금 경로에 항상 강제하면 **570 pass / 36 fail →
+  566 / 40**이 되고, **빨개지는 4건 전부 ac-31**이다. `acceptance/`는 고칠 수 없으므로(§5) 이
+  길은 닫혀 있다. **사용자 판정 사안이다** — ac-31 픽스처가 게이트 없이 잠그는 것을 허용으로
+  볼 것인지, ac-27의 게이트를 전역 불변식으로 볼 것인지.
+- **잠금 진입점 하드닝 4종에 계약 원문 근거가 없고, 동결 테스트가 전혀 판정하지 않는다**
+  (2026-07-26, 커밋 `7006843`). 넷은 ① 무증거 호출 거부(`no-evidence`) ② 읽는 단계가 없는
+  증거 거부(`evidence-without-a-stage`) ③ discovered seed의 적극적 해소 요구
+  (`unevaluated`·열거 밖 상태·상태 부재·이유 없는 drop 차단) ④ `deriveConflictingInput`의
+  pass id 요구다. `gate-a/rows/ac-25.json` oracle 절 6은 **`state='open'`만** 말하고, 나머지는
+  ac-26 절 3과 `dimension.ts`의 `isSettled`에서 끌어온 **구현자 해석**이다. 두 거부 사유 이름도
+  계약이 부른 적 없다. 그리고 **되돌림 돌연변이 5종 전부를 동결 스위트가 놓쳤다**(570/36 무변,
+  `verify-freeze` 통과). **유일한 방어선은 신규 src 테스트 3파일**(`lock/enter.test.ts` ·
+  `readiness/seed-block.test.ts` · `readiness/conflicting-input.test.ts`)이다.
+- **"잠금 기록이 `deriveConflictingInput`을 경유한다"는 소스 형상 규칙으로만 서 있다**
+  (2026-07-26). 행위 등가 검사는 진짜 패스가 언제나 진짜 id를 갖기 때문에 두 구현을 구별하지
+  못하고, 남은 셋(헬퍼 호출 존재 · 대입 자체가 그 호출 · `"ran"` 리터럴 부재)은 전부 소스
+  텍스트 규칙이다. **헬퍼로 대입한 뒤 다음 줄에서 덮어쓰면 세 규칙을 전부 통과한다** — 검증자가
+  그 돌연변이를 실제로 만들어 `src 128/0 · acceptance 570/36 · tsc 0` 전부 초록임을 확인했다.
+  행위 검사로 닫으려면 `enterLock`에 **외부 pass 주입 슬롯**이 필요한데 그것이 곧 ADR-0018이
+  금지한 위장 문이고, `bun:test`의 `mock.module`은 **정적 import를 가로채지 못한다**(실측
+  `calls === 0`). **사용자 판정 사안이다.**
+- **카운터 중복 발급에 신규 테스트 커버리지가 0이다** (2026-07-26). `consistency/pass-run.ts`를
+  떼어 낸 **이유 그 자체**가 "패스 id 카운터를 한 곳에서만 발급한다"인데, 그것을 직접 판정하는
+  테스트가 새로 하나도 없다. 방어하는 것은 동결(ac-31 절 1·2)뿐이고, 그것은 카운터가 어디서
+  발급되는지가 아니라 패스가 1회 도는지를 본다. 카운터를 둘로 쪼개는 회귀는 오늘 잡히지 않을
+  수 있다.
 - 실제 인터뷰를 한 번도 돌려 보지 않았다(관문 B). 표면이 서기 전까지는 돌릴 수 없다.
