@@ -11,6 +11,7 @@
 sed '1,8d' GOAL.md | shasum -a 256    # 2a4ba701d13dbf36… 여야 한다 (비준 본문 무결, 개정 5)
 git log --oneline -6                   # 최근 흐름
 ls src 2>/dev/null || echo "코드 없음 — 정상"
+ls verify package.json bin 2>/dev/null      # verify·bin이 없으면 0a부터다 — 루프를 켜지 마라
 ```
 
 **읽는 순서**: `GOAL.md` **전문**(짧다, 요약본을 쓰지 마라) → 이 문서 → 필요하면 `contract/original-request.md`(개정 3까지).
@@ -18,6 +19,8 @@ ls src 2>/dev/null || echo "코드 없음 — 정상"
 **한 줄 상태**: 목표 비준 + **개정 5까지 반영**(2026-07-27), 범위 확정, 열린 질문 0, **미확인 전부 닫힘**(훅 셋의 실물 페이로드 · 설치 연쇄 · 권한/신뢰 · `codex exec` 샌드박스), **역할 분담 확정 — 코드는 Codex, 프롬프트·검증은 Claude**, **구동 방식 확정 — 신뢰된 저장소 디렉터리에서 브랜치로, allowlist는 `.claude/settings.local.json`에 `Bash(bun run:*)`+`Bash(bun test:*)`**, **코드 0줄 — 이제 착수한다.**
 
 **이 세션이 할 일**: **정해진 방법대로 짓는다.** 방법을 정하는 단계는 끝났다 — 무엇을 만들지는 `GOAL.md` §2가, 어떻게 만들지는 아래 **"구현 형상 — 새 세션은 이대로 짓는다"**가 이미 적어 뒀다. 남은 것은 그 형상대로 코드를 내고 `bun run verify`를 초록으로 만드는 것뿐이다. **실측 결과는 설계 제약으로 그대로 받아라 — 다시 논의하지 마라.**
+
+> **루프를 먼저 켜지 마라.** 구동 루프의 종료 조건인 `bun run verify`가 **0단계의 산출물**이라, 지금 루프를 켜면 종료 조건이 없는 채로 돈다. 착수 지점은 **"0단계는 0a·0b로 갈린다"** 절의 **0a(대화형 부트스트랩)**다 — 미결 둘을 정하고, 다섯을 짓고, 연기 시험 넷을 통과한 **뒤에야** 0b의 루프를 켠다.
 
 ---
 
@@ -296,6 +299,78 @@ CLI는 `prompt_id`를 볼 수 없다 — **CLI는 장부에 쓰기만 하고 "�
 
 ---
 
+## 0단계는 0a·0b로 갈린다 — **루프를 먼저 켜지 마라** (2026-07-27 추가)
+
+**위 표는 그대로 유효하다.** 바뀌는 것은 0단계를 **어떻게 착수하는가** 하나다.
+
+### 왜 이 순서를 지켜야 하는가
+
+위 "구동 루프의 형상"은 `until bun run verify; do …`로 돌게 적혀 있는데, **그 루프의 종료 조건인 `bun run verify` 자체가 0단계의 산출물이다.** 지금 저장소에는 `package.json`의 `verify` 스크립트도 `bin`도, `verify/` 러너와 fixture도, `.claude/agents/fab-verifier.md`도, `.claude/settings.local.json`의 allowlist도, `drive.sh`도 **전부 없다.** 없는 명령을 종료 조건으로 삼은 루프는 첫 바퀴부터 의미 없이 돌거나 즉시 끝난다 — **루프로 0단계를 돌릴 수 없다.** 그리고 더 중요한 이유가 하나 더 있다: **루프는 정해진 목표를 초록으로 갈아 내는 데 강하고, 열린 설계 질문을 푸는 데 약하다.** 아래 "0단계에서 바로 부딪힐 자리"의 미결 1(모델 호출 경로의 회복)과 2(`sid` 이음매)는 반복이 아니라 **판단**이 필요한 자리라서, 루프에 던지면 매 패스가 서로 다른 답을 고르며 헤맨다 — 앞 패스가 ①로 지어 둔 것을 다음 패스가 ③으로 갈아엎고, verify는 계속 빨갛다. 그래서 **판단이 필요한 것과 하네스는 사람이 곁에 있는 대화형으로 먼저 짓고(0a), 루프는 눈금이 이미 박힌 뒤에 켠다(0b).**
+
+### 0a — 부트스트랩 (대화형, 루프 없음)
+
+**1. 미결 1·2를 먼저 정한다.** 아래 "0단계에서 바로 부딪힐 자리"의 1(IP-2ⓜ과 IP-1의 긴장 — 모델 호출 경로의 회복 방식)과 2(`<sid>`가 무엇이고 훅과 CLI가 어떻게 같은 세션을 가리키는가). 판단이 필요한 자리이고, 정하지 않으면 fixture를 쓸 수 없다.
+
+**2. 다섯을 짓는다.**
+
+| 무엇 | 요점 |
+| --- | --- |
+| `package.json`의 `verify` 스크립트와 `bin` | 단일 닫기 명령과 단일 뿌리(`bin/fabricate`) |
+| `verify/` 러너와 IP-0~6 fixture | **전부 RED, default-FAIL — 모든 기준이 `false`에서 시작한다.** 없는 검사가 초록으로 보이면 안 된다 |
+| `.claude/agents/fab-verifier.md` | **쓰기 도구 없음**: `Read` · `Glob` · `Grep` · `Bash`만. 검증자가 고칠 수 있으면 그 자리는 더 이상 검증이 아니다 |
+| `.claude/settings.local.json`의 allowlist | `Bash(bun run:*)` + `Bash(bun test:*)`. 커밋되는 `.claude/settings.json`에 두지 않는다(아래 `.gitignore` 절) |
+| `drive.sh` | 0b의 루프 본. 아래 스크립트 |
+
+**3. 연기 시험 넷을 통과한 뒤에만 0b로 간다.** 하나라도 안 되면 루프는 **조용히 헛돈다** — 특히 넷째가 안 되면 구현자가 매 패스마다 아무것도 못 하고 끝난다.
+
+```
+bun run verify; echo "exit=$?"                    # 0이 아니고, 어느 IP가 false인지 읽힌다
+codex exec -s workspace-write "SMOKE 파일을 만들고 ok를 써라"
+claude --agent fab-verifier -p "PASS만 답하라"
+claude -p --permission-mode acceptEdits --allowedTools "Bash(bun run:*)" \
+  "bun run verify를 돌리고 종료 코드를 보고하라"
+```
+
+### 0b — 루프
+
+**위 "구동 루프의 형상" 스케치를 그대로 켜면 안 된다.** 셋을 고친다.
+
+- **verify를 패스당 한 번만 돌린다.** `until bun run verify; do … $(bun run verify)`는 같은 패스에서 verify를 **두 번** 돌린다 — 느리고, 두 실행 사이에 상태가 갈리면 조건과 프롬프트가 서로 다른 사실을 본다. 한 번 돌려 **파일에 받고**, 종료 조건과 프롬프트가 그 파일을 함께 쓴다.
+- **상한을 건다.** verify가 원리적으로 통과 불가하게 짜이면 루프는 영원히 돈다. 셋을 함께 건다 — **반복 카운터** + **`--max-budget-usd`**(exit 1로 확실히 끊는 유일한 수단) + **`AGENT_STOP` 센티널 파일**(사람이 밖에서 끊는 손잡이).
+- **`codex` 플러그인의 `timeout: 900` `Stop` 훅이 라운드마다 곱해진다**(위 "주의 — 루프에 곱해지는 15분"). 루프 세션은 **`--setting-sources project`로 격리한다.**
+
+```bash
+i=0
+while :; do
+  bun run verify > .drive/verify.log 2>&1 && break
+  [ -f AGENT_STOP ] && break
+  i=$((i+1)); [ $i -gt 20 ] && break
+  codex exec -s workspace-write "$(cat GOAL.md)
+=== STATE.md ===
+$(cat STATE.md)
+=== 지난 검증 지적 ===
+$(cat .drive/FINDINGS.md 2>/dev/null)
+=== 지금 빨간 것 ===
+$(tail -80 .drive/verify.log)"
+  claude --agent fab-verifier -p "verify를 직접 돌리고 IP별 양극·음극을 확인하라. \
+구현자 보고는 증거가 아니다." --setting-sources project > .drive/FINDINGS.md
+done
+```
+
+매 라운드 입력은 여전히 **`GOAL.md` 전문**이지 직전 라운드의 산출물 요약이 아니다(`GOAL.md` §0).
+
+### `.gitignore`에 넣을 것 (파일은 아직 만들지 않았다 — 목록만)
+
+| 항목 | 왜 |
+| --- | --- |
+| `.drive/` | 루프의 휘발성 작업물(`verify.log` · `FINDINGS.md`). 라운드마다 덮어써지는 중간 산출이지 저장소의 산출물이 아니다 |
+| `.fabricate/` | 런타임 상태(세션 장부 · 표식 · 잠긴 레코드). 사용자의 인터뷰 데이터이지 코드가 아니다 |
+| `.claude/settings.local.json` | **사용자별 파일이라 배포·커밋 대상이 아니다.** 그리고 저장소에 커밋되는 `.claude/settings.json`은 **미신뢰 워크스페이스에서 조용히 무시되므로**(위 "워크스페이스 신뢰") allowlist를 거기 두면 안 된다 — 남의 기계에서 권한이 저절로 열리는 것도 IP-0의 "설정 보존"과 정면 충돌이다 |
+| `AGENT_STOP` | 사람이 루프를 끊으려고 만드는 로컬 센티널. 커밋되면 남의 체크아웃에서 루프가 즉시 죽는다 |
+| `.idea/` | IDE 설정. 도구 사슬이 아니라 이 기계의 취향이다 |
+
+---
+
 ## 다음 유력 경로 (개정 5 이후: 위 "작업 순서 네 단계"가 이것을 갱신한다)
 
 **아래는 개정 5 이전의 권장안이고, 0단계(verify를 RED로 먼저)가 추가되면서 위 표로 대체됐다.** 판단 근거로 남긴다.
@@ -469,4 +544,5 @@ CLI는 `prompt_id`를 볼 수 없다 — **CLI는 장부에 쓰기만 하고 "�
 | 2026-07-27 | **IP-2ⓚ가 실측으로 무너짐 → `GOAL.md` 개정 5 비준.** `UserPromptExpansion`이 **사용자가 타이핑한 슬래시 명령에만** 발화하고 **모델의 `Skill` 도구 호출에는 발화하지 않는 것**을 4회 재현으로 관측했다(정적 근거 일치 — UPE 훅의 유일한 호출 사슬이 슬래시 명령 처리이고 `expansion_type`이 `slash_command`·`mcp_prompt` 둘뿐). 즉 "표식이 UPE에서 생기니 `start`를 건너뛴 세션도 잡힌다"는 근거가 모델 호출 경로에서 성립하지 않았다. 대체 표식 생성기로 **`PreToolUse`(매처 `Skill`)**를 실측 확보 — `prompt_id`가 오므로 `Stop`의 턴 회계와 경계를 공유하고, `tool_input.skill`이 UPE의 `command_name`과 같은 네임스페이스 형식이다. 매처는 `tool_name` 정규식일 뿐이라 `Skill(name)`이 안 먹는다. **원문 비대칭**(모델 호출 경로엔 사용자 원문이 없다) → **IP-2ⓜ 신설**. 함께: **IP-0ⓐ를 4단 증거로 강화**, **§4-7의 적용 범위를 §8에 명시**. 새 본문 해시 `2a4ba701d13dbf36…` | 사용자 비준 + 실측 (`GOAL.md` §9) |
 | 2026-07-27 | **권한 절 과잉 일반화 정정 + `codex exec` 미확인 닫힘.** 미신뢰 시 무시되는 것은 **`.claude/settings.json` 하나뿐이고 `settings.local.json`은 존중되며, `--allowedTools`·`--settings <파일>`은 신뢰 여부와 무관하게 동작한다** → 남의 기계의 미신뢰 체크아웃에서도 구동 루프가 선다(신뢰된 디렉터리 브랜치 작업은 여전히 가장 단순한 길이라 유지). 권한 실무 사실 확보 — **`bun`은 내장 안전 목록 밖**(`bun --version` 거부, `git status`·`ls`·`node --version`은 통과), 패턴 정확 매칭, 콜론·공백 형식 둘 다, **최소 규칙 `Bash(bun run:*)`+`Bash(bun test:*)`**(`Bash(bun:*)`는 `bun x` 임의 실행을 열어 피한다). 못 잰 것은 복합 명령의 allowlist 분해 하나. **`codex exec -s workspace-write`**로 위험 플래그 없이 작업 디렉터리 쓰기가 열린다 — 구동 루프 확정 | 실행 관측 · `codex-cli 0.145.0` |
 | 2026-07-27 | **핸드오프 확정 — 새 세션은 짓기만 한다.** `STATE.md`에 **구현 형상**을 박았다: 저장소 레이아웃(플러그인 배포 · `bin/fabricate` 단일 뿌리 · 훅 셋이 전부 그 뿌리 호출 · 매처 생략하고 스크립트가 이름 검사), 상태 파일 형상(`.fabricate/sessions/<sid>/{active,request.txt,ledger.jsonl,turnstate.json}` · `intent/<id>.json`은 `close`만 쓴다), 턴 회계 알고리즘(`{prev_prompt_id, prev_L}` · `stop_hook_active`면 재차단 대신 장부 기록으로 캡 소진 회피, 방어선은 IP-4), **작업 순서 네 단계**(0: `verify` 하네스와 전 IP fixture를 **RED로 먼저**, default-FAIL / 1: 걷는 뼈대 게이트 없이 / 2: `close` 거부 + Stop 회계 / 3: IP-5·IP-6·IP-4·IP-3), 구동 루프 형상 | — |
+| 2026-07-27 | **0단계를 0a·0b로 갈랐다 — 루프를 먼저 켜지 마라.** 사용자가 순환을 지적했다: 구동 루프의 종료 조건인 `bun run verify`가 **0단계의 산출물**이라 루프로 0단계를 돌릴 수 없다(지금 저장소에 `verify` 스크립트·`bin`·`verify/` fixture·`fab-verifier`·allowlist·`drive.sh`가 전부 없다). 더해 **루프는 정해진 목표를 초록으로 가는 데 강하고 열린 설계 질문에 약하다** — 미결 1(모델 호출 경로 회복)·2(`sid` 이음매)는 판단이 필요해 매 패스가 다른 답을 골라 헤맨다. **0a(대화형 부트스트랩: 미결 둘 결정 → 다섯을 짓기 → 연기 시험 넷)** 통과 후에만 **0b(루프)**. 루프 본도 셋을 고쳤다 — verify를 패스당 **한 번만** 돌려 파일로 받기 · 상한 셋(반복 카운터 + `--max-budget-usd` + `AGENT_STOP`) · codex 플러그인의 `timeout: 900` `Stop` 훅을 `--setting-sources project`로 격리. `.gitignore` 목록도 함께 적었다(파일은 미생성) | 사용자 지적 |
 | 2026-07-27 | **추적 안 된 문서 셋 제거** — `reveiw_comment.md`(1차 외부 리뷰) · `codex_review_comment2.md`(3차 외부 리뷰) · `REACT_LOOP_CARD_TEMPLATE.md`(ditto 소유, fabricate 산출물 아님). 두 리뷰는 `GOAL.md` 최초 커밋(07-26 23:59)보다 앞선 **미커밋 초안**을 대상으로 쓰여 인용 줄번호가 무효이고, 내용은 이 진척 로그에 이미 흡수됐다 | 사용자 승인 |
