@@ -10,7 +10,11 @@
  * gate exists to keep honest.
  */
 
-export type StaticCopyKind = "banner" | "prompt" | "label";
+export const STATIC_COPY_KINDS = ["banner", "prompt", "label"] as const;
+export type StaticCopyKind = (typeof STATIC_COPY_KINDS)[number];
+
+/** One string per kind cannot make "전수 검수" mean anything. */
+export const MIN_ENTRIES_PER_KIND = 2;
 
 export type StaticCopyEntry = {
   kind: StaticCopyKind;
@@ -29,5 +33,15 @@ export const STATIC_COPY_CATALOG = {
   "interview.label.unverified": { kind: "label", ko: "미검증" },
   "interview.label.assumption": { kind: "label", ko: "가정" },
 } as const satisfies Record<string, StaticCopyEntry>;
+
+export type StaticCopyKey = keyof typeof STATIC_COPY_CATALOG;
+
+/**
+ * The one lookup the render paths use. A module that inlines the string instead
+ * holds a second copy of it, and the review layer only ever sees this one.
+ */
+export function staticCopy(key: StaticCopyKey): string {
+  return STATIC_COPY_CATALOG[key].ko;
+}
 
 export type StaticCopyCatalog = Record<string, { kind: string; ko: string }>;
