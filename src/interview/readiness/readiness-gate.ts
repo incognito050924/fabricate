@@ -1,4 +1,6 @@
 import type { DimensionNode } from "../completeness/fragment-mapping";
+import { enterLock } from "../lock/enter";
+import { blockingSeedIds } from "./seed-block";
 
 /**
  * Readiness, and the lock that depends on it. An open discovered seed means a
@@ -10,8 +12,9 @@ import type { DimensionNode } from "../completeness/fragment-mapping";
  * gate reads the dimensions instead, because a claim is exactly what the block
  * exists to overrule.
  *
- * The block lifts one way only — the fragment gets covered by a real dimension,
- * or the seed leaves the open state (resolved, or dropped with a reason).
+ * Both verdicts read the same predicate: readiness asks `seed-block.ts` which
+ * seeds block, and the lock asks the single entry point, which asks the same
+ * file. Neither restates it, so the lock cannot lock what readiness refuses.
  */
 
 export type ReadinessResult = {
@@ -20,13 +23,10 @@ export type ReadinessResult = {
   blockers: string[];
 };
 
-const isOpenDiscoveredSeed = (dimension: DimensionNode): boolean =>
-  dimension.origin === "discovered" && dimension.state === "open";
-
 export function evaluateReadiness(input: {
   dimensions: readonly DimensionNode[];
 }): ReadinessResult {
-  const blockers = input.dimensions.filter(isOpenDiscoveredSeed).map((dimension) => dimension.id);
+  const blockers = blockingSeedIds(input.dimensions);
   return { ready: blockers.length === 0, blockers };
 }
 
@@ -36,14 +36,14 @@ export type LockResult = {
   blockers: string[];
 };
 
+/** A projection of the single lock entry point — this door holds no judgment. */
 export function proceedToLock(input: {
   dimensions: readonly DimensionNode[];
   /** Accepted and ignored — readiness is read off the dimensions. */
   claimed_ready?: boolean;
 }): LockResult {
-  const readiness = evaluateReadiness(input);
-  if (!readiness.ready) {
-    return { locked: false, blockers: readiness.blockers };
-  }
-  return { locked: true, intent: { dimensions: [...input.dimensions] }, blockers: [] };
+  const outcome = enterLock({ dimensions: input.dimensions });
+  return outcome.locked && outcome.intent
+    ? { locked: true, intent: outcome.intent, blockers: [] }
+    : { locked: false, blockers: outcome.blockers };
 }
