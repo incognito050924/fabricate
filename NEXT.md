@@ -390,10 +390,27 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
 - 근거: `src/interview/glossary/render.ts:18-23` · `src/interview/glossary/avoid-scan.ts:17-26`
 - 확인: probe: 항목 a의 `korean = "수용 기준"`, 항목 b의 `avoid = ["수용 기준"]` →
   `renderConceptSurface(g,"a")`가 위반 없이 `"수용 기준"`을 반환.
+  **[2026-07-26 갱신 · 커밋 `575649b`] 이 probe는 이제 던진다** — 기록자 실측:
+  `InconsistentGlossaryError: 용어집이 정합하지 않다: [{"kind":"anchor_hits_avoid",
+  "concept":"a","conflicting_concept":"b","term":"수용 기준"}]`. 렌더 앞에 정합성 검사와
+  자기 항목 avoid 검사 둘이 섰고, 렌더 경로가 `avoid-scan.ts`를 실제로 임포트한다.
 - 건드릴 파일: `src/interview/glossary/render.ts`
-- 딸린 것: 저장소의 유일한 glossary 항목 생산자(`laddering/glossary-record.ts:36-42`)가
-  `avoid: []`와 사용자 원문(ac-B5 픽스처에선 영어)을 `korean`에 넣는다 — **avoid 기계가 무력화된다.**
-  ac-B5 항목과 함께 고쳐야 한다.
+- 딸린 것 ① **`avoid: []` — 미수리로 남는다.** 저장소의 유일한 glossary 항목 생산자
+  (`laddering/glossary-record.ts:61`)가 `avoid: []`를 넣는다. 즉 저장소가 **생산하는**
+  모든 항목은 아무것도 거르지 않는다. 커밋 `575649b`이 검사기 쪽은 고쳤지만 생산자 쪽
+  `avoid: []`은 그대로다 — 아래 0단계 6번 수리 항목 4.
+- 딸린 것 ② ~~사용자 원문(영어)을 `korean`에 넣는다~~ — **[2026-07-26 정정] 이 절은
+  삭제한다. 결함이 아니었다.** 원 문장은 `avoid: []`(진짜 결함)과 "영어를 `korean`에
+  넣는다"를 하나의 "avoid 기계가 무력화된다"로 **접합**했으나, 둘은 서로 다른 일이고
+  후자는 계약이 **지지**하는 쪽이다(기록자 직접 확인):
+  - `contract/criteria.md:193` = `contract/contract-draft.md:195` 역방향(b) 축자:
+    *"자연 등가 없는 하중 용어는 영어 유지 > 억지 번역"*
+  - `src/interview/render/language-policy.ts:22` 같은 문장이 `## 예외`에 들어 있고,
+    `:27`은 *"사용자 발화의 인용은 번역하지 않고 verbatim 보존한다"*
+  - `contract/research-report.md:133`(Kelly 1955 / Reynolds & Gutman 1988):
+    양극 쌍은 *"사용자의 **자기 언어** 구분"*으로 채록하며 *"채록된 쌍은 곧 용어집 재료"*
+  즉 사용자가 영어로 말한 하중 용어를 `korean`에 verbatim 남기는 것은 위반이 아니라
+  **명시된 예외의 이행**이다. 억지 번역이야말로 금지된 쪽이다.
 
 **ac-22** `[기록만]` — 감사 D
 - 판정 SOUND. `findReverseCueSentence`는 진짜 문장 범위 검출기이고 음성 대조군도 진짜다.
@@ -402,21 +419,44 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
   요구하므로 위반은 아니다.** 다만 그 "정합성"의 실체는 한 문장을 두 상수에 복사한 것이다
   (`directives.ts:58` ≡ `render/language-policy.ts:22`).
 
-**ac-24** `[파손]` — 감사 E
-- 문제 (1): **문안이 fail-closed라고 부른 바로 그 절이 fail-open이다.** 카피가 없는 카탈로그 항목은
-  `""`에 대해 판정되어 **통과**한다("무판정=미통과"의 정반대).
-- 문제 (2): **전수성이 구조상 참이다.** 커버리지를 카탈로그에서 파생하므로 **빈 카탈로그도 통과**한다.
-  그리고 **카탈로그가 인터뷰 표면이 아니다** — 사용자에게 실제로 찍히는 문구
-  (`src/interview/render.ts:16,19,22`, `src/cli/interview-finalize.ts:28,30,37`)는 모든 게이트 밖에 있다.
+**ac-24** `[부분수리]` — 감사 E · **2026-07-26 커밋 `575649b`로 `[파손]`에서 격하**
+- 문제 (1) **해결.** 카피 없는 키는 이제 판정되지 않고 `unjudged_keys`로 가 통과를 막는다
+  (`?? ""` 제거). 빈 카탈로그는 `checkCatalogFloor`가 `empty_catalog`로 거부한다.
+- 문제 (2) **좁혀졌으나 미해결.** 카탈로그 7→15로 `render.ts` 3문구·`interview-finalize.ts`
+  4문구를 흡수하고 `staticCopy` 경유 소비로 바꿨다. **그러나 사용자-대면 질문 4건이 여전히
+  게이트 밖이다**(기록자 실측): `preunderstanding/leading-question-gate.ts:44,45` ·
+  `materiality/ask-router.ts:95,96` · `challenge/answer-challenge.ts:63`. 아래 0단계 6번
+  수리 항목 3 — **문제 (2)는 이것이 닫히기 전까지 닫히지 않는다.**
+- **원 문제 원문(감사 시점)**
+  - (1): **문안이 fail-closed라고 부른 바로 그 절이 fail-open이다.** 카피가 없는 카탈로그 항목은
+    `""`에 대해 판정되어 **통과**한다("무판정=미통과"의 정반대).
+  - (2): **전수성이 구조상 참이다.** 커버리지를 카탈로그에서 파생하므로 **빈 카탈로그도 통과**한다.
+    그리고 **카탈로그가 인터뷰 표면이 아니다** — 사용자에게 실제로 찍히는 문구
+    (`src/interview/render.ts:16,19,22`, `src/cli/interview-finalize.ts:28,30,37`)는 모든 게이트 밖에 있다.
 - 근거: `src/interview/i18n/banner-fidelity-gate.ts:22,41-43,90` ·
   `src/interview/i18n/static-copy-coverage.ts:21-26,53-56,68`
 - 확인: probe: `runStaticCopyFidelityGate({})` → `passed:true`. probe:
   `{"interview.banner.x": {kind:"banner"}}` → `passed:true`, 판정 `{text:"", passed:true}`.
   probe: `validateReviewRecord({catalog_key:"k", en:"Welcome to the interview"})` → 수용됨.
 - 건드릴 파일: `src/interview/i18n/{banner-fidelity-gate,static-copy-coverage,static-copy-catalog}.ts`
-- 딸린 것: 행이 `depends_on:["ac-21"]`과 "중복 구현 금지"를 선언했는데도 avoid 목록이
-  `banner-fidelity-gate.ts:22`의 사문자 상수 4개이고 grep도 재구현이다. `glossary/avoid-scan.ts`를
-  써야 한다 — **ac-21 수리와 묶어서 한다.**
+- 딸린 것: avoid 목록이 `banner-fidelity-gate.ts:22`의 사문자 상수 4개이고 grep도 재구현이다.
+  **해결됨** — 커밋 `575649b`이 목록을 `INTERVIEW_GLOSSARY`에서 파생시키고 grep을
+  `scanAvoidViolations` 하나로 합쳤다.
+  **[2026-07-26 오귀속 정정] 다만 그 근거로 댄 "중복 구현 금지"는 이 자리를 말한 것이 아니다**
+  (기록자 직접 확인). 원 문장은 "행이 `depends_on:["ac-21"]`과 '중복 구현 금지'를 선언했는데도
+  … `glossary/avoid-scan.ts`를 **써야 한다**"였다. 셋 다 틀렸다:
+  - **"중복 구현 금지"의 금지 대상은 wi_2607130ld i18n 번역 테이블이다.**
+    `contract/contract-draft.md:56`(*"역방향(d) 정적 문구 검수 ⊂ i18n wi_2607130ld
+    (충실도 검수만 심화, 중복 구현 금지)"*)·`:197` 및 `gate-a/rows/ac-24.json` 절 3
+    (*"검수 계층 산출 레코드는 … **자체 번역 문자열 테이블을 정의하지 않는다**"*)이
+    말하는 것은 **번역 테이블의 중복**이지 avoid grep 함수의 중복이 아니다.
+  - **ac-21 인용은 `"예:"`(예시)다.** 행 절 2는 *"기계 검출 가능한 충실도 위반(**예:** 합의 어휘
+    glossary의 avoid 목록 grep 적중)"* — 예시이지 지정이 아니다.
+  - **`depends_on`은 행 메타필드이지 oracle 절이 아니다.** 게다가 `gate-a/rows/ac-24.json`은
+    "전역 중복 부재"를 **잔여로 선언**한다(residual #3).
+  → 즉 **"`glossary/avoid-scan.ts`를 써야 한다"는 계약 요구가 아니라 선택이었다.**
+  실제로 그렇게 했고, 두 grep을 하나로 줄이는 것은 해롭지 않다 — 다만 **계약이 시킨 일로
+  기록하면 안 된다.**
 
 **ac-25** `[의심]` — 감사 H
 - 문제: 준비 게이트가 **`open` 말고 모든 상태에 눈이 멀었다.** `origin==="discovered" && state==="open"`
@@ -608,6 +648,22 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
   probe: `"feedback tone"` 쌍 2개 → `renderConceptSurface`가 첫째만 반환.
 - 건드릴 파일: `src/interview/laddering/{glossary-record,ladder-updown}.ts`
 - **ac-21·ac-24와 한 덩어리로 고친다** — glossary 항목의 형상이 세 조건에 걸쳐 있다.
+- **[2026-07-26 수리 · 커밋 `575649b`]**
+  - **문제 (1) 닫힘.** 절 5의 진공이 메워졌다. `checkBipolarGlossaryRecord`가 후보를
+    `glossaryEntrySchema`로 파싱하고(항목성), 개념 키 일치를 요구하며, **극의 자리**를
+    본다(grouped는 양성 예시, opposite는 음성 예시). entry-hood와 음성 극 자리 **둘 다
+    테스트로 핀됐다.** 쌍이 자기 자신을 기록했다고 통과하던 길과 두 부분문자열만 든
+    잡동사니가 통과하던 길이 둘 다 막혔다.
+  - **문제 (2) 닫힘.** `conceptOf(dimension, grouped_pole)`이 한 dimension의 여러 구인을
+    구별한다. 두 반쪽이 사용자 원문이라 구분자가 그 안에 들어올 수 있으므로 **구분자
+    배가 이스케이프**를 도입했다.
+  - **단사성은 성질 탐색 테스트로 핀됐다** — 픽스처가 아니다. 742조각에서 만든
+    **550,564쌍**을 전수 대조하며 결정적(~121ms)이다. `replaceAll`→`replace`로 한 글자
+    약화시키면 **성질 테스트만** 빨개지고 픽스처 둘은 초록이다 — 픽스처로는 인코딩의
+    성질을 핀할 수 없다는 실증.
+  - **남은 것**: 검사기가 극의 자리를 고정해 행 오라클(*"두 극을 verbatim 담거나 참조"*)보다
+    **좁다** — 극을 `korean`+`avoid`에 담은 정본 5필드 항목이 거부된다(0단계 6번 항목 6).
+    그리고 생산자의 `avoid: []`는 그대로다(항목 4).
 - 딸린 것: `ladderSchema`가 `.strict()`이면서 `dimension`+`downward_observable_instances`만 받아,
   **모듈 자신의 주석이 "양 끝이 다 필요하다"고 말하는데 한 레코드가 될 수 없다.**
   `triadic-alternatives.ts:18`은 `preference_clarity: z.literal("fuzzy")`로 고정(넓게 감).
@@ -733,7 +789,60 @@ intent를 실제로 기록하는 것은 `src/interview/finalize.ts:158`의 `fina
    건드리지 않고 동시에 적용**해 `acceptance 570/36 · bun test src 87/0 · tsc 0 · 동결 69/0`을
    얻었다. 순환은 계약이나 코드가 만든 것이 아니라 **"합치기"라는 선택이 스스로 만든 것**이다.
 5. **glossary 항목 형상(ac-21·ac-24·ac-B5)을 한 덩어리로.** `avoid` 목록의 단일 소유도 여기서 정한다.
-6. **`charter/directives.ts`(ac-11)는 마지막에, 단독으로.** 10개 테스트가 공유하는 최대 이음매다.
+   — **부분 완료** (2026-07-26, 커밋 `5fdd215`+`575649b`). 아래 6번이 그 잔여다.
+6. **0단계 5번이 남긴 수리 백로그 9건** (2026-07-26, 독립 검증이 찾아낸 것). ↓
+7. **`charter/directives.ts`(ac-11)는 마지막에, 단독으로.** 10개 테스트가 공유하는 최대 이음매다.
+
+#### 0단계 5번 진행 상태 — **부분 완료** (2026-07-26, 커밋 `5fdd215` 구조적 + `575649b` 동작적)
+
+**완료로 읽지 마라.** 구현 에이전트 1명이 3라운드, **다른 인스턴스**의 검증자가 3라운드
+독립 재검해 `pass with findings`를 냈다. 닫힌 것은 세 위반이고, 아래 9건이 열려 있다.
+
+**닫힌 것 (실측)**
+
+- ac-24 fail-open: 카피 없는 키가 `""`에 대해 통과하던 길이 막혔다(`unjudged_keys`).
+  빈 카탈로그는 `checkCatalogFloor`가 거부한다.
+- ac-24 카탈로그≠표면: 7→15항목, `render.ts`·`interview-finalize.ts` 7문구가
+  `staticCopy` 경유로 바뀌었다. **부분 해결**(항목 3).
+- ac-B5 항목성: `glossaryEntrySchema` 파싱 + 개념 키 + 극 자리.
+- ac-21 렌더 앞 두 거부, avoid 목록 단일 소유(`glossary/interview-vocabulary.ts`).
+- **liveness**: 실제 사용자 문구의 토큰을 avoid에 심으면 ac-24가 빨개진다. 검증자가 6종
+  (`말씀`·`완료`·`가정`·`다시`·`확정`·`미검증`)으로 확인, 음성 대조군(`존재하지않는말`)은 초록.
+  **수리 전에는 어떤 토큰도 반응이 없었다.**
+- 실측: `src 128 → 190/0` · acceptance **570/36 불변(실패 파일 목록 NO DIFF)** ·
+  tsc 0 · biome 0 · 동결 69/0.
+
+**⚠️ 이 수리는 acceptance 계층에서 관측 불가하다** — 606건이 전후 완전 동일하다.
+새 증거는 신규 `src` 테스트 62건뿐이다. **"동결이 초록이니 됐다"는 여기서 무의미하다.**
+
+**수리 백로그 — 우선순위 순서: 3 → 4 → 5 → 6 → 1 → 2 → 8 → 9 → 7**
+
+3. **사용자-대면 질문 4건이 여전히 게이트 밖이다.** `preunderstanding/leading-question-gate.ts:44,45` ·
+   `materiality/ask-router.ts:95,96` · `challenge/answer-challenge.ts:63`. ac-24 문제 (2)는
+   이것이 닫히기 전까지 닫히지 않는다. **가장 먼저 한다** — 남은 진짜 위반이다.
+4. **`recordBipolarPairToGlossary`는 여전히 `avoid: []`**(`laddering/glossary-record.ts:61`).
+   저장소가 **생산하는** 모든 항목이 아무것도 거르지 않는다. 검사기만 고쳤고 생산자는 그대로다.
+5. **검수 레코드 허용목록이 틀린 사유로 거부한다.** `reviewer_id`/`reviewed_at`/`severity`가
+   `parallel_translation_table`이라는 사유로 거부된다 — 병렬 번역 테이블이 아닌데도.
+   구현자가 사유 분리를 시도했으나 셋 다 문자열이라 `"alice"`와 카피를 구별할 수 없어
+   포기했다. **열린 부정확으로 기록한다** — 거부 자체는 맞고 사유가 틀렸다.
+6. **`checkBipolarGlossaryRecord`가 행 오라클보다 좁다.** 극의 자리를 고정하므로
+   오라클(*"두 극을 verbatim 담거나 참조"*)이 허용하는 형태 — 극을 `korean`+`avoid`에 담은
+   정본 5필드 항목 — 이 거부된다. **구현이 계약보다 강하게 간 자리**(X3 계열).
+1. **sentinel 랜덤화가 접두사에만 걸린다.** 형태 감지(`endsWith(':'+key)`)나 의미 감지
+   (카탈로그 `ko` 값이 아니면 stub이다)로 우회 가능하고, 우회해도 190/0 통과한다.
+   **적대적 작성자 한정.** 완화: sentinel을 **다른 키의 실제 `ko` 값**으로 치환.
+2. **`banner-fidelity-gate.test.ts`의 파생-핀 소스 테스트는 우회 가능하다.** 파생을 삼키는
+   헬퍼 + `String.fromCharCode`로 통과한다. 실질 벽은 `toEqual` 하나뿐이다.
+8. **`acceptance/ac-24.test.ts:284-299`는 구조적으로 순환이다.** "모든 avoid 용어가 게이트를
+   뒤집는다"는 단언인데 프로브 카탈로그가 `ko:` 안에 **용어 자신을 주입**한다. 용어를 무의미어로
+   갈아도 20/0이다. **어떤 코드 수리로도 닫히지 않는다** — `acceptance/`는 못 고치므로
+   기록만 하고 넘어간다. X3(계약 대면) 소관.
+9. **`INTERVIEW_GLOSSARY`의 avoid 용어는 사용자와 합의된 어휘가 아니다.** 구현자가 지어냈다.
+   ac-21 residual #1(합의 어휘의 **내용**은 잔여)이 이제 ac-24의 하중이 된다 —
+   **관문 B 사람 판정 항목이다.** 코드로 닫을 수 없다.
+7. **합의 어휘 내용을 무의미어로 갈면 전부 초록이다.** `avoid`+`negative_examples`를 짝맞춰
+   갈면 통과한다. **ac-21이 선언한 잔여이므로 위반은 아니다 — 기록만.**
 
 **그다음 파손 4개**(ac-2 · ac-4 · ac-24 · ac-37) → **그다음 fail-open/fail-crash 계열**
 (ac-14 · ac-16 · ac-25 · ac-26 · ac-32 · ac-35 · ac-B4) → **마지막에 [기록만]**.
@@ -1099,13 +1208,27 @@ X3(ac-13·ac-4·ac-32의 자기충족 가드)은 **코드 수리가 아니라 �
   온다. **`1ec21c6`+`1f741db`가 늘린 것은 0건**이다(HEAD 워크트리 대조 301 = 작업 트리 301).
   → **동결 테스트를 타입으로 지키는 게이트는 없다.** `tsconfig.json`을 고쳐 넣지 마라(그러면 조각 3
   내내 영구 빨강이 된다) — 대신 "tsc 초록"을 acceptance 보증으로 인용하지 마라.
-- **이 하네스의 `grep`이 `acceptance/ac-27.test.ts`를 바이너리로 분류한다** (2026-07-26 기록자 실측).
-  파일 안의 이모지 때문에 `file`이 `data`로 판정하고, 그러면 `grep`은 그 파일을 **조용히 건너뛴다.**
-  실측: `grep -c "lock" acceptance/ac-27.test.ts` → **출력 없음, exit 1**. `grep -ac` → **19**.
-  `grep -rn "lockIntent" acceptance/` → **0건**, `grep -arn` → **8건**.
+- **`grep`이 `acceptance/ac-27.test.ts`를 바이너리로 분류한다** (2026-07-26 기록자 실측).
+  `file`이 `data`로 판정하고, 그러면 `grep`은 그 파일을 **조용히 건너뛴다.**
+  실측: `grep -rn "lockIntent" acceptance/` → **1건**, `grep -arn` → **8건**.
   → **전수 조사에는 반드시 `-a`를 붙여라.** 그리고 **2026-07-26 감사와 이 문서의 grep 기반 전수
   조사가 이 구멍을 지났을 수 있다** — "grep 0건이므로 호출자 없음"류의 결론은 `-a`로 재확인해야
   한다.
+  - **[2026-07-26 원인 정정] 이모지 때문이 아니다. 그렇게 적혀 있었으나 틀렸다.**
+    실제 원인은 **날 NUL 바이트 1개**다. 기록자 실측:
+    - 위치는 `acceptance/ac-27.test.ts` **198행, 바이트 오프셋 10161, 42열**(0-기준 41열).
+      그 줄은 테스트가 `acceptanceTestable` 게이트에 먹이는 **적대적 입력 배열**이다:
+      `for (const text of ["", "abc", "a", "\x00", "🧪", OBSERVABLE_STATEMENT, MIXED_STATEMENT])`.
+      소스에 **이스케이프 시퀀스가 아니라 실제 0x00 바이트**가 박혀 있다.
+    - 파일은 그 외 **유효 UTF-8**이다(16039바이트, NUL 1개). 그리고 **저장소 전체
+      추적 파일 중 NUL을 가진 것은 이 파일 하나뿐**이다(전수 확인).
+    - **이모지는 원인이 아니다**: 이모지만 든 파일을 만들어 `file`에 물리면
+      `Unicode text, UTF-8 text`가 나오고 `grep`이 정상 동작한다. `file`을 `data`로
+      뒤집는 것은 NUL이다.
+    - **고칠 수 없다.** 동결 해시가 통과하므로 동결 시점부터 있던 것이고,
+      §5가 `acceptance/` 수정을 금지한다. bun은 이 파일을 정상 파싱한다(ac-27은 초록).
+    → 남는 실무 규칙은 같다(`-a`를 붙여라). 다만 **이유를 이모지로 기억하면 다음 사람이
+      엉뚱한 파일을 의심한다.**
 - **설계 노드 5개**(ac-33·36·38·39·E2)는 코드 구현이 아니라 **spec 문서 + 동결 red 산출물**이다.
   산출 red 테스트는 `*.redtest.ts`로 이름 짓는다 — bun 기본 glob에 안 걸린다는 것을 실측 확인했다.
 - **`bun tools/freeze-red-tests.ts`를 다시 돌리지 마라.** 동결은 이미 끝났다. 재실행은 지금 내용을
@@ -1248,4 +1371,44 @@ ac-9로 `src/cli/interview-finalize.ts`의 finalize arm(거부 시 0 아닌 종�
   테스트가 새로 하나도 없다. 방어하는 것은 동결(ac-31 절 1·2)뿐이고, 그것은 카운터가 어디서
   발급되는지가 아니라 패스가 1회 도는지를 본다. 카운터를 둘로 쪼개는 회귀는 오늘 잡히지 않을
   수 있다.
+- **이 저장소 최초의 `mock.module`을 도입했고, 그 보증은 적대적 작성자에게 우회 가능하다**
+  (2026-07-26, 커밋 `575649b`). `static-copy-catalog.test.ts`가 카탈로그 모듈을 stub해
+  "렌더 경로가 실제로 `staticCopy`를 경유한다"를 강제한다. 원본을 로드 시점에
+  스냅샷(`REAL_CATALOG_MODULE`)하고 `finally`에서 복원하며, 자기 복원을 자기 테스트로 검사한다.
+  그럼에도 남는 것 둘: ① **stub이 러너 프로세스 전역이라 blast radius가 5파일**이고,
+  복원이 한 번이라도 건너뛰어지면 다른 파일이 stub된 카탈로그를 보는 **누수 경로가 구조적으로
+  존재한다**(테스트 파일 실행 순서에 의존하지 않는 보증이 아니다). ② **sentinel은 랜덤
+  접두사를 쓰지만 모양과 의미로 판별 가능하다** — `endsWith(':'+key)`로 형태를, "카탈로그
+  `ko` 값이 아니면 stub이다"로 의미를 감지해 우회할 수 있고, 우회해도 `src 190/0`이 초록이다.
+  즉 **소비 강제는 정직한 작성자에게만 성립한다.** 완화안(sentinel을 다른 키의 실제 `ko`
+  값으로 치환)은 착수하지 않았다 — §4 0단계 6번 항목 1.
+- **`ADR-20260713`이 이 저장소에 없다** (2026-07-26 기록자 실측). `decisions/`에 있는 것은
+  `0001-contract-evidence-mapping.md` **하나뿐**이고, `ADR-20260713`을 인용하는 곳은
+  `contract/criteria.json:238` · `contract/criteria.md:205` · `contract/contract-draft.md:197` ·
+  `gate-a/rows/ac-24.json` · `gate-a/oracle-table.md:581,583,587,593` ·
+  `acceptance/ac-24.test.ts:3,14,42,161` · `src/interview/i18n/banner-fidelity-gate.ts:2`다.
+  **`ADR-0018`에 이은 둘째 유령 인용이다** — 판정 기준이 저장소에 없는 문서를 근거로 서 있다.
+  **다만 ADR-0018과 같지는 않다. 이 차이를 지우지 마라**: `gate-a/rows/ac-24.json` residual #2가
+  *"ADR-20260713은 이 저장소에 없는 **외부 ADR**이므로 … 그 ADR 원문과 의미적으로 일치하는지는
+  이 판정 기준으로 닫히지 않는다(구현 착수 시 ADR 원문 재대면 필요)"*라고 **스스로 선언한다.**
+  즉 ADR-0018은 있는 척 인용됐고 ADR-20260713은 **없다고 적힌 채** 인용됐다. 그래도 결과는
+  같다 — 배너 충실도 게이트가 그 ADR이 실제로 정한 것과 일치하는지는 **미검증**이며,
+  커밋 `575649b`은 그 게이트를 **넓혔지 대면하지는 않았다.** X3(계약 대면) 소관.
+- **"코드가 특정 함수를 실제로 경유한다"는 보증을 이 저장소에서 기계로 세울 수 없다**
+  (2026-07-26). 이것은 추측이 아니라 **세 번 독립 확인된 결과**다:
+  1. **0단계 4번(잠금 진입점)의 `deriveConflictingInput` 경유** — 바로 위 항목. 행위 등가
+     검사가 두 구현을 구별하지 못했고, `bun:test`의 `mock.module`은 **정적 import를 가로채지
+     못했으며**(실측 `calls === 0`), 남은 소스 형상 규칙 셋은 **헬퍼로 대입한 뒤 다음 줄에서
+     덮어쓰면** 전부 통과했다.
+  2. **0단계 5번의 sentinel + `mock.module`** — 이번에는 `mock.module`이 동작했지만
+     sentinel이 **형태(`endsWith(':'+key)`)·의미(카탈로그 `ko` 값 대조)로 판별**돼 우회됐다.
+  3. **0단계 5번의 `banner-fidelity-gate.test.ts` 파생-핀 소스 규칙** — **헬퍼 삼키기**와
+     **`String.fromCharCode`**로 뚫린다. 실질 벽은 `toEqual` 하나뿐이다.
+  (검증자는 이 셋을 각각 `F2`·`M5`·파생-핀으로 불렀다. **그 라벨은 이 문서의 F-번호와 다르다** —
+  이 문서의 `F2`는 `?? 0` 방어를 가리킨다. 라벨이 아니라 위 앵커를 따라가라.)
+  세 종류의 방법이 각각 다른 방식으로 실패한다: **행위 검사는 위장 문(ADR-0018이 금지한 것)을
+  열어야 닫히고, `mock.module`은 우회되며, 소스 텍스트 규칙은 텍스트를 바꾸면 그만이다.**
+  → **"X를 경유한다"는 종류의 단언은 이 저장소에서 증거가 아니라 규약으로 취급하라.**
+  이것을 기계로 닫으려는 다음 시도는 착수 전에 위 셋 중 어느 실패 모드를 어떻게 피하는지
+  먼저 적어라.
 - 실제 인터뷰를 한 번도 돌려 보지 않았다(관문 B). 표면이 서기 전까지는 돌릴 수 없다.
