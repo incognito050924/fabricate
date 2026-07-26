@@ -89,16 +89,97 @@ export function getDirectiveBlock(id: string): string {
 }
 
 /**
+ * Where a block may BEGIN: a marker that opens its own line, indentation
+ * allowed. This end has to be precise, because being too generous here is
+ * fail-OPEN — it would let prose (`서문에서 [U1] 언급`) shadow the real block,
+ * or let a decoy be picked over it.
+ */
+function markerLineStarts(text: string, id: string): number[] {
+  const marker = `[${id}]`;
+  const starts: number[] = [];
+  for (let at = text.indexOf(marker); at >= 0; at = text.indexOf(marker, at + 1)) {
+    let lineHead = at;
+    while (lineHead > 0 && (text[lineHead - 1] === " " || text[lineHead - 1] === "\t")) lineHead--;
+    if (lineHead === 0 || text[lineHead - 1] === "\n") starts.push(at);
+  }
+  return starts;
+}
+
+/**
+ * Where a block must END: the next line carrying ANY directive marker,
+ * wherever on that line it sits. This end is deliberately the opposite of
+ * precise, because the two errors are not symmetric:
+ *
+ *  - Ending too LATE is fail-open. The block swallows its neighbours and their
+ *    wording covers for a cue this block has lost — exactly the masking the
+ *    ac-11 oracle names. Every attempt to spell out which prefixes may sit in
+ *    front of a marker (`[ \t]*`, `\s*`, …) leaves the complement as a channel:
+ *    one ZWSP, NBSP, `>` or bullet in front of `[U5]` reopens it.
+ *  - Ending too EARLY is fail-closed. The extracted block is a prefix of the
+ *    real one, so a cue grep over it can only get stricter, never laxer, and
+ *    checkDirectiveBlockIsolation reports the truncation as `not_canonical`.
+ *
+ * So the terminator takes the whole complement away: no prefix is enumerated,
+ * therefore none can be evaded. The cost is that a block whose BODY mentions
+ * another directive gets truncated — visible, and fail-closed. No shipped
+ * block does (see BLOCKS: every body line opens with `- `).
+ */
+const MARKER_LINE = /\n[^\n]*\[U\d+\]/;
+
+/**
  * Extracts one directive's block out of ARBITRARY surface text by its marker,
  * rather than looking the canonical block up. That is what lets a gate judge a
  * candidate surface: whole-file grep can be satisfied by another block's
  * wording, so the check has to read the block the cue is supposed to live in.
- * Returns null when the surface carries no such block.
+ * Anchoring to the canonical block instead would defeat the purpose — the gates
+ * must be able to judge a surface whose block has been gutted.
+ *
+ * Two properties make the extraction hard to walk around:
+ *  - The boundary does not depend on how the blocks were joined, nor on what
+ *    decoration precedes the next marker. Collapsing the separator, or hiding
+ *    an invisible character in front of the next marker, can no longer make one
+ *    block swallow the next.
+ *  - A surface carrying the marker on two different lines is AMBIGUOUS and is
+ *    refused (null) rather than resolved by first-occurrence, which a decoy
+ *    block prepended to the surface would otherwise win.
+ *
+ * Returns null when the surface carries no unambiguous such block.
  */
 export function extractCueBlock(text: string, id: string): string | null {
-  const start = text.indexOf(`[${id}]`);
-  if (start < 0) return null;
+  const starts = markerLineStarts(text, id);
+  const [start] = starts;
+  if (start === undefined || starts.length !== 1) return null;
   const rest = text.slice(start);
-  const nextBlock = rest.search(/\n\s*\n\[U\d+\]/);
+  const nextBlock = rest.search(MARKER_LINE);
   return (nextBlock < 0 ? rest : rest.slice(0, nextBlock)).trimEnd();
+}
+
+export type IsolationViolationKind = "not_extractable" | "not_canonical";
+
+export type DirectiveIsolationResult = {
+  ok: boolean;
+  violations: Array<{ id: DirectiveId; kind: IsolationViolationKind }>;
+};
+
+/**
+ * States block isolation as a product predicate rather than leaving it to a
+ * gate's incidental arithmetic: every id must read back out of the surface as
+ * exactly its own canonical block. A block that swallowed its neighbours, a
+ * block masked by a decoy, or a surface that lost a block all show up here —
+ * whereas a length comparison only notices when the FIRST block is the victim.
+ *
+ * Not thrown at module load on purpose: an import side effect buys nothing
+ * today (no src consumer reads this surface) and would make every importer pay
+ * for it. Promote to a one-line load-time invariant if a consumer appears.
+ */
+export function checkDirectiveBlockIsolation(
+  text: string = directivesText,
+): DirectiveIsolationResult {
+  const violations: DirectiveIsolationResult["violations"] = [];
+  for (const id of ORDER) {
+    const extracted = extractCueBlock(text, id);
+    if (extracted === null) violations.push({ id, kind: "not_extractable" });
+    else if (extracted !== BLOCKS[id]) violations.push({ id, kind: "not_canonical" });
+  }
+  return { ok: violations.length === 0, violations };
 }
