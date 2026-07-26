@@ -17,6 +17,9 @@ export const ladderSchema = z
     dimension: z.string().min(1),
     /** The downward output — instances that can be observed, not described. */
     downward_observable_instances: z.array(z.string().min(1)).min(1),
+    /** The upward half — optional, so one record can carry both ends at once. */
+    why_chain: z.array(z.string().min(1)).optional(),
+    saturated: z.boolean().optional(),
   })
   .strict();
 export type Ladder = z.infer<typeof ladderSchema>;

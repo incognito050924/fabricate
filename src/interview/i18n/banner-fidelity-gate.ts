@@ -15,11 +15,16 @@
  * is applied to every key, deterministically.
  */
 
+import { scanAvoidViolations } from "../glossary/avoid-scan";
+import { INTERVIEW_GLOSSARY, glossaryAvoidTerms } from "../glossary/interview-vocabulary";
 import { STATIC_COPY_CATALOG, type StaticCopyCatalog } from "./static-copy-catalog";
 import { enumerateCoverage } from "./static-copy-coverage";
 
-/** Translationese rejected for user-facing copy — the machine-checkable subset. */
-export const INTERVIEW_AVOID_TERMS: readonly string[] = ["여정", "당신", "귀하", "원활한"];
+/**
+ * Derived, never retyped: the terms are the agreed-vocabulary glossary's, and a
+ * term added there reaches every banner without anyone editing this file.
+ */
+export const INTERVIEW_AVOID_TERMS: readonly string[] = glossaryAvoidTerms(INTERVIEW_GLOSSARY);
 
 export type FidelityViolation = {
   term: string;
@@ -38,9 +43,11 @@ export function judgeCopyFidelity(input: {
   text: string;
   avoid_terms: string[];
 }): CopyFidelityJudgment {
-  const violations = input.avoid_terms
-    .filter((term) => input.text.includes(term))
-    .map((term) => ({ term }));
+  // The grep is the glossary's scanner — this module keeps no second one.
+  const violations = scanAvoidViolations(
+    [{ concept: input.catalog_key, avoid: input.avoid_terms }],
+    input.text,
+  ).map((violation) => ({ term: violation.term }));
 
   return {
     catalog_key: input.catalog_key,
@@ -72,11 +79,26 @@ export function aggregateFidelityGate(input: {
   };
 }
 
+/**
+ * The floor under "전수 검수". An empty catalog enumerates to an empty coverage,
+ * which aggregates to a pass — reviewing nothing would otherwise be reported as
+ * having reviewed everything.
+ */
+export type CatalogFloor = { ok: true } | { ok: false; reason: "empty_catalog" };
+
+export function checkCatalogFloor(catalog: StaticCopyCatalog): CatalogFloor {
+  return Object.keys(catalog).length === 0 ? { ok: false, reason: "empty_catalog" } : { ok: true };
+}
+
 export type FidelityGateReport = FidelityGateResult & {
+  catalog_floor: CatalogFloor;
   avoid_terms: string[];
   coverage_keys: string[];
   judgments: CopyFidelityJudgment[];
 };
+
+const hasCopy = (entry: { ko?: unknown } | undefined): boolean =>
+  typeof entry?.ko === "string" && entry.ko.trim().length > 0;
 
 /** The whole surface, reviewed: coverage from the catalog, a verdict per key. */
 export function runStaticCopyFidelityGate(
@@ -84,16 +106,22 @@ export function runStaticCopyFidelityGate(
 ): FidelityGateReport {
   const avoid_terms = [...INTERVIEW_AVOID_TERMS];
   const coverage_keys = enumerateCoverage(catalog).map((row) => row.catalog_key);
-  const judgments = coverage_keys.map((key) =>
-    judgeCopyFidelity({
-      catalog_key: key,
-      text: catalog[key]?.ko ?? "",
-      avoid_terms,
-    }),
-  );
+  // A key with no copy is left UNJUDGED rather than judged over "": a verdict
+  // over a string the catalog never held is the fail-open this gate exists to
+  // refuse. It lands in unjudged_keys and blocks the pass.
+  const judgments = coverage_keys
+    .filter((key) => hasCopy(catalog[key]))
+    .map((key) =>
+      judgeCopyFidelity({ catalog_key: key, text: catalog[key]?.ko ?? "", avoid_terms }),
+    );
+
+  const aggregate = aggregateFidelityGate({ coverage_keys, judgments });
+  const catalog_floor = checkCatalogFloor(catalog);
 
   return {
-    ...aggregateFidelityGate({ coverage_keys, judgments }),
+    ...aggregate,
+    passed: aggregate.passed && catalog_floor.ok,
+    catalog_floor,
     avoid_terms,
     coverage_keys,
     judgments,

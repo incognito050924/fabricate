@@ -32,6 +32,18 @@ export const STATIC_COPY_CATALOG = {
   "interview.label.done": { kind: "label", ko: "완료" },
   "interview.label.unverified": { kind: "label", ko: "미검증" },
   "interview.label.assumption": { kind: "label", ko: "가정" },
+  // Absorbed from src/interview/render.ts — the delegation reflection.
+  "interview.label.echoed_utterance": { kind: "label", ko: "말씀하신 것:" },
+  "interview.label.echoed_reading": { kind: "label", ko: "이렇게 이해했습니다:" },
+  "interview.prompt.correct_reading": {
+    kind: "prompt",
+    ko: "다르게 이해했다면 지금 바로잡아 주세요.",
+  },
+  // Absorbed from src/cli/interview-finalize.ts — the finalize arm.
+  "interview.banner.finalize_rejected": { kind: "banner", ko: "확정 거부" },
+  "interview.banner.intent_recorded": { kind: "banner", ko: "의도를 확정해 기록했다." },
+  "interview.label.next_route": { kind: "label", ko: "다음 경로" },
+  "interview.label.resynthesize": { kind: "label", ko: "원 요청에서 다시 합성한다" },
 } as const satisfies Record<string, StaticCopyEntry>;
 
 export type StaticCopyKey = keyof typeof STATIC_COPY_CATALOG;

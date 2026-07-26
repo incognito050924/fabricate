@@ -12,6 +12,7 @@ import {
   createIntentStore,
   finalize,
 } from "../interview/finalize";
+import { staticCopy } from "../interview/i18n/static-copy-catalog";
 
 export type FinalizeCliResult = {
   exitCode: number;
@@ -25,16 +26,19 @@ export async function runFinalizeCli(candidate: FinalizeCandidate): Promise<Fina
   const outcome = finalize(candidate, store);
 
   if (outcome.status === "rejected") {
-    const output = [`확정 거부(${outcome.rejection.kind}): ${outcome.rejection.reason}`];
+    const rejected = staticCopy("interview.banner.finalize_rejected");
+    const output = [`${rejected}(${outcome.rejection.kind}): ${outcome.rejection.reason}`];
     if (outcome.routing) {
-      output.push(`다음 경로: ${outcome.routing.target} — 원 요청에서 다시 합성한다`);
+      const route = staticCopy("interview.label.next_route");
+      const resynthesize = staticCopy("interview.label.resynthesize");
+      output.push(`${route}: ${outcome.routing.target} — ${resynthesize}`);
     }
     return { exitCode: 1, output };
   }
 
   return {
     exitCode: 0,
-    output: ["의도를 확정해 기록했다.", outcome.intent.statement],
+    output: [staticCopy("interview.banner.intent_recorded"), outcome.intent.statement],
     intent: outcome.intent,
   };
 }

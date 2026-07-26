@@ -1,4 +1,5 @@
 import type { DelegationRecord } from "./delegation";
+import { staticCopy } from "./i18n/static-copy-catalog";
 
 /**
  * Reflecting a delegation back to the user. The interpretation is shown
@@ -13,12 +14,12 @@ import type { DelegationRecord } from "./delegation";
 
 export function renderDelegationReflection(record: DelegationRecord): string {
   return [
-    "말씀하신 것:",
+    staticCopy("interview.label.echoed_utterance"),
     record.raw_utterance,
     "",
-    "이렇게 이해했습니다:",
+    staticCopy("interview.label.echoed_reading"),
     record.interpretation,
     "",
-    "다르게 이해했다면 지금 바로잡아 주세요.",
+    staticCopy("interview.prompt.correct_reading"),
   ].join("\n");
 }

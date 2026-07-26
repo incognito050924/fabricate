@@ -49,11 +49,32 @@ export type ReviewRecordValidation = { accepted: true } | { accepted: false; rea
 
 const HANGUL = /[가-힣]/;
 
-/** A field holding a key→string map is a translation table under any name. */
-function isStringMap(value: unknown): boolean {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-  const values = Object.values(value as Record<string, unknown>);
-  return values.length > 0 && values.every((entry) => typeof entry === "string");
+/**
+ * The review layer's entire vocabulary: which catalog key was reviewed, what
+ * kind of copy it is, the verdict, and the violations behind it.
+ *
+ * An allowlist rather than a blocklist, because a blocklist only rejects the
+ * copy-shaped fields somebody thought of — `en: "Welcome to the interview"`
+ * carries a second surface string past every Korean-shaped test.
+ */
+export const REVIEW_RECORD_FIELDS = ["catalog_key", "kind", "passed", "violations"] as const;
+
+const isAllowed = (field: string): boolean =>
+  (REVIEW_RECORD_FIELDS as readonly string[]).includes(field);
+
+/** Fields carrying a shape they were not given hold copy in disguise. */
+function holdsCopy(field: string, value: unknown): boolean {
+  switch (field) {
+    // The kind is an internal English tag; Korean in it is user-facing copy.
+    case "kind":
+      return typeof value !== "string" || HANGUL.test(value);
+    case "passed":
+      return typeof value !== "boolean";
+    case "violations":
+      return !Array.isArray(value);
+    default:
+      return true;
+  }
 }
 
 export function validateReviewRecord(record: Record<string, unknown>): ReviewRecordValidation {
@@ -64,8 +85,7 @@ export function validateReviewRecord(record: Record<string, unknown>): ReviewRec
 
   for (const [field, value] of Object.entries(record)) {
     if (field === "catalog_key") continue;
-    // Copy held by the review layer — either a table of it, or one string of it.
-    if (isStringMap(value) || (typeof value === "string" && HANGUL.test(value))) {
+    if (!isAllowed(field) || holdsCopy(field, value)) {
       return { accepted: false, reason: "parallel_translation_table" };
     }
   }

@@ -14,7 +14,7 @@
  * that agreed about nothing.
  */
 
-import type { GlossaryEntry } from "../glossary/entry";
+import { type GlossaryEntry, glossaryEntrySchema } from "../glossary/entry";
 import { type BipolarPair, assessBipolarPair } from "./bipolar-pair";
 
 export class IncompleteBipolarPairError extends Error {
@@ -23,6 +23,26 @@ export class IncompleteBipolarPairError extends Error {
     this.name = "IncompleteBipolarPairError";
   }
 }
+
+/**
+ * The concept key of a recorded construct. A dimension can hold several
+ * constructs — "feedback tone" is warm/cold AND terse/expansive — so keying the
+ * entry on the dimension alone makes the second construct overwrite the first
+ * in every lookup. The grouped pole is what distinguishes them.
+ *
+ * Both halves are verbatim user text, so the separator can occur inside them:
+ * ("tone", "warm — plain") and ("tone — warm", "plain") would otherwise mint one
+ * key for two different constructs, and the record check — whose whole job is
+ * detecting ABSENCE — would answer "recorded" about a construct nobody
+ * recorded. Doubling the separator inside each half removes the ambiguity
+ * without refusing anything the user actually said.
+ */
+const SEPARATOR = "—";
+
+const escapeSeparator = (text: string): string => text.replaceAll(SEPARATOR, SEPARATOR + SEPARATOR);
+
+export const conceptOf = (dimension: string, grouped_pole: string): string =>
+  `${escapeSeparator(dimension)} ${SEPARATOR} ${escapeSeparator(grouped_pole)}`;
 
 export function recordBipolarPairToGlossary(pair: BipolarPair): GlossaryEntry {
   const assessment = assessBipolarPair(pair);
@@ -34,7 +54,7 @@ export function recordBipolarPairToGlossary(pair: BipolarPair): GlossaryEntry {
   const opposite = pair.opposite_pole as string;
 
   return {
-    concept: pair.dimension,
+    concept: conceptOf(pair.dimension, grouped),
     korean: grouped,
     positive_examples: [grouped],
     negative_examples: [opposite],
@@ -68,14 +88,28 @@ export function checkBipolarGlossaryRecord(
   const grouped = pair.grouped_pole as string;
   const opposite = pair.opposite_pole as string;
 
-  const recorded = glossary.some((entry) => {
-    const texts = textsOf(entry);
+  // Entry-hood first: "glossary 항목으로 기록되어" means an entry that satisfies
+  // the ac-21 schema, not any object that happens to contain the two strings.
+  const recorded = glossary.some((candidate) => {
+    const parsed = glossaryEntrySchema.safeParse(candidate);
+    if (!parsed.success) return false;
+
+    const entry = parsed.data;
+    if (entry.concept !== conceptOf(pair.dimension, grouped)) return false;
+
+    // The poles keep their sides: the grouped pole is what the term covers, the
+    // opposite is what it does not. Swapped, the entry says the reverse.
     return (
-      texts.some((text) => text.includes(grouped)) && texts.some((text) => text.includes(opposite))
+      textsOf(entry.positive_examples).some((text) => text.includes(grouped)) &&
+      textsOf(entry.negative_examples).some((text) => text.includes(opposite))
     );
   });
 
   return recorded
     ? { verdict: "pass" }
-    : { verdict: "fail", reason: "채록한 두 극을 담은 glossary 항목이 없다" };
+    : {
+        verdict: "fail",
+        reason:
+          "채록한 두 극을 담은 glossary 항목이 없다 — 항목성(다섯 필드)·개념 키·극의 자리 중 하나가 어긋난다",
+      };
 }
