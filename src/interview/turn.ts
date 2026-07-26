@@ -25,6 +25,15 @@
  * counted refusal) is still not settled here; counting it is what makes the
  * choice observable either way.
  *
+ * There are two ways a goal state ends up unjudgeable — it could not be read at
+ * all, or it was read and names no predicate — and they stay ONE rejection kind
+ * with ONE counter, because nothing downstream routes on the difference and a
+ * second kind would invent a distinction the contract never names. The reason
+ * string is where they part: the second case was read, so reporting it as
+ * unreadable states something untrue about the session, and until the strings
+ * split the two refusals were byte-identical objects a caller could not tell
+ * apart.
+ *
  * Both counters are incremented undefended: a log arriving without one would
  * produce NaN rather than an error. That is deliberate. The type forbids such a
  * log, nothing in this repo deserializes a turn log, and the defence one would
@@ -69,9 +78,12 @@ export type TurnLog = {
   readonly orphan_rejection_count: number;
   /**
    * How many fired questions were refused because this log's goal state could
-   * not be read. Deliberately NOT the orphan counter: those questions may be
+   * not be judged against — it could not be read, or it was read and names no
+   * predicate. Deliberately NOT the orphan counter: those questions may be
    * perfectly well linked, and mixing them in is what made the orphan number
-   * report a schema mismatch.
+   * report a schema mismatch. The name predates the second cause; the two share
+   * this counter because they share every routing consequence, and the refusal
+   * `reason` is what tells them apart.
    */
   readonly unreadable_goal_state_rejection_count: number;
   /** Present once round 0 has derived one; the orphan gate reads it. */
@@ -83,7 +95,12 @@ export type Session = TurnLog & {
   delegations: unknown[];
 };
 
-/** Refused because the session's goal state could not be read at all. */
+/**
+ * Refused because the session's goal state cannot serve as the standard the ref
+ * is judged against — either it could not be read, or it was read and names no
+ * predicate. One kind, because the two route identically; the `reason` says
+ * which, because only one of them is a session that could not be read.
+ */
 export type UnreadableGoalStateRejection = {
   kind: "unreadable_goal_state";
   reason: string;
@@ -112,14 +129,38 @@ export function createSession(input: { source_request: string }): Session {
   };
 }
 
+/**
+ * Why a goal state cannot serve as the standard a ref is judged against.
+ *
+ * Both causes route identically — same refusal kind, same counter, turn not
+ * recorded — and that is on purpose: nothing downstream branches on which one
+ * it was, so splitting the KIND would invent a distinction the contract never
+ * names. But they are different facts, and the caller is handed a sentence.
+ * `no_predicates` means the goal state WAS read; calling that "unreadable" is
+ * simply untrue, and while both refusals carried the same string the two were
+ * byte-identical objects a caller had no way to tell apart.
+ */
 type UnjudgeableCause = "unreadable" | "no_predicates";
 
+/**
+ * Exported so the sentence itself can be pinned, not merely sampled for
+ * keywords. Asserting `reason.includes("술어")` accepts "당신의 술어 참조가
+ * 잘못됐다" — the exact "your ref is wrong" report this split exists to stop —
+ * and asserting `!reason.includes("읽을 수 없다")` accepts "파싱되지 않았고
+ * 술어도 확인 불가", which is the same false claim wearing different words.
+ * A substring assertion cannot tell a sentence from a keyword salad; only the
+ * whole string can. Note that the pinning test must hold its own verbatim copy
+ * rather than import these — `toBe(THIS_CONSTANT)` is `X === X` and cannot fail.
+ */
 export const UNREADABLE_GOAL_STATE_REASON =
   "이 세션의 goal_state를 읽을 수 없다 — 참조가 목표에 닿는지 판정할 수 없으므로 기록하지 않는다(고아 아님)";
 
+export const NO_PREDICATES_GOAL_STATE_REASON =
+  "이 세션의 goal_state는 읽혔으나 술어가 하나도 없어 심판 기준이 못 된다 — 참조가 목표에 닿는지 판정할 수 없으므로 기록하지 않는다(고아 아님)";
+
 const UNJUDGEABLE_REASON: Record<UnjudgeableCause, string> = {
   unreadable: UNREADABLE_GOAL_STATE_REASON,
-  no_predicates: UNREADABLE_GOAL_STATE_REASON,
+  no_predicates: NO_PREDICATES_GOAL_STATE_REASON,
 };
 
 /**
@@ -142,7 +183,24 @@ const UNJUDGEABLE_REASON: Record<UnjudgeableCause, string> = {
  * The structural reader stays honest about the distinction (`readPredicateIds`
  * returns `[]`, which truthfully means "names no ids"); collapsing the two into
  * one refusal is a policy this gate owns, not a fact the reader should hide
- * from other callers.
+ * from other callers — and the cause carried here is what keeps the collapse
+ * from reaching the sentence the caller is shown.
+ *
+ * KNOWN LIMIT (measured 2026-07-26, NOT closed here). The `unreadable` cause is
+ * still two facts wearing one sentence, because `readPredicateIds` answers
+ * `null` for both of them:
+ *  - nothing could be read at all — `{derived_at}` with no `predicates` key,
+ *    a non-object, a non-array predicate list;
+ *  - the list WAS read and one entry's id is unusable — measured cases
+ *    `[{id:"p-1"},{id:"  "}]`, `[{id:"p-1"},{statement:"s"}]`,
+ *    `[{id:"p-1"},{id:7}]`, `[{id:"p-1"},null]`.
+ * All four of the second group are told "이 세션의 goal_state를 읽을 수 없다",
+ * which is false about them in exactly the way the empty-list case was false
+ * before it was split off. Splitting it would take a THIRD cause, and this
+ * surface already has zero contract grounding for the two it has (see §7 of
+ * NEXT.md); adding an invention to correct an invention is a user decision, not
+ * an implementer's. It is left open on purpose and belongs with the X3
+ * contract-confrontation pass, not with a code repair.
  */
 type GoalStateReading =
   | { status: "absent" }
@@ -175,6 +233,7 @@ export function recordFiredTurn<L extends TurnLog>(
   if (goalState.status === "unjudgeable") {
     // Not an orphan: the ref may well be correct — this module simply cannot
     // tell. The orphan counter stays where it was; this refusal gets its own.
+    // One kind, one counter, but the reason names which cause refused.
     return {
       recorded: false,
       log: {

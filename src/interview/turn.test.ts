@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { createSession, createTurnLog, recordFiredTurn } from "./turn";
+import {
+  NO_PREDICATES_GOAL_STATE_REASON,
+  UNREADABLE_GOAL_STATE_REASON,
+  createSession,
+  createTurnLog,
+  recordFiredTurn,
+} from "./turn";
 
 /**
  * The turn log's refusal counters.
@@ -144,6 +150,109 @@ describe("turn log: an empty predicate list is unreadable, not universally orpha
 
     expect(empty.rejection?.kind).toBe("unreadable_goal_state");
     expect(one.recorded).toBe(true);
+  });
+});
+
+/**
+ * The refusal KIND is deliberately one, because the routing consequence is one:
+ * the turn is not recorded, the orphan counter is untouched, and the unreadable
+ * counter goes up. But the two ways to get there are different facts about the
+ * session, and the caller is shown a sentence, not a branch. A goal state whose
+ * predicate list is empty WAS read — what failed is that it cannot serve as the
+ * standard a ref is judged against. Saying "이 세션의 goal_state를 읽을 수 없다"
+ * about it is simply false, and while both refusals returned a byte-identical
+ * object no caller could tell which fact it was looking at.
+ *
+ * These assertions pin the WHOLE sentence, and that is the point rather than
+ * pedantry. Written as substring checks they passed on all of:
+ *   "당신의 술어 참조가 잘못됐다 — …"        (the "your ref is wrong" report
+ *                                            this split exists to prevent)
+ *   "파싱되지 않았고 술어도 확인 불가 — …"   (the same false claim, reworded)
+ *   "술어가 너무 많아 심판 기준이 못 된다"    (a different fact entirely)
+ *   "… 고아 카운터를 올리고 기록하지 않는다(고아 아님)"  (self-contradicting)
+ *   "술어 기록하지 않는다 고아 아님"          (keyword salad, not a sentence)
+ * A keyword assertion cannot distinguish a sentence from a bag of the right
+ * words; the guarantee at stake ("the reason is not false about this session")
+ * lives in the whole string or nowhere.
+ *
+ * The expected strings below are VERBATIM COPIES, deliberately not imported.
+ * `expect(reason).toBe(UNREADABLE_GOAL_STATE_REASON)` would be `X === X`: edit
+ * the constant and the assertion follows it, green forever. Duplication is what
+ * makes this a freeze instead of a tautology.
+ */
+const EXPECTED_UNREADABLE_REASON =
+  "이 세션의 goal_state를 읽을 수 없다 — 참조가 목표에 닿는지 판정할 수 없으므로 기록하지 않는다(고아 아님)";
+
+const EXPECTED_NO_PREDICATES_REASON =
+  "이 세션의 goal_state는 읽혔으나 술어가 하나도 없어 심판 기준이 못 된다 — 참조가 목표에 닿는지 판정할 수 없으므로 기록하지 않는다(고아 아님)";
+
+describe("turn log: the refusal reason names which cause refused the turn", () => {
+  test("the exported reasons are these exact sentences", () => {
+    expect(UNREADABLE_GOAL_STATE_REASON).toBe(EXPECTED_UNREADABLE_REASON);
+    expect(NO_PREDICATES_GOAL_STATE_REASON).toBe(EXPECTED_NO_PREDICATES_REASON);
+    expect(UNREADABLE_GOAL_STATE_REASON).not.toBe(NO_PREDICATES_GOAL_STATE_REASON);
+  });
+
+  test("an unreadable goal state and an empty predicate list do not return the same rejection", () => {
+    const unreadable = recordFiredTurn(
+      { ...createTurnLog(), goal_state: UNREADABLE_GOAL_STATE },
+      QUESTION,
+    );
+    const empty = recordFiredTurn({ ...createTurnLog(), goal_state: EMPTY_GOAL_STATE }, QUESTION);
+
+    // Same routing consequence…
+    expect(unreadable.rejection?.kind).toBe("unreadable_goal_state");
+    expect(empty.rejection?.kind).toBe("unreadable_goal_state");
+    expect(unreadable.log.unreadable_goal_state_rejection_count).toBe(1);
+    expect(empty.log.unreadable_goal_state_rejection_count).toBe(1);
+    // …but the caller can tell the two facts apart.
+    expect(unreadable.rejection).not.toEqual(empty.rejection);
+    expect(unreadable.rejection?.reason).not.toBe(empty.rejection?.reason);
+  });
+
+  test("a goal state that could not be read is refused with exactly the unreadable sentence", () => {
+    const result = recordFiredTurn(
+      { ...createTurnLog(), goal_state: UNREADABLE_GOAL_STATE },
+      QUESTION,
+    );
+
+    expect(result.rejection?.reason).toBe(EXPECTED_UNREADABLE_REASON);
+  });
+
+  test("a goal state that was read but names no predicate is refused with exactly the other sentence", () => {
+    // It WAS read. Any sentence claiming otherwise — or blaming the caller's
+    // ref — is the falsehood this split exists to remove, and only whole-string
+    // equality refuses all of them.
+    const result = recordFiredTurn({ ...createTurnLog(), goal_state: EMPTY_GOAL_STATE }, QUESTION);
+
+    expect(result.rejection?.reason).toBe(EXPECTED_NO_PREDICATES_REASON);
+  });
+
+  test("the two sentences differ only in the cause, never in the consequence", () => {
+    // The shared tail is the routing promise: not recorded, and not an orphan.
+    // Asserted against the string the MODULE returned, never against this
+    // file's own EXPECTED_* literals. Written the other way round —
+    // `EXPECTED_UNREADABLE_REASON.endsWith(CONSEQUENCE)` — all three operands
+    // are literals declared in this file and no src value takes part at all:
+    // blanking both constants in turn.ts to "" leaves such a line green. That
+    // is the "자기참조라 실패 불가" defect NEXT.md names in ac-19, and an
+    // assertion has to observe the runtime value to guard anything.
+    //
+    // The suffix check comes before the whole-string check on purpose: when a
+    // reworded cause takes the consequence with it, the failure then names the
+    // broken promise rather than only reporting that a sentence changed.
+    const CONSEQUENCE = " — 참조가 목표에 닿는지 판정할 수 없으므로 기록하지 않는다(고아 아님)";
+
+    for (const [goal_state, expected] of [
+      [UNREADABLE_GOAL_STATE, EXPECTED_UNREADABLE_REASON],
+      [EMPTY_GOAL_STATE, EXPECTED_NO_PREDICATES_REASON],
+    ] as const) {
+      const result = recordFiredTurn({ ...createTurnLog(), goal_state }, QUESTION);
+      expect(result.rejection?.reason?.endsWith(CONSEQUENCE)).toBe(true);
+      expect(result.rejection?.reason).toBe(expected);
+      expect(result.recorded).toBe(false);
+      expect(result.log.orphan_rejection_count).toBe(0);
+    }
   });
 });
 
