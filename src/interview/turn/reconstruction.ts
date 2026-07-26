@@ -34,8 +34,12 @@ export function recordTurnReconstruction(input: ReconstructionInput): Reconstruc
     return { accepted: true, record: { request_text: input.request_text, u1_fired: false } };
   }
 
+  // '비어있지 않게' is a whitespace-blind floor, as it is for the teachback
+  // restatement (turn/teachback.ts): a line of spaces is not a reconstruction.
+  // The recorded value stays verbatim — the floor decides admission, it does
+  // not rewrite what the turn said.
   const line = input.situation_problem_line;
-  if (line === undefined || line.length === 0) {
+  if (line === undefined || line.trim().length === 0) {
     return { accepted: false, reason: "missing_reconstruction_line" };
   }
 
