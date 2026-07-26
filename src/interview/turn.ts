@@ -112,34 +112,49 @@ export function createSession(input: { source_request: string }): Session {
   };
 }
 
-const UNREADABLE_GOAL_STATE =
+type UnjudgeableCause = "unreadable" | "no_predicates";
+
+export const UNREADABLE_GOAL_STATE_REASON =
   "이 세션의 goal_state를 읽을 수 없다 — 참조가 목표에 닿는지 판정할 수 없으므로 기록하지 않는다(고아 아님)";
 
+const UNJUDGEABLE_REASON: Record<UnjudgeableCause, string> = {
+  unreadable: UNREADABLE_GOAL_STATE_REASON,
+  no_predicates: UNREADABLE_GOAL_STATE_REASON,
+};
+
 /**
- * The predicate ids this log's goal state holds.
- *  - `undefined` — no goal state at all, so there is nothing to check against.
- *  - `null` — a goal state exists but cannot be judged against.
- *  - a set — the ids it names.
+ * What this log's goal state can say about a ref.
+ *  - `absent` — no goal state at all, so there is nothing to check against.
+ *  - `unjudgeable` — a goal state exists but cannot be judged against, and the
+ *    cause says which of the two ways.
+ *  - `read` — the ids it names.
  *
- * An EMPTY predicate list joins the `null` arm rather than becoming an empty
- * set, and that is a decision rather than a detail. An empty set would refuse
- * every ref as an orphan, which is observationally the very defect that folding
- * parse failures into "orphan" produced: a question that DID name a predicate
- * lands on the counter the contract reserves for questions that named none.
- * A goal state with no predicates is not a goal with nothing in it — the live
- * lens refuses it outright (goal-state.ts's `.min(1)`) and ac-2 clause 5
+ * An EMPTY predicate list joins the `unjudgeable` arm rather than becoming an
+ * empty set, and that is a decision rather than a detail. An empty set would
+ * refuse every ref as an orphan, which is observationally the very defect that
+ * folding parse failures into "orphan" produced: a question that DID name a
+ * predicate lands on the counter the contract reserves for questions that named
+ * none. A goal state with no predicates is not a goal with nothing in it — the
+ * live lens refuses it outright (goal-state.ts's `.min(1)`) and ac-2 clause 5
  * requires `predicates.length > 0` — so it is a defective standard, and the
  * honest report is "this cannot be judged against", not "your ref is wrong".
  *
  * The structural reader stays honest about the distinction (`readPredicateIds`
- * returns `[]`, which truthfully means "names no ids"); collapsing the two is a
- * policy this gate owns, not a fact the reader should hide from other callers.
+ * returns `[]`, which truthfully means "names no ids"); collapsing the two into
+ * one refusal is a policy this gate owns, not a fact the reader should hide
+ * from other callers.
  */
-function predicateIdsOf(log: TurnLog): Set<string> | null | undefined {
-  if (log.goal_state === undefined) return undefined;
+type GoalStateReading =
+  | { status: "absent" }
+  | { status: "unjudgeable"; cause: UnjudgeableCause }
+  | { status: "read"; ids: Set<string> };
+
+function readGoalState(log: TurnLog): GoalStateReading {
+  if (log.goal_state === undefined) return { status: "absent" };
   const ids = readPredicateIds(log.goal_state);
-  if (ids === null || ids.length === 0) return null;
-  return new Set(ids);
+  if (ids === null) return { status: "unjudgeable", cause: "unreadable" };
+  if (ids.length === 0) return { status: "unjudgeable", cause: "no_predicates" };
+  return { status: "read", ids: new Set(ids) };
 }
 
 export function recordFiredTurn<L extends TurnLog>(
@@ -156,8 +171,8 @@ export function recordFiredTurn<L extends TurnLog>(
     return rejectAsOrphan(orphanRejection("goal_predicate_ref"));
   }
 
-  const predicateIds = predicateIdsOf(log);
-  if (predicateIds === null) {
+  const goalState = readGoalState(log);
+  if (goalState.status === "unjudgeable") {
     // Not an orphan: the ref may well be correct — this module simply cannot
     // tell. The orphan counter stays where it was; this refusal gets its own.
     return {
@@ -166,10 +181,13 @@ export function recordFiredTurn<L extends TurnLog>(
         ...log,
         unreadable_goal_state_rejection_count: log.unreadable_goal_state_rejection_count + 1,
       },
-      rejection: { kind: "unreadable_goal_state", reason: UNREADABLE_GOAL_STATE },
+      rejection: {
+        kind: "unreadable_goal_state",
+        reason: UNJUDGEABLE_REASON[goalState.cause],
+      },
     };
   }
-  if (predicateIds !== undefined && !predicateIds.has(turn.goal_predicate_ref)) {
+  if (goalState.status === "read" && !goalState.ids.has(turn.goal_predicate_ref)) {
     return rejectAsOrphan(orphanRejection("goal_predicate_ref"));
   }
 
