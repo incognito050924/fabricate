@@ -465,7 +465,7 @@ mv <임시 위치>/* . 2>/dev/null
 
 | 세션 | 무엇을 한다 | 무엇을 하지 않는다 | 끝났다고 말할 수 있는 조건 |
 | --- | --- | --- | --- |
-| **A (다음 세션)** | **0a 전부** — 미결 1·2 결정, 부트스트랩 다섯(`package.json`의 `verify`+`bin` · `verify/` 러너와 **default-FAIL 계약** + **fixture 헌법 검사** + **도달 가능성 검사** · `.claude/agents/fab-verifier.md` · `.claude/settings.local.json` allowlist · `drive.sh`), 연기 시험 넷 | **IP를 초록으로 만들지 않는다.** 인터뷰 로직 · CLI 하위 명령의 본체 · 훅 스크립트의 판정 본체를 구현하지 않는다. `drive.sh`는 **짓기만 하고 켜지 않는다**. **그리고 IP별 fixture를 만들지 않는다** — 걷는 경로가 없으면 좋은 fixture를 쓸 수 없다(위 "fixture 헌법" 규칙 4) | 넷이다: ① 연기 시험 넷 통과 · ② **`bun run verify`가 RED로 정상 동작**(어느 IP 기준이 왜 `false`인지 사람이 읽히고 **종료 코드 ≠ 0**) · ③ **fixture 헌법 검사가 실제로 도는 것**(`verify/`의 `src/` import 금지를 기계가 본다) · ④ 미결 1·2 결정. 그리고 아래 "세션 A가 끝날 때 STATE에 남길 것" 다섯이 이 문서에 적혀 있다 |
+| **A (다음 세션)** | **0a 전부** — 미결 1·2 결정, 부트스트랩 다섯(`package.json`의 `verify`+`bin` · `verify/` 러너와 **default-FAIL 계약** + **fixture 헌법 검사** + **도달 가능성 검사** · `.claude/agents/fab-verifier.md` · `.claude/settings.local.json` allowlist · `drive.sh`), 연기 시험 넷 | **IP를 초록으로 만들지 않는다.** 인터뷰 로직 · CLI 하위 명령의 본체 · 훅 스크립트의 판정 본체를 구현하지 않는다. `drive.sh`는 **짓기만 하고 켜지 않는다**. **그리고 IP별 fixture를 만들지 않는다** — 걷는 경로가 없으면 좋은 fixture를 쓸 수 없다(위 "fixture 헌법" 규칙 4) | **다섯이다** (2026-07-28 갱신 — ④가 계획 세션에서 이미 닫혀 자리를 루프에 넘겼다): ① **`drive.sh`가 켜기만 하면 도는 상태**(상한 셋 · `--setting-sources project` 격리 · verify 1회 실행이 실제로 들어 있고 실행 권한이 있다) — **이것이 이 세션의 주 산출물이다** · ② **`bun run verify`가 RED로 정상 동작**(어느 IP 기준이 왜 `false`인지 사람이 읽히고 **종료 코드 ≠ 0**) · ③ **fixture 헌법 검사가 실제로 도는 것**(`verify/`의 `src/` import 금지를 기계가 본다) · ④ 연기 시험 넷 통과 · ⑤ **비계 판별식 통과**(비계를 치워도 `verify` 결과가 같다). 그리고 아래 "세션 A가 끝날 때 STATE에 남길 것" 다섯이 이 문서에 적혀 있다 |
 | **B (그 다음)** | **0b** — `drive.sh`를 켜고 **먼저 걷는 경로 하나**(IP-0 · IP-1ⓐ)를 뚫은 뒤, 나머지 IP의 양극·음극을 **그 세션의 변형으로** 만들며 초록으로. 이후 작업 순서 2·3단계 | **부트스트랩을 다시 설계하지 않는다.** 세션 A가 정한 미결 1·2와 계약 형상을 취향으로 다시 열지 않는다 — 더 나은 **사실을 관측**했을 때만 바꾸고, 바꾸면 STATE에 근거를 적는다. **fixture 헌법 넷을 어기지 않는다** | **`bun run verify`가 초록.** 그때만 `main`에 착지(`GOAL.md` §3). 보고는 `기계 통과`이지 완료가 아니다 — 남은 상태는 `사람 검증 대기`(`GOAL.md` §2 끝) |
 
 ### 세션 A에 못박는 것 — 이 절의 핵심이다
@@ -583,9 +583,26 @@ done
   -> 2a4ba701d13dbf3670871d840224c86f66f1cb237cfc0772a62c230ca71c088f 여야 한다.
   다르면 멈추고 보고하라. GOAL.md는 한 글자도 고치지 마라(§9 없이는).
 
+[이 세션이 만드는 것 — 구동 루프 하나]
+- 이 세션의 산출물은 "다음 세션이 켜기만 하면 도는 루프"다. verify 하네스는 그 루프의
+  종료 조건이지 이 세션의 목적 자체가 아니다. 둘의 비중을 뒤집지 마라 —
+  verify만 잘 짓고 drive.sh를 끝에 대충 갈기면 이 세션은 실패다.
+- 루프의 형상은 이미 정해져 있다. STATE.md "0b — 루프" 절의 스크립트와 그 위의 세 정정을
+  그대로 따라라. 다시 설계하지 마라:
+  1) verify는 패스당 한 번만 돌려 .drive/verify.log 에 받는다.
+     종료 조건과 다음 라운드 프롬프트가 그 파일을 함께 쓴다.
+     (until bun run verify; do … $(bun run verify) 는 같은 패스에서 두 번 돌아
+      두 실행 사이에 상태가 갈리면 조건과 프롬프트가 서로 다른 사실을 본다)
+  2) 상한 셋을 함께 건다 — 반복 카운터 · --max-budget-usd · AGENT_STOP 센티널 파일.
+  3) 루프 세션은 --setting-sources project 로 격리한다.
+     (codex 플러그인이 timeout: 900 인 Stop 훅을 등록해서 라운드마다 15분이 곱해진다)
+- 매 라운드 입력은 GOAL.md 전문이다. 직전 라운드의 산출물 요약을 시드로 주지 마라(GOAL.md §0).
+- 검증자에게 쓰기 도구를 주지 않는다. 고칠 수 있으면 그 자리는 더 이상 검증이 아니다.
+
 [이 세션의 범위 — 이것만 한다]
 - 이 세션은 0a만 한다. STATE.md의 "세션 경계 — 다음 세션은 0a만 한다"를 먼저 읽어라.
 - 루프를 켜지 마라. drive.sh는 짓기만 하고 실행하지 않는다.
+  (한 바퀴 돌려 보고 싶어지면, 그것은 세션 B의 일을 당겨 하는 것이다)
 - IP를 초록으로 만들지 마라. 인터뷰 로직·CLI 하위 명령 본체·훅 판정 본체는 세션 B의 일이다.
 - RED가 이 세션의 정상 산출물이다. bun run verify가 빨간 것이 완료 조건이다.
   초록으로 만들고 싶어지면 그것은 종료 조건을 짓는 자가 그것을 통과시키는 자가 되는 것이고,
@@ -626,7 +643,9 @@ done
    - 미결 2: CLI에 --session을 두지 않는다. active 표식이 정확히 하나일 때 그것을 쓰고,
      0개거나 2개 이상이면 exit ≠ 0. 세션 디렉터리는 훅만 만든다.
    - 실측할 것 하나: CLI가 .fabricate/를 찾는 기준 디렉터리(훅의 cwd와 갈리는가).
-2. 부트스트랩 다섯을 짓는다:
+2. 부트스트랩 다섯을 짓는다. 다섯이 전부 루프의 부품이다 —
+   drive.sh=루프 본체 · verify=종료 조건 · fab-verifier=검증 역할 ·
+   settings.local.json=Bash 권한 · bin/fabricate=도달성 검사의 뿌리:
    - package.json의 verify 스크립트와 bin (단일 뿌리 bin/fabricate)
    - verify/ 러너 + default-FAIL 계약(IP-0~6의 모든 기준이 false에서 시작)
      + fixture 헌법 검사(verify/ 아래 어떤 파일도 src/ 에서 import하지 않는지 기계가 본다)
@@ -635,7 +654,10 @@ done
         그것은 세션 B가 걷는 경로를 뚫은 뒤 그 세션의 변형으로 만든다. **
    - .claude/agents/fab-verifier.md — 쓰기 도구 없음(Read/Glob/Grep/Bash만)
    - .claude/settings.local.json allowlist — Bash(bun run:*) + Bash(bun test:*)
-   - drive.sh (0b의 루프 본. 켜지 않는다)
+   - drive.sh — 이 세션의 주 산출물이다. STATE.md "0b — 루프" 절의 스크립트를 본으로 쓰되
+     상한 셋(카운터 · --max-budget-usd · AGENT_STOP)과 --setting-sources project 격리와
+     verify 1회 실행을 실제로 담아라. 켜지는 않지만 chmod +x 까지 해서
+     "켜기만 하면 도는 상태"로 놓는다. 비계이므로 최소로 짓는다 — 정교하게 만들지 마라
    - .gitignore 채우기 — .drive/ · .fabricate/ · .claude/settings.local.json · AGENT_STOP.
      (.idea/ 항목은 이미 있으나 .idea/ 와 fabricate.iml 이 실제로는 추적 대상으로 남아 있다.
       STATE.md ".gitignore에 넣을 것" 표 참조)
