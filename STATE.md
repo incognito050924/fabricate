@@ -11,7 +11,7 @@
 sed '1,8d' GOAL.md | shasum -a 256    # 2a4ba701d13dbf36… 여야 한다 (비준 본문 무결, 개정 5)
 git log --oneline -6                   # 최근 흐름
 ls src 2>/dev/null || echo "코드 없음 — 정상"
-ls verify package.json bin 2>/dev/null      # 없으면 세션 A(0a)다 — 루프를 켜지 마라 / 있으면 세션 B(0b)다
+ls verify bin 2>/dev/null              # 아무것도 안 나오면 세션 A(0a)다 — 루프를 켜지 마라 / 나오면 세션 B(0b)다
 ```
 
 **이 한 줄이 어느 세션인지를 가른다.** `verify`·`bin`이 **없으면 당신은 세션 A**이고 할 일은 0a뿐이다 — 아래 **"세션 경계 — 다음 세션은 0a만 한다"**를 먼저 읽어라. **있으면 세션 B**이고 `drive.sh`를 켜서 IP를 초록으로 만든다.
@@ -200,7 +200,7 @@ UPE가 모델 호출 경로를 안 덮는다는 것이 드러나면서 찾은 �
 
 ### 환경 사실 (실측)
 
-- `codex-cli 0.145.0`이 `/opt/homebrew/bin/codex`에 있다.
+- ~~`codex-cli 0.145.0`이 `/opt/homebrew/bin/codex`에 있다.~~ **정정 (2026-07-28 실측)**: `codex-cli 0.142.5`이고 경로는 fnm 셸 경로(`~/.local/state/fnm_multishells/…/bin/codex`)다. `/opt/homebrew/bin/codex`는 **없다.** `-s workspace-write`는 이 버전에도 있다.
 - 플러그인 `codex@openai-codex` v1.0.3 설치됨(user 스코프).
 - 서브에이전트 정의 `codex-rescue`와 스킬 `codex:rescue`가 있다.
 
@@ -428,19 +428,27 @@ CLI는 `prompt_id`를 볼 수 없다 — **CLI는 장부에 쓰기만 하고 "�
 
 **따라서 비계는 플러그인 매니페스트에 들어가지 않는다.** IP-0의 설치 4단이 비계를 설치하면 그 자체로 §4-8(설정 보존) 위반이다.
 
-### 기계로 확인되는 판별식 — 0a가 실제로 돌린다
+### 기계로 확인되는 판별식 — **정적 참조 금지 검사로 확정 (2026-07-28 2차 개정)**
 
-> **비계를 치워도 `bun run verify`의 결과가 같아야 한다.**
+> **`verify/`와 `package.json`의 `verify` 스크립트가 `drive.sh` · `.claude/` · `.drive/` · `AGENT_STOP`을 참조하지 않는다.** `verify`가 이것을 기계로 본다.
 
-달라지면 그건 비계가 아니라 제품이고, 경계가 새고 있다는 뜻이다. 형상은 이렇다(경로는 0a가 정한다).
+참조가 생기면 verify가 빨개진다. `fixture 헌법 검사`(`src/` import 금지)와 **같은 형상의 정적 검사**이고, 같은 이유로 사람의 성실성이 아니라 기계에 맡긴다.
+
+**~~파일을 치우고 verify를 다시 돌리는 방식은 버렸다.~~ 적대적 검증에서 셋이 깨졌다** (2026-07-28):
 
 ```
-mv drive.sh .claude .drive AGENT_STOP <임시 위치>/ 2>/dev/null
-bun run verify; echo "exit=$?"        # 비계 없이도 같은 출력·같은 종료 코드여야 한다
-mv <임시 위치>/* . 2>/dev/null
+mv drive.sh .claude .drive AGENT_STOP <임시>/ 2>/dev/null   # 옛 안 — 쓰지 마라
+bun run verify; echo "exit=$?"
+mv <임시>/* . 2>/dev/null
 ```
 
-0a는 이것을 **연기 시험에 넣고 출력을 STATE에 적는다.** `verify`가 `fab-verifier`나 `drive.sh`를 부르는 순간 이 검사가 깨진다 — 그것이 의도된 경보다.
+| 무엇이 깨졌나 | 실측 |
+| --- | --- |
+| **복구가 안 된다** | `mv <임시>/*`의 `*`는 **dotfile을 매칭하지 않는다.** 실제로 돌려 보니 `.claude`·`.drive`가 임시 위치에 **남았다.** `2>/dev/null`이 그 사실을 삼킨다 — `GOAL.md` §4-7(조용한 실패 금지)을 판별식 자신이 위반한다 |
+| **자기 발밑을 판다** | `.claude`를 치우면 allowlist가 사라진다. 이 디렉터리는 미신뢰라 그것이 **유일하게 존중되는 권한 원천**이고, `bun`은 내장 안전 목록 밖이다. 즉 판별식이 자기 실행에 필요한 권한을 스스로 제거한다 |
+| **증명하려는 것을 증명하지 못한다** | verify가 비계를 아예 안 읽으면 `drive.sh`가 `exit 0` 한 줄이어도 "결과가 같다"가 나온다. 이 판별식은 **verify의 독립성**만 보고 **비계가 도는지**는 보지 않는다 |
+
+**그래서 둘로 갈랐다** — 독립성은 위 정적 검사가 보고, `drive.sh`가 실제로 도는지는 **0a의 드라이런**(`AGENT_STOP`을 미리 만들어 둔 상태로 한 바퀴)이 본다.
 
 ### 세션 B에 대한 귀결
 
@@ -465,7 +473,7 @@ mv <임시 위치>/* . 2>/dev/null
 
 | 세션 | 무엇을 한다 | 무엇을 하지 않는다 | 끝났다고 말할 수 있는 조건 |
 | --- | --- | --- | --- |
-| **A (다음 세션)** | **0a 전부** — 미결 1·2 결정, 부트스트랩 다섯(`package.json`의 `verify`+`bin` · `verify/` 러너와 **default-FAIL 계약** + **fixture 헌법 검사** + **도달 가능성 검사** · `.claude/agents/fab-verifier.md` · `.claude/settings.local.json` allowlist · `drive.sh`), 연기 시험 넷 | **IP를 초록으로 만들지 않는다.** 인터뷰 로직 · CLI 하위 명령의 본체 · 훅 스크립트의 판정 본체를 구현하지 않는다. `drive.sh`는 **짓기만 하고 켜지 않는다**. **그리고 IP별 fixture를 만들지 않는다** — 걷는 경로가 없으면 좋은 fixture를 쓸 수 없다(위 "fixture 헌법" 규칙 4) | **다섯이다** (2026-07-28 갱신 — ④가 계획 세션에서 이미 닫혀 자리를 루프에 넘겼다): ① **`drive.sh`가 켜기만 하면 도는 상태**(상한 셋 · `--setting-sources project` 격리 · verify 1회 실행이 실제로 들어 있고 실행 권한이 있다) — **이것이 이 세션의 주 산출물이다** · ② **`bun run verify`가 RED로 정상 동작**(어느 IP 기준이 왜 `false`인지 사람이 읽히고 **종료 코드 ≠ 0**) · ③ **fixture 헌법 검사가 실제로 도는 것**(`verify/`의 `src/` import 금지를 기계가 본다) · ④ 연기 시험 넷 통과 · ⑤ **비계 판별식 통과**(비계를 치워도 `verify` 결과가 같다). 그리고 아래 "세션 A가 끝날 때 STATE에 남길 것" 다섯이 이 문서에 적혀 있다 |
+| **A (다음 세션)** | **0a 전부** — 미결 1·2 결정, 부트스트랩 다섯(`package.json`의 `verify`+`bin` · `verify/` 러너와 **default-FAIL 계약** + **fixture 헌법 검사** + **도달 가능성 검사** · `.claude/agents/fab-verifier.md` · `.claude/settings.local.json` allowlist · `drive.sh`), 연기 시험 넷 | **IP를 초록으로 만들지 않는다.** 인터뷰 로직 · CLI 하위 명령의 본체 · 훅 스크립트의 판정 본체를 구현하지 않는다. `drive.sh`는 **짓기만 하고 켜지 않는다**. **그리고 IP별 fixture를 만들지 않는다** — 걷는 경로가 없으면 좋은 fixture를 쓸 수 없다(위 "fixture 헌법" 규칙 4) | **여섯이다** (2026-07-28 2차 개정 — 적대적 검증에서 *"다섯을 전부 형식 통과하면서 실질이 0인 산출물"*이 구체적으로 제시돼 ③·⑥을 넣었다): ① **`drive.sh`가 켜기만 하면 도는 상태** — 상한 셋 · verify 1회 실행 · `AGENT_STOP` 검사가 verify **앞**에 · 프롬프트를 stdin으로 넣는 검증자 호출. **드라이런(`AGENT_STOP` 선행 생성)을 실제로 한 바퀴 돌린 출력이 있어야 한다** · ② **`bun run verify`가 RED로 정상 동작**(43개 기준 각각이 왜 `false`인지 읽히고 **종료 코드 ≠ 0**이며, **환경 사유와 IP 미충족이 출력에서 구분된다**) · ③ **하네스 자기시험** — 음극 셋(`src/` import · 비계 참조 · 기준 매니페스트 변조)을 일부러 심어 verify가 **실제로 빨개지는 것**을 관측하고 되돌린 기록, 그리고 양극 하나(기준 하나를 합성 충족으로 `true`로 뒤집었다 되돌린 기록) · ④ 검증 명령 다섯 통과(음극 시험 포함 — `fab-verifier`가 쓰기를 **못 하는 것**을 관측) · ⑤ **비계 정적 참조 금지 검사가 돈다** · ⑥ **기준 동결 매니페스트가 있고 대조가 실제로 작동한다**(한 글자 고치면 verify가 죽는 것을 관측). 그리고 아래 "세션 A가 끝날 때 STATE에 남길 것"이 이 문서에 적혀 있다 |
 | **B (그 다음)** | **0b** — `drive.sh`를 켜고 **먼저 걷는 경로 하나**(IP-0 · IP-1ⓐ)를 뚫은 뒤, 나머지 IP의 양극·음극을 **그 세션의 변형으로** 만들며 초록으로. 이후 작업 순서 2·3단계 | **부트스트랩을 다시 설계하지 않는다.** 세션 A가 정한 미결 1·2와 계약 형상을 취향으로 다시 열지 않는다 — 더 나은 **사실을 관측**했을 때만 바꾸고, 바꾸면 STATE에 근거를 적는다. **fixture 헌법 넷을 어기지 않는다** | **`bun run verify`가 초록.** 그때만 `main`에 착지(`GOAL.md` §3). 보고는 `기계 통과`이지 완료가 아니다 — 남은 상태는 `사람 검증 대기`(`GOAL.md` §2 끝) |
 
 ### 세션 A에 못박는 것 — 이 절의 핵심이다
@@ -536,27 +544,65 @@ claude -p --permission-mode acceptEdits --allowedTools "Bash(bun run:*)" \
 - **상한을 건다.** verify가 원리적으로 통과 불가하게 짜이면 루프는 영원히 돈다. 셋을 함께 건다 — **반복 카운터** + **`--max-budget-usd`**(exit 1로 확실히 끊는 유일한 수단) + **`AGENT_STOP` 센티널 파일**(사람이 밖에서 끊는 손잡이).
 - **`codex` 플러그인의 `timeout: 900` `Stop` 훅이 라운드마다 곱해진다**(위 "주의 — 루프에 곱해지는 15분"). 루프 세션은 **`--setting-sources project`로 격리한다.**
 
+**아래 옛 스케치에는 결함 다섯이 있다. 베끼지 마라 — 그 아래 고친 것을 쓴다** (2026-07-28 적대적 검증).
+
 ```bash
+# 옛 안 — 결함 다섯. 근거로만 남긴다
 i=0
 while :; do
-  bun run verify > .drive/verify.log 2>&1 && break
-  [ -f AGENT_STOP ] && break
+  bun run verify > .drive/verify.log 2>&1 && break     # (1) .drive/ 가 없어 리디렉션 실패
+  [ -f AGENT_STOP ] && break                            # (2) 센티널 검사가 verify 뒤에 있다
   i=$((i+1)); [ $i -gt 20 ] && break
   codex exec -s workspace-write "$(cat GOAL.md)
 === STATE.md ===
-$(cat STATE.md)
+$(cat STATE.md)                                         # (3) §0 위반 — 아래 표
 === 지난 검증 지적 ===
-$(cat .drive/FINDINGS.md 2>/dev/null)
+$(cat .drive/FINDINGS.md 2>/dev/null)                   # (3) §0 위반 — 직전 산출물 시드
 === 지금 빨간 것 ===
-$(tail -80 .drive/verify.log)"
-  claude --agent fab-verifier -p "verify를 직접 돌리고 IP별 양극·음극을 확인하라. \
-구현자 보고는 증거가 아니다." --setting-sources project > .drive/FINDINGS.md
+$(tail -80 .drive/verify.log)"                          # (4) codex 쪽에 상한이 없다
+  claude --agent fab-verifier -p "…" --setting-sources project > .drive/FINDINGS.md
+done                                                    # (5) 권한이 안 서고 프롬프트가 삼켜진다
+```
+
+| # | 결함 | 실측 |
+| --- | --- | --- |
+| 1 | `.drive/`를 만드는 곳이 없다 | 리디렉션이 `rc=1`로 실패 → `&& break`가 안 걸리고 `tail`이 빈 문자열 → **verify를 한 번도 못 본 채 20라운드를 돈다.** 재현함 |
+| 2 | 센티널 검사가 verify 뒤 | 사람이 `AGENT_STOP`을 만들어도 그 라운드의 verify가 한 번 더 돈다 |
+| 3 | `FINDINGS.md`·`STATE.md`를 시드로 준다 | **`GOAL.md` §0 정면 위반** — *"이전 조각의 산출물을 시드로 주지 않는다"*. `FINDINGS.md`가 정확히 직전 라운드 검증자의 산출물이다 |
+| 4 | 상한이 싼 쪽에만 붙는다 | `codex exec --help`에 budget·limit·timeout **0건**. `--max-budget-usd`는 `claude` 전용. 돈과 15분을 태우는 건 codex 쪽이다 |
+| 5 | 검증자가 Bash 권한 0 + 프롬프트 유실 | `--setting-sources project`는 `local`(=`settings.local.json`)을 안 싣고, 미신뢰라 `project`의 `settings.json`도 무시된다. 게다가 `--allowedTools`가 가변 인자라 뒤의 프롬프트를 먹는다 |
+
+**고친 형상 (0a가 이대로 짓는다):**
+
+```bash
+#!/usr/bin/env bash
+set -u
+mkdir -p .drive                                  # (1)
+i=0
+while :; do
+  [ -f AGENT_STOP ] && { echo "AGENT_STOP"; break; }        # (2) verify 앞으로
+  i=$((i+1)); [ "$i" -gt 20 ] && { echo "라운드 상한"; break; }
+  bun run verify > .drive/verify.log 2>&1 && { echo "GREEN"; break; }
+
+  timeout 1800 codex exec -s workspace-write "$(cat GOAL.md)
+=== 이 세션의 범위 ===
+하네스가 아니라 fabricate 자체를 짓는다. 완료 정의는 위 문서 §2뿐이다.
+=== 지금 빨간 것 ===
+$(tail -80 .drive/verify.log)"                   # (3) GOAL 전문 + 이 라운드 verify 출력만
+                                                 # (4) codex 상한은 셸 timeout
+
+  echo "verify를 직접 돌리고 각 기준의 양극·음극을 확인하라. 구현자 보고는 증거가 아니다." \
+    | claude -p --agent fab-verifier \
+        --setting-sources project \
+        --allowedTools "Bash(bun run:*)" \
+        --max-budget-usd 5 > .drive/FINDINGS.md  # (5) 프롬프트는 stdin. 권한은 플래그로
 done
 ```
 
-매 라운드 입력은 여전히 **`GOAL.md` 전문**이지 직전 라운드의 산출물 요약이 아니다(`GOAL.md` §0).
+- **매 라운드 입력은 `GOAL.md` 전문 + 그 라운드의 `verify` 실패 출력뿐이다**(`GOAL.md` §0). `FINDINGS.md`는 **사람이 읽는 파일로만** 남고 다음 라운드 프롬프트에 들어가지 않는다.
+- `--setting-sources project`는 codex 플러그인의 `timeout: 900` `Stop` 훅을 막기 위한 것이고, 권한은 **`--allowedTools`가 따로 낸다.** 이 조합이 미신뢰 디렉터리에서 실제로 통과하는 것을 확인했다(2026-07-28 실측).
 
-### `.gitignore`에 넣을 것 (파일은 아직 만들지 않았다 — 목록만)
+### `.gitignore`에 넣을 것 — **정정 (2026-07-28)**: `.gitignore`는 **이미 612줄로 존재한다**(커밋 `bc88b58`·`bdf12cd`). 아래가 거기 **없는** 항목이다. 그리고 `.idea/`는 이미 `.gitignore:136`으로 무시되고 **추적된 적이 없다** — 실제로 규칙에 안 걸리는 것은 `fabricate.iml` 하나다
 
 | 항목 | 왜 |
 | --- | --- |
@@ -564,7 +610,10 @@ done
 | `.fabricate/` | 런타임 상태(세션 장부 · 표식 · 잠긴 레코드). 사용자의 인터뷰 데이터이지 코드가 아니다 |
 | `.claude/settings.local.json` | **사용자별 파일이라 배포·커밋 대상이 아니다.** 그리고 저장소에 커밋되는 `.claude/settings.json`은 **미신뢰 워크스페이스에서 조용히 무시되므로**(위 "워크스페이스 신뢰") allowlist를 거기 두면 안 된다 — 남의 기계에서 권한이 저절로 열리는 것도 IP-0의 "설정 보존"과 정면 충돌이다 |
 | `AGENT_STOP` | 사람이 루프를 끊으려고 만드는 로컬 센티널. 커밋되면 남의 체크아웃에서 루프가 즉시 죽는다 |
-| `.idea/` | IDE 설정. 도구 사슬이 아니라 이 기계의 취향이다 |
+| ~~`.idea/`~~ **불필요** | 이미 `.gitignore:136`(`.idea/*`)로 무시된다. `git ls-files`에 0건 — 추적된 적 없다 |
+| `fabricate.iml` | **이것만 실제로 규칙에 안 걸린다.** IDE 모듈 파일이고 이 기계의 취향이다 |
+
+**실측 (2026-07-28, `git check-ignore -v`)**: `.drive/`·`.fabricate/`·`AGENT_STOP` → 전부 `NOT IGNORED`. `.claude/settings.local.json`은 무시되지만 출처가 저장소가 아니라 **사용자 전역** `~/.config/git/ignore`다 — **다른 기계에서는 무시되지 않는다.** 그래서 저장소 `.gitignore`에 넣어야 한다.
 
 ---
 
@@ -574,116 +623,191 @@ done
 
 ### 세션 A용 (0a — 부트스트랩. `verify`·`bin`이 없을 때)
 
+**2026-07-28 2차 개정.** 신선 컨텍스트 검토자 셋과 Codex(GPT-5.5)의 적대적 검증에서 나온 결함 열아홉을 반영했다. 근거는 아래 "세션 A 프롬프트 적대적 검증 — 1차" 절에 있다.
+
 ```
 너는 /Users/ecoletree/dev/project/fabricate 의 작업자다.
 
-[읽기]
+[0] 시작 전 확인
 - GOAL.md 전문과 STATE.md 전문을 직접 읽어라. 요약을 받지 마라(GOAL.md §0).
-- 해시를 확인하라: sed '1,8d' GOAL.md | shasum -a 256
+- sed '1,8d' GOAL.md | shasum -a 256
   -> 2a4ba701d13dbf3670871d840224c86f66f1cb237cfc0772a62c230ca71c088f 여야 한다.
   다르면 멈추고 보고하라. GOAL.md는 한 글자도 고치지 마라(§9 없이는).
+- bun install 을 먼저 돌려라. node_modules 가 없어서 biome 이 없다.
 
-[이 세션이 만드는 것 — 구동 루프 하나]
-- 이 세션의 산출물은 "다음 세션이 켜기만 하면 도는 루프"다. verify 하네스는 그 루프의
-  종료 조건이지 이 세션의 목적 자체가 아니다. 둘의 비중을 뒤집지 마라 —
-  verify만 잘 짓고 drive.sh를 끝에 대충 갈기면 이 세션은 실패다.
-- 루프의 형상은 이미 정해져 있다. STATE.md "0b — 루프" 절의 스크립트와 그 위의 세 정정을
-  그대로 따라라. 다시 설계하지 마라:
-  1) verify는 패스당 한 번만 돌려 .drive/verify.log 에 받는다.
-     종료 조건과 다음 라운드 프롬프트가 그 파일을 함께 쓴다.
-     (until bun run verify; do … $(bun run verify) 는 같은 패스에서 두 번 돌아
-      두 실행 사이에 상태가 갈리면 조건과 프롬프트가 서로 다른 사실을 본다)
-  2) 상한 셋을 함께 건다 — 반복 카운터 · --max-budget-usd · AGENT_STOP 센티널 파일.
-  3) 루프 세션은 --setting-sources project 로 격리한다.
-     (codex 플러그인이 timeout: 900 인 Stop 훅을 등록해서 라운드마다 15분이 곱해진다)
-- 매 라운드 입력은 GOAL.md 전문이다. 직전 라운드의 산출물 요약을 시드로 주지 마라(GOAL.md §0).
-- 검증자에게 쓰기 도구를 주지 않는다. 고칠 수 있으면 그 자리는 더 이상 검증이 아니다.
+[1] 이 세션이 만드는 것 — 구동 루프 하나
+- 산출물은 "다음 세션이 켜기만 하면 도는 루프"다. verify 하네스는 그 루프의 종료
+  조건이고, 그 둘이 전부다. fabricate 자체는 짓지 않는다.
+- 루프를 켜지 마라. 단 하나 허용되는 실행은 [7]의 드라이런이다.
+- IP를 초록으로 만들지 마라. 인터뷰 로직·CLI 하위 명령 본체·훅 판정 본체는 세션 B다.
+- RED가 이 세션의 정상 산출물이다. 초록으로 만들고 싶어지면 그것은 종료 조건을 짓는
+  자가 그것을 통과시키는 자가 되는 것이고, 자기 채점이다(GOAL.md §1).
 
-[이 세션의 범위 — 이것만 한다]
-- 이 세션은 0a만 한다. STATE.md의 "세션 경계 — 다음 세션은 0a만 한다"를 먼저 읽어라.
-- 루프를 켜지 마라. drive.sh는 짓기만 하고 실행하지 않는다.
-  (한 바퀴 돌려 보고 싶어지면, 그것은 세션 B의 일을 당겨 하는 것이다)
-- IP를 초록으로 만들지 마라. 인터뷰 로직·CLI 하위 명령 본체·훅 판정 본체는 세션 B의 일이다.
-- RED가 이 세션의 정상 산출물이다. bun run verify가 빨간 것이 완료 조건이다.
-  초록으로 만들고 싶어지면 그것은 종료 조건을 짓는 자가 그것을 통과시키는 자가 되는 것이고,
-  자기 채점이다(GOAL.md §1 "자기 확신은 자기가 못 깬다").
+[2] 이미 측정된 것 — 다시 재지 말고 그대로 써라 (2026-07-28 실행 관측)
+- claude 의 --allowedTools 는 가변 인자다. 뒤에 프롬프트를 위치 인자로 놓으면 그것까지
+  도구 이름으로 먹고 "Error: Input must be provided either through stdin or as a
+  prompt argument when using --print" 로 죽는다. 콤마로 묶어도 같다.
+  => 프롬프트는 반드시 stdin 으로 넣는다.
+- 이 디렉터리는 미신뢰다(~/.claude.json 의 hasTrustDialogAccepted: false).
+  --setting-sources 는 user / project / local 을 따로 받고 settings.local.json 은
+  local 이다. 즉 --setting-sources project 만 주면 allowlist 가 빠지고, 미신뢰라
+  project 의 settings.json 도 무시되어 Bash 권한이 하나도 안 남는다.
+  실측으로 통과가 확인된 유일한 형태:
+    echo "<프롬프트>" | claude -p --setting-sources project \
+      --allowedTools "Bash(bun run:*)"
+  대조군(allowlist 없이 같은 명령)은 "This command requires approval" 로 거부됐다.
+- codex exec 에는 예산·시간 상한 플래그가 없다(--help 에 budget/limit/timeout 0건).
+  --max-budget-usd 는 claude 에만 있다. codex 쪽 상한은 셸 timeout 으로 건다.
+- 지금 환경 사유로 이미 빨간 것들 — IP 미충족과 섞이면 안 된다:
+    bun run typecheck -> exit 2 (TS18003. tsconfig include 가
+                                 ["src/**/*","tools/**/*"] 인데 둘 다 없다)
+    bun run lint      -> exit 127 (biome 미설치. bun install 로 해소된다)
+    bun test          -> 테스트 파일 0개
+- .gitignore 는 이미 612줄로 존재한다. .idea/ 는 이미 무시되고 추적된 적 없다.
+  실제로 손볼 것은 .drive/ · .fabricate/ · .claude/settings.local.json ·
+  AGENT_STOP · fabricate.iml 이 규칙에 없다는 것뿐이다. git rm --cached 는 필요 없다.
 
-[착수 전 — RED-first 전제 검증은 끝났다]
-- 결론: RED-first만으로는 1차 실패를 막지 못한다. 1차가 이미 RED-first를 했고 실패했다.
-  실측: 수용 검사 69개 중 44개가 "frozen red" 선언, 69개 전부가 ../src/ 를 직접 import,
-  프로세스를 띄운 것은 4개. 게다가 src/gate/red-first.ts 라는 형식 게이트가 있었고
-  동결 69개 중 통과 69·거부 0으로 100% 작동했는데도 초록 33개에 돌아가는 것은 0개였다.
-  도달성: 유일한 CLI 파일에서 운영 .ts 102개 중 도달 13 / 미도달 89.
-- 근거 전문은 STATE.md의 "fixture 헌법" 절과 "RED-first 전제 검증 — 끝났다" 절이다. 직접 읽어라.
-- 네가 할 일은 판정이 아니라 fixture 헌법 넷을 지키는 것이다:
-  1) fixture는 운영 모듈을 import하지 않는다 — 설치된 bin/fabricate를 프로세스로 띄우거나,
-     훅 스크립트에 합성 stdin을 먹이거나, claude -p 로 실제 발화시킨다.
-  2) 구현이 만든 판정값을 정답으로 재사용하지 않는다 — fixture가 조각·모순·판정을
-     독립적으로 만들어 공개 경로로 심는다.
-  3) 관측하는 것은 외부 효과뿐이다 — 종료 코드·디스크에 생긴 파일·장부 내용.
-     내부 상태를 들여다보지 않는다.
-  4) IP-0과 IP-1ⓐ(걷는 뼈대)가 먼저 초록이 된다. 이 순서가 뒤집히면 IP-2~6 fixture는
-     붙일 프로세스가 없어 모듈 단위로 내려앉고, 그 순간 1차와 구조적으로 동일해진다.
+[3] 닫힌 결정 — 따르기만 한다. 취향으로 다시 열지 마라
+   (더 나은 사실을 관측했을 때만 바꾸고, 바꾸면 STATE.md에 근거를 적는다)
+- 미결 1: 모델이 Skill 도구로 연 세션은 표식만 서고 잠금 자격이 없다(GOAL §1 본문).
+  회복은 새 코드 0줄 — 사용자가 슬래시 명령을 다시 치면 같은 session_id 에 UPE 가
+  request.txt 를 앉힌다. request.txt 를 쓰는 경로는 UPE 훅 하나뿐이고 CLI 에 그것을
+  쓰는 하위 명령을 두지 않는다.
+- 미결 2: CLI 에 --session 을 두지 않는다. active 표식이 정확히 하나일 때 그것을 쓰고,
+  0개거나 2개 이상이면 exit != 0. 세션 디렉터리는 훅만 만든다.
+- 기준 해상도: GOAL §2 의 동그라미 항목 43개를 개별 id 로 열거한다
+  (IP-0:4 IP-1:8 IP-2:13 IP-3:4 IP-4:4 IP-5:3 IP-6:7 — 계획 세션이 세었다).
+  IP 7개 boolean 으로 뭉치지 마라. 뭉치면 세션 B가 close 거부 여섯을 하나로 세게 되고,
+  그것이 1차의 "조건 목록" 실패와 같은 방향이다.
 
-[제품과 비계를 가른다 — STATE.md "구동 루프는 비계다" 절을 읽어라]
-- 지금 짓는 구동 루프는 fabricate의 정식 루프가 아니다. 일회용 비계이고 나중에 걷어낸다.
-- 제품: package.json의 verify 스크립트 · bin/fabricate · verify/ 러너. (GOAL이 요구한다)
-- 비계: drive.sh · .claude/agents/fab-verifier.md · .claude/settings.local.json · .drive/ · AGENT_STOP.
-- 비계를 치워도 bun run verify의 결과가 같아야 한다. 이것을 실제로 돌려 STATE에 적어라.
-  달라지면 경계가 샌 것이다.
-- 비계는 플러그인 매니페스트에 넣지 않는다. 배포되면 IP-0(설정 보존)을 오염시킨다.
+[4] 네가 정할 것 — 하나뿐이다
+- 미결 3: verify 의 격리 방식과 IP-0ⓐ 4단 증거의 충돌
+  (STATE.md "verify의 격리 방식과 IP-0ⓐ의 4단 증거가 충돌 가능" 절).
+  verify 를 합성 stdin 으로 훅을 직접 때리게 하면 오프라인·CI 에서 돌지만 설치 연쇄를
+  증명하지 못하고, 실제 claude -p 를 띄우면 설치 연쇄를 증명하지만 로그인이 필요하다.
+  권고안(따르지 않아도 되나 다르게 가면 근거를 적어라): 기본 verify 는 합성 stdin 으로
+  돌리고, 실제 호스트를 띄우는 층은 같은 러너 안의 별도 태그로 두되 43개 기준에서
+  빼지 않는다 — 안 돌린 기준은 false 로 남고 "미실행"임이 출력에 보인다.
+  결정과 근거를 STATE.md 에 적어라.
 
-[할 일 — 순서대로]
-1. 미결 1·2는 **이미 결정됐다**(2026-07-28 계획 세션). STATE.md "0단계에서 바로 부딪힐 자리"의
-   결정과 근거를 읽고 그대로 따라라. 취향으로 다시 열지 마라 —
-   더 나은 사실을 관측했을 때만 바꾸고, 바꾸면 STATE.md에 근거를 적는다.
-   - 미결 1: 모델 호출 경로는 표식만 서고 잠금 자격 없음(GOAL §1 본문).
-     회복은 사용자가 슬래시 명령을 다시 치면 같은 세션에 UPE가 request.txt를 앉히는 것 —
-     새 코드 0줄. request.txt를 쓰는 경로는 UPE 훅 하나뿐이다.
-   - 미결 2: CLI에 --session을 두지 않는다. active 표식이 정확히 하나일 때 그것을 쓰고,
-     0개거나 2개 이상이면 exit ≠ 0. 세션 디렉터리는 훅만 만든다.
-   - 실측할 것 하나: CLI가 .fabricate/를 찾는 기준 디렉터리(훅의 cwd와 갈리는가).
-2. 부트스트랩 다섯을 짓는다. 다섯이 전부 루프의 부품이다 —
-   drive.sh=루프 본체 · verify=종료 조건 · fab-verifier=검증 역할 ·
-   settings.local.json=Bash 권한 · bin/fabricate=도달성 검사의 뿌리:
-   - package.json의 verify 스크립트와 bin (단일 뿌리 bin/fabricate)
-   - verify/ 러너 + default-FAIL 계약(IP-0~6의 모든 기준이 false에서 시작)
-     + fixture 헌법 검사(verify/ 아래 어떤 파일도 src/ 에서 import하지 않는지 기계가 본다)
-     + 도달 가능성 검사(GOAL.md §6-2)
-     ** IP별 fixture는 만들지 마라 — 걷는 경로가 없으면 좋은 fixture를 쓸 수 없다(헌법 규칙 4).
-        그것은 세션 B가 걷는 경로를 뚫은 뒤 그 세션의 변형으로 만든다. **
-   - .claude/agents/fab-verifier.md — 쓰기 도구 없음(Read/Glob/Grep/Bash만)
-   - .claude/settings.local.json allowlist — Bash(bun run:*) + Bash(bun test:*)
-   - drive.sh — 이 세션의 주 산출물이다. STATE.md "0b — 루프" 절의 스크립트를 본으로 쓰되
-     상한 셋(카운터 · --max-budget-usd · AGENT_STOP)과 --setting-sources project 격리와
-     verify 1회 실행을 실제로 담아라. 켜지는 않지만 chmod +x 까지 해서
-     "켜기만 하면 도는 상태"로 놓는다. 비계이므로 최소로 짓는다 — 정교하게 만들지 마라
-   - .gitignore 채우기 — .drive/ · .fabricate/ · .claude/settings.local.json · AGENT_STOP.
-     (.idea/ 항목은 이미 있으나 .idea/ 와 fabricate.iml 이 실제로는 추적 대상으로 남아 있다.
-      STATE.md ".gitignore에 넣을 것" 표 참조)
-3. 연기 시험 넷을 통과시킨다 (STATE.md "0a" 절의 네 명령).
-   + 다섯째로 비계 판별식을 돌린다 — 비계를 치운 상태에서 bun run verify 결과가 같은가.
+[5] 만들 것
+  제품 (GOAL 이 요구한다. 나중에 걷어내지 않는다)
+  - package.json: "bin": {"fabricate": "./bin/fabricate"} 와 verify 스크립트
+  - bin/fabricate: 단일 뿌리. 지금은 exit != 0 인 스텁이다.
+    --help 에 deep-interview·turn·check 를 띄우지 마라 — 그것은 GOAL §6-1 이고
+    세션 B가 초록으로 만들 기준이다.
+  - verify/ 러너. 아래 넷을 담는다:
+      (a) default-FAIL 계약 — 43개 기준이 전부 false 에서 시작한다
+      (b) 기준 동결 — 43개 기준 목록의 sha256 을 매니페스트에 적고, verify 가 매 실행
+          그 해시를 대조해 불일치면 exit != 0 으로 죽는다. 세션 B는 기준을 고치지
+          못하고 check 구현만 붙인다. (1차에 있던 gate-a/red-freeze.json 의 부활이다.
+          1차는 테스트를 동결했고 이번엔 눈금 자신을 동결한다)
+      (c) fixture 헌법 검사 — verify/ 아래 어떤 파일도 src/ 에서 import 하지 않는다
+      (d) 도달 가능성 검사 — GOAL §6-2
+      (e) 비계 참조 금지 검사 — verify/ 와 package.json 의 verify 스크립트가
+          drive.sh · .claude/ · .drive/ · AGENT_STOP 을 참조하지 않는다
+      (f) typecheck / lint / test 슬롯 — GOAL §2 가 요구한다. 환경 사유로 실패한
+          것과 IP 미충족을 출력에서 구분해서 적어라
+  - tsconfig.json 의 include 에 verify/**/* 와 bin/**/* 를 넣는다.
+    안 넣으면 이 세션이 짓는 코드 전부가 타입 검사 밖이다.
 
-[역할 규율]
-- 코드(CLI·훅·verify·매니페스트)는 codex exec -s workspace-write 로 짓는다.
-- 프롬프트(SKILL.md·agents/*.md)와 검증은 Claude가 한다.
+  비계 (버릴 것. 최소로 짓는다)
+  - drive.sh — 이 세션의 주 산출물. [6] 을 그대로 따른다
+  - .claude/agents/fab-verifier.md — 쓰기 도구 없음(Read/Glob/Grep/Bash만)
+  - .claude/settings.local.json — Bash(bun run:*) + Bash(bun test:*)
+  - .gitignore 에 .drive/ · .fabricate/ · .claude/settings.local.json ·
+    AGENT_STOP · fabricate.iml 추가
+
+[6] drive.sh 의 확정 형상 — 아래를 반영해라. STATE.md "0b — 루프" 절의 옛 스케치에는
+    버그가 있으니 그것을 그대로 베끼지 마라
+- 첫 줄에 mkdir -p .drive. 없으면 리디렉션이 실패해 && break 가 안 걸리고 루프가
+  빈 로그로 20바퀴 헛돈다.
+- AGENT_STOP 검사를 verify 앞에 둔다. 뒤에 두면 센티널을 만들어도 한 바퀴 더 돈다.
+- verify 는 패스당 한 번만 돌려 .drive/verify.log 에 받는다. 종료 조건과 프롬프트가
+  그 파일을 함께 쓴다.
+- 상한 셋: 반복 카운터 · claude 호출에 --max-budget-usd · AGENT_STOP 센티널.
+  codex exec 에는 상한 플래그가 없으므로 셸 timeout 으로 감싼다.
+- 검증자 호출은 [2] 의 확정 형태를 쓴다 — 프롬프트를 stdin 으로 넣고
+  --setting-sources project 와 --allowedTools 를 함께 준다. 검증자에게 쓰기 도구를
+  주지 않는다.
+- 라운드 입력에서 .drive/FINDINGS.md 와 STATE.md 전문을 빼라. GOAL.md 전문과 그 라운드의
+  verify 실패 출력만 준다 — GOAL §0 이 "직전 걸음의 산출물을 시드로 주지 않는다"이고,
+  FINDINGS.md 가 정확히 그것이다. 사람이 읽는 용도로는 파일에 계속 남긴다.
+
+[7] 하네스가 실제로 판정하는지 증명한다 — 이 세션의 급소다
+   지금 저장소에는 src/ 도 fixture 도 없어서 (c)(d)(e) 는 대상이 공집합이다.
+   대상 0개인 검사는 항상 통과한다 — "없는 검사가 초록으로 보이면 안 된다"에 걸린다.
+   그래서 아래를 요구한다.
+- 대상이 0개인 검사는 PASS 로 출력하지 마라. "n/a — 대상 0개" 라는 별도 상태로 적어라.
+- 음극 자기시험: 검사마다 일부러 위반을 심어 verify 가 실제로 빨개지는 것을 관측하고
+  되돌려라. 최소 셋 —
+    (c) verify/ 아래에 src/ 를 import 하는 임시 파일 하나
+    (e) verify/ 안에서 drive.sh 를 참조하는 임시 줄 하나
+    (b) 기준 매니페스트를 한 글자 고쳐 해시 대조가 죽는 것
+  각각의 명령과 출력을 STATE.md 에 적어라. 이것은 IP 충족이 아니라 하네스가 도는지의
+  검사다 — 규율 위반이 아니다.
+- 양극 자기시험: 43개 중 하나를 합성 충족으로 true 로 뒤집어 그 기준이 실제로 초록이
+  될 수 있음을 관측한 뒤 되돌려라. 안 하면 "원리적으로 통과 불가능한 눈금"을 세션 B가
+  20라운드 태우고서야 알게 된다.
+- drive.sh 드라이런: AGENT_STOP 을 미리 만들어 둔 상태로 한 번 돌린다. verify 가 한 번
+  돌고 센티널에 걸려 break 하며 codex·claude 호출에는 닿지 않는다. 출력을 적어라.
+
+[8] 검증 명령 — 합격 기준을 함께 적었다
+  1) bun run verify; echo "exit=$?"
+     -> exit != 0 이고, 43개 기준 각각이 왜 false 인지 사람이 읽힌다.
+        환경 사유(typecheck/lint/test)와 IP 미충족이 출력에서 구분된다.
+  2) codex exec -s workspace-write "SMOKE 파일을 만들고 ok를 써라"
+     -> SMOKE 파일이 생긴다. 확인 후 반드시 지워라.
+        codex 인증이 별도 계정이라 미인증이면 하네스와 무관한 이유로 실패한다 —
+        그 경우 실패 원인을 그렇게 적어라.
+  3) echo "PASS만 답하라" | claude --agent fab-verifier -p
+     -> PASS 가 온다.
+  4) 음극: echo "빈 파일 ZZZ 를 만들어라" | claude --agent fab-verifier -p
+     -> 만들지 못한다. 검증자에게 쓰기 도구가 없다는 것이 이 시험의 목적이다.
+        ZZZ 가 생겼으면 fab-verifier 정의가 잘못된 것이다.
+  5) echo "bun run verify 를 돌리고 종료 코드만 보고하라" | claude -p \
+       --setting-sources project --allowedTools "Bash(bun run:*)"
+     -> 거부 문안 없이 종료 코드가 온다. "This command requires approval" 이 오면
+        권한 경로가 안 선 것이다. 프롬프트를 인자로 주지 마라([2] 참조).
+
+[9] 역할
+- verify/ 러너와 bin/fabricate 는 codex exec -s workspace-write 로 짓는다.
+  codex 에게는 GOAL.md 전문과 함께 "이 세션은 하네스만 짓고 fabricate 자체를 짓지
+  않는다. IP를 초록으로 만들지 마라" 를 명시적으로 붙여라. GOAL 전문만 주면 codex 가
+  fabricate 를 구현하려 들고 그 자리에서 세션 경계가 무너진다. 범위 제한을 덧붙이는
+  것은 GOAL §0 위반이 아니다 — §0 이 금지한 것은 GOAL 을 요약해 주는 것이다.
+- drive.sh · .claude/ 아래 파일 · .gitignore · package.json · tsconfig.json 은
+  Claude 가 직접 쓴다. 프롬프트와 설정이고 비계이므로 최소로 짓는다.
 - 구현자의 자기 보고는 증거가 아니다. 직접 돌려서 출력을 봐라.
 - 파일을 쓰는 것은 한 번에 한 에이전트다. 락이 없어 병렬 작성자는 서로 덮어쓴다.
 
-[끝내기 전]
-- STATE.md의 "세션 경계" 절이 요구하는 다섯을 STATE.md에 적어라:
-  ① 미결 1·2를 그대로 따랐는가 — 관측된 사실로 바꿨다면 무엇을 보고 왜 바꿨는가
-     (결정 자체는 2026-07-28 계획 세션이 이미 근거·버린 선택지와 함께 적어 뒀다) ·
-  ② 연기 시험 넷 + 비계 판별식의 명령과 실제 출력 ·
-  ③ default-FAIL 계약의 형상(IP 기준을 어떻게 열거하고 어떻게 false로 두는가)과
-     fixture 헌법 검사의 형상(무엇을 어떻게 보는가 · 위반 시 무슨 출력인가) ·
-  ④ 0a에서 새로 드러난 미결 (없으면 "없다"고 적는다) ·
-  ⑤ bun run verify의 출력 형상(실제 예시). 세션 B가 이걸 읽고 다음 조각을 고른다.
+[10] 끝내기 전 — STATE.md 에 적는다. 세션 B의 입력은 이것뿐이다
+  1) 미결 3 의 결정과 근거. 미결 1·2 를 그대로 따랐는지, 바꿨다면 무엇을 관측했는지
+  2) [8] 다섯 시험의 명령과 실제 출력
+  3) [7] 음극 자기시험 셋과 양극 자기시험의 명령과 출력 — 없으면 이 세션은 안 끝났다
+  4) drive.sh 전문 + 드라이런 출력 + 상한값을 그렇게 고른 근거
+  5) 43개 기준을 어디에 어떤 형식으로 열거했는가 · 동결 매니페스트의 형상 ·
+     세션 B가 check 를 어떻게 붙이는가
+  6) verify 의 실제 출력 예시 — 세션 B가 이걸 읽고 다음 조각을 고른다
+  7) 0a 에서 새로 드러난 미결 (없으면 "없다")
 
-[멈추는 조건]
-- GOAL.md §7의 넷뿐이다: 원 요청과의 실질 충돌 · 사용자만 정할 제품 의미 ·
+[11] 멈추는 조건
+- GOAL.md §7 의 넷뿐이다: 원 요청과의 실질 충돌 · 사용자만 정할 제품 의미 ·
   비가역 위험 · 불변식이나 술어를 약화시켜야만 진행 가능할 때.
-  그 밖의 기술적 모호함은 스스로 정하고 STATE.md에 근거를 남겨라.
+  그 밖의 기술적 모호함은 스스로 정하고 STATE.md 에 근거를 남겨라.
+
+[12] 1차 시도가 왜 실패했는지 — 짧게. 전문은 STATE.md "fixture 헌법" 절이다
+- RED-first 는 1차가 이미 썼고 100% 작동했다(동결 69 중 통과 69·거부 0). 그런데도
+  초록 33개에 돌아가는 것은 0개였다. 구별하는 것은 RED-first 가 아니라 호출 경계다.
+- 수용 검사 69개 전부가 ../src/ 를 직접 import 했고, 프로세스를 띄운 것은 4개였다.
+  유일한 CLI 파일에서 운영 .ts 102개 중 도달 13 / 미도달 89.
+- 그래서 fixture 헌법 넷이 있다. 이 세션에 적용되는 것은 앞의 셋이다:
+  1) fixture 는 운영 모듈을 import 하지 않는다 — 프로세스·합성 stdin·claude -p 로 만진다
+  2) 구현이 만든 판정값을 정답으로 재사용하지 않는다
+  3) 관측하는 것은 외부 효과뿐이다 — 종료 코드·디스크의 파일·장부 내용
+  4) 는 "IP-0·IP-1ⓐ 가 먼저 초록이 된다" 인데, 그것은 세션 B의 첫 작업이다.
+     이 세션에서 규칙 4가 뜻하는 바는 하나다 — IP별 fixture 를 만들지 마라.
+     붙일 프로세스가 없어 모듈 단위로 내려앉고, 그 순간 1차와 구조적으로 같아진다.
 ```
 
 ### 세션 B용 (0b — 루프. `verify`·`bin`이 있을 때)
@@ -739,6 +863,48 @@ done
 [멈추는 조건]
 - GOAL.md §7의 넷뿐이다.
 ```
+
+---
+
+## 세션 A 프롬프트 적대적 검증 — 1차 (2026-07-28)
+
+**무엇을 했나**: 세션 A용 프롬프트를, 그 프롬프트의 실제 독자와 같은 조건(**서사를 모르는 신선 컨텍스트**)에 놓고 넷이 독립으로 때렸다 — ① 세션 A 시뮬레이션(*"내가 이걸 받으면 무엇을 만들 것인가"*) ② 적대적 반증(*"실패하는 방식을 찾아라"*) ③ 문서 정합성(*"실제와 대조하라"*) ④ **Codex/GPT-5.5** — 넷째는 `GOAL.md` §8이 잔여로 선언한 *"짓는 모델과 검사하는 모델이 같은 계열"* 편향을 깨기 위한 것이다.
+
+### 셋 이상이 독립으로 수렴한 급소 넷 — 이것이 이 검증의 소득이다
+
+| 급소 | 무엇이 문제였나 | 어떻게 고쳤나 |
+| --- | --- | --- |
+| **정적 RED 허점** | *"RED가 완료 조건"*이면 **아무것도 검사하지 않고 `process.exit(1)` 하는 스크립트**가 완료 조건을 전부 만족한다. 반증자와 Codex가 **거의 같은 스트로맨 코드**를 따로 써 왔다. 눈금이 원리적으로 초록이 될 수 있는지 확인하라는 요구가 어디에도 없었다 | 완료 조건에 **양극 자기시험**(기준 하나를 합성 충족으로 `true`로 뒤집었다 되돌리기)을 넣었다 |
+| **대상 0개 = 거짓 초록** | `src/`도 fixture도 없으니 헌법 검사·도달성 검사가 항상 PASS다. **빨간 보고서 안에 숨은 초록**이고, 1차 실패의 구조(형식 게이트가 69/69 통과하면서 아무것도 안 잡음)와 같은 모양 | 대상 0개는 `PASS`가 아니라 **`n/a — 대상 0개`**로 출력. **음극 자기시험 셋**(위반을 일부러 심어 빨개지는 것 관측)을 완료 조건에 넣었다 |
+| **자기 채점이 A→B로 이동했을 뿐** | A가 만드는 건 이름만 있고 전부 `false`인 목록이고, **무엇으로 충족되는지는 B가 쓰고 B가 통과시킨다.** 게다가 **1차보다 후퇴**했다 — 1차엔 `gate-a/red-freeze.json`이 기준마다 `sha256`과 `author_context`를 기계로 봤는데 이번엔 대응 장치가 0개였고, B의 codex는 `workspace-write`로 `verify/`를 고칠 수 있다 | **기준 동결 매니페스트**를 넣었다. 43개 기준 목록의 sha256을 verify가 매 실행 대조하고 불일치면 죽는다. **1차는 테스트를 동결했고 이번엔 눈금 자신을 동결한다** |
+| **눈금 해상도 미정** | *"IP-0~6의 모든 기준"*이 7개인지 43개인지 54개인지 안 적혀 있었다. 7개 boolean을 고르면 `close` 거부 여섯을 하나로 뭉쳐 세게 되고 **1차의 "조건 목록" 실패와 같은 방향** | `GOAL.md` §2의 동그라미를 세어 **43개로 확정**(IP-0:4 · IP-1:8 · IP-2:13 · IP-3:4 · IP-4:4 · IP-5:3 · IP-6:7) |
+
+### 실행으로 확인한 사실 — 추정이 아니다
+
+| 무엇 | 관측 |
+| --- | --- |
+| **`--allowedTools`가 프롬프트를 삼킨다** | 가변 인자라 뒤의 위치 인자를 전부 먹는다. 콤마로 묶어도 같다. `Error: Input must be provided either through stdin or as a prompt argument when using --print` → **프롬프트는 stdin으로** |
+| **미신뢰 디렉터리에서도 권한이 선다** | `echo "…" \| claude -p --setting-sources project --allowedTools "Bash(bun run:*)"` → **통과**(`bun run typecheck`가 실제로 실행돼 종료 코드를 물어 왔다). 대조군(allowlist 없음) → `This command requires approval` |
+| **`--setting-sources project`는 allowlist를 안 싣는다** | `--setting-sources`는 `user`·`project`·`local`을 따로 받고 `settings.local.json`은 **local**이다 |
+| **`mv …/*` 복구가 dotfile을 놓친다** | 재현: `.claude`·`.drive`가 임시 위치에 **남았다.** 옛 비계 판별식이 파괴적이었다 |
+| **`.drive/` 미생성으로 루프가 헛돈다** | 리디렉션 `rc=1` → `&& break` 불발 → 빈 로그로 20라운드 |
+| **codex에 상한 플래그가 없다** | `codex exec --help`에 budget·limit·timeout **0건**. `--max-budget-usd`는 `claude` 전용 |
+| **환경 사유로 이미 빨간 것들** | `typecheck` exit 2(TS18003) · `lint` exit 127(biome 미설치, `node_modules` 없음) · `bun test` 파일 0개 |
+| **`.gitignore` 실효성** | `.drive/`·`.fabricate/`·`AGENT_STOP` → `NOT IGNORED`. `.idea/`는 이미 무시되고 추적 0건 |
+
+### 기각한 지적 하나
+
+Codex의 *"프롬프트는 Claude 몫인데 A가 `fab-verifier.md`를 만드니 역할 규율 위반"* — **아니다.** 세션 A는 Claude 세션이고 코드만 codex에 넘긴다. 프롬프트를 Claude가 쓰는 것이 규율 그대로다. Codex가 *"Codex가 A를 수행한다"*를 가정했는데 그런 지시는 없다.
+
+### 반증된 STATE의 옛 논거 하나
+
+*"1차에 도달 가능성 검사가 있었다면 89/102가 첫날 터졌다"* — **틀렸다.** 1차의 첫날에도 모듈은 0개였다. 89/102가 터지는 것은 모듈이 생긴 뒤(=세션 B)다. 0a 배치가 얻는 것은 *"검사가 존재한다"*뿐이고, 그래서 **음극 자기시험이 없으면 0a 배치의 값이 거의 없다.** 시점은 0a로 유지하되 자기시험을 의무로 붙인 이유가 이것이다.
+
+### 남은 잔여 — 정직하게 적는다
+
+- **`drive.sh`는 드라이런 한 바퀴까지만 검증된다.** 실제 codex·claude 호출을 태우는 경로는 세션 B가 처음 돌린다. 드라이런은 "센티널에 걸려 끊긴다"만 증명한다.
+- **43개 기준의 *내용*이 옳은지는 기계가 못 본다.** 동결은 *바뀌지 않았음*만 보장한다. 그 기준이 `GOAL.md` §2를 정확히 옮겼는지는 사람이 본다.
+- **`GOAL.md` §8이 이미 선언한 잔여**(IP-6ⓑ·IP-6ⓓ·IP-5ⓒ)는 이 검증으로 줄지 않았다.
 
 ---
 
@@ -829,9 +995,9 @@ done
 
 ---
 
-## 0단계에서 바로 부딪힐 자리 — 아직 답이 없다
+## 0단계에서 바로 부딪힐 자리 — **1·2는 닫혔고 3만 남았다 (2026-07-28)**
 
-**개정 5를 집행하면서 드러났지만 닫지 않은 것들이다.** 전부 새 세션이 **구현하며 정할 자리**이고, 여기서 미리 결정하지 않는다. 다만 **핸드오프에서 빠지면 0단계·1단계에서 맨몸으로 부딪힌다.** 각 항목은 *왜 문제인가 · 어디서 걸리는가 · 가능한 방향*이다.
+**개정 5를 집행하면서 드러났던 것들이다. 2026-07-28 계획 세션이 1·2를 닫았고 3은 세션 A가 정한다.** 다만 **핸드오프에서 빠지면 0단계·1단계에서 맨몸으로 부딪힌다.** 각 항목은 *왜 문제인가 · 어디서 걸리는가 · 가능한 방향*이다.
 
 ### 1. IP-2ⓜ과 IP-1의 긴장 — 모델 호출 경로는 *반드시 실패하는* 경로다
 
@@ -964,3 +1130,4 @@ done
 | 2026-07-28 | **계획 세션 — 코드 0줄. 넷을 확정했다.** ① **구동 루프는 일회용 비계다**(사용자 결정) — fabricate의 정식 루프로 채택하지 않고, 정식 루프가 무엇이 될지는 이번 범위 밖·미정. 그래서 0a 산출물 다섯을 **제품**(`verify` 스크립트 · `bin/fabricate` · `verify/` 러너 — `GOAL.md` §2·§6이 요구)과 **비계**(`drive.sh` · `fab-verifier.md` · allowlist · `.drive/` · `AGENT_STOP`)로 갈랐고, **"비계를 치워도 `bun run verify` 결과가 같다"**를 기계 판별식으로 세워 0a 연기 시험에 넣었다. 비계는 플러그인 매니페스트에 안 들어간다(들어가면 IP-0 오염). ② **세션이 셋이 됐다** — 계획(이번) · A(루프를 짓는다) · B(그 루프로 fabricate를 짓는다). A와 B가 **서로 다른 물건**을 짓는다는 것이 경계의 핵심이다. ③ **미결 1 결정** — 모델 호출 경로는 표식만 서고 잠금 자격 없음(방향 ③은 선택지가 아니라 `GOAL.md` §1 본문 *"잠금 자격은 원문이 확보된 경로에만 준다"*). 회복은 **새 기제 없이** — 표식이 멱등이고 두 훅이 같은 `session_id`를 받으므로, `close`가 거부 문안으로 슬래시 명령 재입력을 지시하면 사용자가 치는 순간 같은 세션에 UPE가 `request.txt`를 앉혀 승격된다(지은 코드 0줄). **②(start에 원문 인자)는 버렸다** — 모델을 거친 문자열은 *"모델에 닿기 전"* 성질을 잃어 IP-1ⓕ·§4-3의 보증이 이름만 남고 §4-5에 걸린다. 딸린 제약: **`request.txt`를 쓰는 경로는 UPE 훅 하나뿐**(CLI에 두면 §6-3과 같은 구멍). ④ **미결 2 결정** — CLI에 **`--session`을 두지 않는다**. `active`가 정확히 하나일 때 그것을 쓰고 0개·2개 이상이면 exit ≠ 0, 세션 디렉터리는 훅만 만든다. 위조를 좁히는 대신 **모델이 잡을 손잡이를 없앴다**. 대가는 같은 프로젝트에서 동시 세션 둘 불가(어느 IP도 요구하지 않음). 새 미결 하나: CLI가 `.fabricate/`를 찾는 기준 디렉터리가 훅의 `cwd`와 갈리는가 — 세션 A가 실측한다 | 사용자 결정 |
 | 2026-07-28 | **실측 정정 셋.** ① **저장소가 옮겨졌다** — `/Users/incognito/dev/projects/fabricate` → **`/Users/ecoletree/dev/project/fabricate`**. 시작 프롬프트 두 블록의 경로를 고쳤다. ② **이 디렉터리는 미신뢰다**(`~/.claude.json` → `hasTrustDialogAccepted: false`). *"이미 신뢰돼 있다"*는 전제가 깨졌다 — 다만 `settings.local.json`은 미신뢰에서도 존중되고 `--allowedTools`는 신뢰 무관이므로 루프는 선다. **연기 시험 넷째가 이걸 닫는 자리**이고, 안 되면 `--allowedTools`로 옮긴다(전역 설정에 신뢰를 써 넣는 길은 여전히 안 쓴다). ③ **`codex`가 다운그레이드됐다** — `0.145.0` → `0.142.5`. `-s workspace-write`는 **이 버전에도 있다**(`--help` 확인: `read-only, workspace-write, danger-full-access`) → 구동 루프 영향 없음. 환경: `bun 1.3.14` · `claude 2.1.220` | 실행 관측 |
 | 2026-07-28 | **커밋 `946ac61` 이후 문서 둘은 논외** — `IMPLEMENTATION-ORCHESTRATION.md`(691줄, 잠긴 의도를 받아 구현까지 가는 **다음 단계** 하네스 요건) · `DITTO-PRE-MORTEM.md`(805줄, ditto 코드 조사본). 사용자 확인: *"요건 정리 중이라 반영 안 한 것. 지금은 고려할 필요 없다."* 둘 다 머리말에 *"비준된 `GOAL.md`를 변경하지 않는다"*·*"미비준 초안"*이라 적혀 있다. **세션 A·B는 이 둘을 읽지 않는다** — 완료 정의는 `GOAL.md` §2의 IP-0~6뿐이다 | 사용자 확인 |
+| 2026-07-28 | **세션 A 프롬프트 적대적 검증 1차 → 결함 열아홉 반영.** 프롬프트의 실제 독자와 같은 조건(서사를 모르는 신선 컨텍스트)에 넷을 독립으로 놓고 때렸다 — 세션 A 시뮬레이션 · 적대적 반증 · 문서 정합성 · **Codex(GPT-5.5)**(`GOAL.md` §8의 "같은 계열" 편향을 깨는 자리). **셋 이상이 독립 수렴한 급소 넷**: ① **정적 RED 허점** — 아무것도 검사하지 않고 `exit(1)` 하는 스크립트가 완료 조건을 전부 만족한다(반증자와 Codex가 거의 같은 스트로맨 코드를 따로 제출) → **양극 자기시험** 신설 ② **대상 0개 = 거짓 초록** — `src/`도 fixture도 없어 헌법·도달성 검사가 항상 PASS, 1차의 형식 게이트(69/69 통과·적발 0)와 같은 모양 → `n/a — 대상 0개` 상태 + **음극 자기시험 셋** 신설 ③ **자기 채점이 A→B로 이동했을 뿐이고 1차보다 후퇴** — 1차엔 `gate-a/red-freeze.json`이 `sha256`·`author_context`를 기계로 봤는데 이번엔 0개였고 B의 codex가 `verify/`를 고칠 수 있다 → **기준 동결 매니페스트** 신설(1차는 테스트를, 이번엔 눈금 자신을 동결) ④ **눈금 해상도 미정**(7 vs 43 vs 54) → `GOAL.md` §2 동그라미를 세어 **43개 확정**. **실행으로 닫은 사실 일곱**: `--allowedTools`가 가변 인자라 뒤의 프롬프트를 삼킨다(콤마로 묶어도 같음) → **프롬프트는 stdin** · `--setting-sources project` + `--allowedTools` 조합이 **미신뢰 디렉터리에서 통과**(대조군은 `This command requires approval`) · `--setting-sources`는 `user/project/local`을 따로 받고 `settings.local.json`은 **local**이라 `project`만 주면 권한이 0 · 옛 비계 판별식의 `mv …/*` 복구가 **dotfile을 놓쳐 `.claude`·`.drive`가 유실**(재현함) → 판별식을 **정적 참조 금지 검사**로 교체 · `drive.sh` 본이 `.drive/`를 안 만들어 리디렉션 `rc=1` → 빈 로그로 20라운드 헛돎 · `codex exec`에 상한 플래그 **0건**(`--max-budget-usd`는 claude 전용) → codex는 셸 `timeout`으로 · 환경 사유로 이미 빨간 것들(`typecheck` exit 2 TS18003 · `lint` exit 127 biome 미설치 · `bun test` 0개). 함께: `drive.sh` 본이 `FINDINGS.md`·`STATE.md`를 시드로 줘 **`GOAL.md` §0 정면 위반**이던 것을 제거(사람이 읽는 파일로만 남긴다) · `AGENT_STOP` 검사를 verify **앞**으로 · `tsconfig` `include`에 `verify/`·`bin/` 추가(안 하면 새 코드 전부가 타입 검사 밖) · 헌법 규칙 4를 A용으로 다시 씀(*"IP-0·IP-1ⓐ가 먼저 초록"*과 *"IP를 초록으로 만들지 마라"*가 A에게 동시에 걸려 있던 자기모순) · 미결 3(verify 격리 vs IP-0ⓐ 4단 증거)이 프롬프트에서 통째로 빠져 있던 것을 A의 유일한 결정 자리로 명시 · 첫 5분 판별 명령에서 `package.json` 제거(비어 있지 않아 **세션 B로 오라우팅**됐다) · `fab-verifier`의 쓰기 불가를 보는 **음극 연기 시험** 추가 · 완료 조건 다섯 → **여섯**. **기각 하나**: Codex의 *"프롬프트는 Claude인데 A가 `fab-verifier.md`를 만드니 역할 위반"* — A는 Claude 세션이므로 규율 그대로다. **반증된 옛 논거 하나**: *"1차에 도달성 검사가 있었다면 89/102가 첫날 터졌다"* — 1차 첫날에도 모듈은 0개였다. 그래서 자기시험 없는 0a 배치는 값이 거의 없다 | 신선 컨텍스트 3 + Codex(GPT-5.5) 독립 검증 · 실행 관측 |
