@@ -87,6 +87,35 @@ export const closeIntent = async (cwd: string, args: string[]): Promise<CliResul
   return ok(`${readinessText}\n잠긴 의도 레코드를 썼습니다: ${intentPath}\n`);
 };
 
+export const showIntent = async (cwd: string, args: string[]): Promise<CliResult> => {
+  if (args.length === 0) {
+    return fail("intent id 가 필요합니다.\n");
+  }
+
+  if (args.length > 1) {
+    return fail(`알 수 없는 인자입니다: ${args[1]}\n`);
+  }
+
+  const intentId = args[0];
+  if (intentId === undefined || intentId.length === 0) {
+    return fail("intent id 가 필요합니다.\n");
+  }
+
+  const projectDir = await projectDirFromCommandCwd(cwd);
+  const text = await readUtf8IfExists(join(fabricateDir(projectDir), "intent", `${intentId}.json`));
+
+  if (text === null) {
+    return fail(`잠긴 의도 레코드가 없습니다: ${intentId}\n`);
+  }
+
+  const parsed = parseJson(text);
+  if (!isIntentRecord(parsed)) {
+    return fail(`잠긴 의도 레코드를 읽을 수 없습니다: ${intentId}\n`);
+  }
+
+  return ok(formatIntentForShow(parsed));
+};
+
 type CloseArgs = { ok: true; goalHash: string } | { ok: false; result: CliResult };
 
 const parseCloseArgs = (args: string[]): CloseArgs => {
@@ -237,3 +266,59 @@ const closeReasons = (
 
   return reasons;
 };
+
+type IntentRecord = {
+  id: string;
+  request: string;
+  goals: {
+    texts: string[];
+    goal_hash: string;
+  };
+  locked_at: string;
+};
+
+const parseJson = (text: string): unknown => {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
+};
+
+const isIntentRecord = (value: unknown): value is IntentRecord => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  const goals = record.goals;
+  const goalRecord =
+    typeof goals === "object" && goals !== null && !Array.isArray(goals)
+      ? (goals as Record<string, unknown>)
+      : null;
+  const goalTexts = goalRecord?.texts;
+
+  return (
+    typeof record.id === "string" &&
+    typeof record.request === "string" &&
+    typeof record.locked_at === "string" &&
+    goalRecord !== null &&
+    Array.isArray(goalTexts) &&
+    goalTexts.every((goal): goal is string => typeof goal === "string") &&
+    typeof goalRecord.goal_hash === "string"
+  );
+};
+
+const formatIntentForShow = (intent: IntentRecord): string =>
+  [
+    `잠긴 의도 레코드: ${intent.id}`,
+    "사용자 원문:",
+    "----- fabricate request bytes begin -----",
+    intent.request,
+    "----- fabricate request bytes end -----",
+    "목표 술어:",
+    ...intent.goals.texts.map((goal, index) => `${index}. ${goal}`),
+    `goal-hash: ${intent.goals.goal_hash}`,
+    `locked-at: ${intent.locked_at}`,
+    "",
+  ].join("\n");
