@@ -1,6 +1,13 @@
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { FABRICATE_COMMAND_NAME } from "./constants.ts";
-import { pathExists, writeFileIfAbsent } from "./files.ts";
+import {
+  appendJsonLine,
+  pathExists,
+  readJsonLines,
+  readUtf8IfExists,
+  writeFileIfAbsent,
+} from "./files.ts";
 import {
   objectField,
   optionalBoolean,
@@ -101,18 +108,113 @@ const handleStop = async (payload: Record<string, unknown>): Promise<CliResult> 
     return ok();
   }
 
-  await appendHookObservation(
-    {
-      projectDir,
-      sessionId: id,
-      dir,
-    },
-    {
-      hook_event_name: optionalString(payload, "hook_event_name"),
-      prompt_id: optionalString(payload, "prompt_id"),
-      stop_hook_active: optionalBoolean(payload, "stop_hook_active"),
-    },
-  );
+  const session = {
+    projectDir,
+    sessionId: id,
+    dir,
+  };
+  const promptId = optionalString(payload, "prompt_id");
+  const stopHookActive = optionalBoolean(payload, "stop_hook_active");
 
-  return ok();
+  await appendHookObservation(session, {
+    hook_event_name: optionalString(payload, "hook_event_name"),
+    prompt_id: promptId,
+    stop_hook_active: stopHookActive,
+  });
+
+  if (promptId === null) {
+    return ok();
+  }
+
+  const active = await pathExists(join(dir, "active"));
+
+  if (!active) {
+    return ok();
+  }
+
+  const ledgerLength = (await readJsonLines(join(dir, "ledger.jsonl"))).length;
+  const previous = await readTurnState(join(dir, "turnstate.json"));
+  const sameTurn = previous?.prompt_id === promptId;
+  const startLength = sameTurn ? previous.start_L : (previous?.last_L ?? 0);
+  const ledgerAdvanced = ledgerLength > startLength;
+  const turnStatePath = join(dir, "turnstate.json");
+
+  if (ledgerAdvanced) {
+    await writeTurnState(turnStatePath, {
+      prompt_id: promptId,
+      start_L: startLength,
+      last_L: ledgerLength,
+    });
+    return ok();
+  }
+
+  if (stopHookActive === true) {
+    await appendJsonLine(join(dir, "ledger.jsonl"), {
+      ts: new Date().toISOString(),
+      kind: "turn-violation",
+      prompt_id: promptId,
+      start_L: startLength,
+      last_L: ledgerLength,
+      reason: "활성 인터뷰 턴에서 장부가 늘지 않았습니다.",
+    });
+    await writeTurnState(turnStatePath, {
+      prompt_id: promptId,
+      start_L: startLength,
+      last_L: ledgerLength + 1,
+    });
+    return ok();
+  }
+
+  await writeTurnState(turnStatePath, {
+    prompt_id: promptId,
+    start_L: startLength,
+    last_L: ledgerLength,
+  });
+  return ok(
+    `${JSON.stringify({
+      decision: "block",
+      reason:
+        "활성 인터뷰 세션인데 이번 턴에 장부가 늘지 않았습니다. 질문이나 판단을 사용자에게 내기 전에 `fabricate turn record ...`로 이번 턴의 장부를 기록하세요.",
+    })}\n`,
+  );
+};
+
+const writeTurnState = async (path: string, state: TurnState): Promise<void> => {
+  await writeFile(path, `${JSON.stringify(state)}\n`, "utf8");
+};
+
+type TurnState = {
+  prompt_id: string;
+  start_L: number;
+  last_L: number;
+};
+
+const readTurnState = async (path: string): Promise<TurnState | null> => {
+  const text = await readUtf8IfExists(path);
+
+  if (text === null) {
+    return null;
+  }
+
+  const parsed = JSON.parse(text) as unknown;
+
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return null;
+  }
+
+  const object = parsed as Record<string, unknown>;
+
+  if (
+    typeof object.prompt_id !== "string" ||
+    typeof object.start_L !== "number" ||
+    typeof object.last_L !== "number"
+  ) {
+    return null;
+  }
+
+  return {
+    prompt_id: object.prompt_id,
+    start_L: object.start_L,
+    last_L: object.last_L,
+  };
 };

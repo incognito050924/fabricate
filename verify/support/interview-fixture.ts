@@ -38,7 +38,20 @@ export const withInterviewFixture = async (
 };
 
 export const createSlashSession = async (fixture: InterviewFixture): Promise<void> => {
-  const hook = await runSyntheticHook({
+  const hook = await markSlashSession(fixture, "prompt-1");
+
+  if (hook.code !== 0 || !hook.markerAppeared) {
+    throw new Error(`합성 UPE 훅 실패: exit ${hook.code}\n${hook.stderr}`);
+  }
+
+  await expectOk(await fabricate(fixture, ["deep-interview", "start"]), "start");
+};
+
+export const markSlashSession = async (
+  fixture: InterviewFixture,
+  promptId: string,
+): Promise<Awaited<ReturnType<typeof runSyntheticHook>>> =>
+  await runSyntheticHook({
     repoRoot: fixture.repoRoot,
     projectDir: fixture.projectDir,
     event: "user-prompt-expansion",
@@ -48,7 +61,7 @@ export const createSlashSession = async (fixture: InterviewFixture): Promise<voi
       ...baseHookPayload({
         cwd: fixture.projectDir,
         sessionId: fixture.sessionId,
-        promptId: "prompt-1",
+        promptId,
         hookEventName: "UserPromptExpansion",
       }),
       expansion_type: "slash_command",
@@ -59,15 +72,21 @@ export const createSlashSession = async (fixture: InterviewFixture): Promise<voi
     },
   });
 
+export const createModelSession = async (fixture: InterviewFixture): Promise<void> => {
+  const hook = await markModelSession(fixture, "prompt-1");
+
   if (hook.code !== 0 || !hook.markerAppeared) {
-    throw new Error(`합성 UPE 훅 실패: exit ${hook.code}\n${hook.stderr}`);
+    throw new Error(`합성 PreToolUse 훅 실패: exit ${hook.code}\n${hook.stderr}`);
   }
 
   await expectOk(await fabricate(fixture, ["deep-interview", "start"]), "start");
 };
 
-export const createModelSession = async (fixture: InterviewFixture): Promise<void> => {
-  const hook = await runSyntheticHook({
+export const markModelSession = async (
+  fixture: InterviewFixture,
+  promptId: string,
+): Promise<Awaited<ReturnType<typeof runSyntheticHook>>> =>
+  await runSyntheticHook({
     repoRoot: fixture.repoRoot,
     projectDir: fixture.projectDir,
     event: "pre-tool-use",
@@ -77,7 +96,7 @@ export const createModelSession = async (fixture: InterviewFixture): Promise<voi
       ...baseHookPayload({
         cwd: fixture.projectDir,
         sessionId: fixture.sessionId,
-        promptId: "prompt-1",
+        promptId,
         hookEventName: "PreToolUse",
       }),
       tool_name: "Skill",
@@ -88,12 +107,23 @@ export const createModelSession = async (fixture: InterviewFixture): Promise<voi
     },
   });
 
-  if (hook.code !== 0 || !hook.markerAppeared) {
-    throw new Error(`합성 PreToolUse 훅 실패: exit ${hook.code}\n${hook.stderr}`);
-  }
-
-  await expectOk(await fabricate(fixture, ["deep-interview", "start"]), "start");
-};
+export const stopHook = async (input: {
+  fixture: Pick<InterviewFixture, "repoRoot" | "projectDir" | "sessionId">;
+  promptId: string;
+  stopHookActive?: boolean;
+}): Promise<ProcessResult> =>
+  await runProcess(join(input.fixture.repoRoot, "bin", "fabricate"), ["hook", "stop"], {
+    cwd: input.fixture.projectDir,
+    input: `${JSON.stringify({
+      ...baseHookPayload({
+        cwd: input.fixture.projectDir,
+        sessionId: input.fixture.sessionId,
+        promptId: input.promptId,
+        hookEventName: "Stop",
+      }),
+      ...(input.stopHookActive === undefined ? {} : { stop_hook_active: input.stopHookActive }),
+    })}\n`,
+  });
 
 export const addCompleteInterview = async (fixture: InterviewFixture): Promise<string> => {
   await record(fixture, ["--kind", "fragment", "--id", "F1", "--text", "로그인 실패"]);
