@@ -4,8 +4,12 @@
   "private": true,
   "type": "module",
   "description": "Agent work harness whose spine is intent formation",
+  "bin": {
+    "fabricate": "./bin/fabricate"
+  },
   "scripts": {
-    "test": "bun test",
+    "verify": "bun run verify/run.ts",
+    "test": "bun test verify/fixtures",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write ."

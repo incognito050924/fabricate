@@ -610,3 +610,13 @@ gradle-app.setting
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,jetbrains+all,visualstudiocode,java,node,python,rust,go,kotlin,gradle,maven,sbt
 /.idea/codeStyles/codeStyleConfig.xml
+
+# --- fabricate (2026-07-29, 세션 A) ---
+# 실측: 아래 넷은 위 612줄의 어떤 규칙에도 걸리지 않았다.
+# .idea/ 는 :136 의 `.idea/*` 를 :138 의 `!.idea/codeStyles` 가 되뚫어서 필요하다.
+# .claude/settings.local.json 은 지금 사용자 전역 ~/.config/git/ignore 로만 무시되므로
+# 다른 기계에서는 안 무시된다.
+.fabricate/
+.idea/
+fabricate.iml
+.claude/settings.local.json

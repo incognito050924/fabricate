@@ -17,6 +17,25 @@
 
 계약 문안은 손대지 않는다.
 
+## 설치
+
+Claude Code 플러그인이다. 저장소 뿌리에서 **이 한 줄**을 돌리고 Claude Code를 재시작한다.
+
+```sh
+claude plugin marketplace add . && claude plugin install fabricate@fabricate-local
+```
+
+재시작 뒤 인터뷰를 연다.
+
+```
+/fabricate:deep-interview "<하고 싶은 일을 그대로 쓴다>"
+```
+
+- 같은 줄을 다시 돌려도 결과가 같다 — 호스트가 *already installed*로 no-op 처리한다.
+- 마켓플레이스 소스가 `directory`라 **저장소를 옮기면 등록된 경로가 낡는다.** 옮긴 뒤에는
+  옮긴 자리에서 같은 줄을 다시 돌린다.
+- 지우려면: `claude plugin marketplace remove fabricate-local`.
+
 ## 무엇을 만드는가 · 지금 어디인가
 
 - **`GOAL.md`** — 비준된 목표. 완료 정의(IP-0~6) · 불변식 · 비-목표 · 잔여. 본문은 §9 없이 고치지 않는다
