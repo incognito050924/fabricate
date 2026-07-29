@@ -36,8 +36,12 @@ test(
 
     expect(active.created_by).toBe("user-prompt-expansion");
     expect(Buffer.compare(Buffer.from(requestText), Buffer.from(current.requestSent.run1))).toBe(0);
+    // The first question reached the user: user-facing text came back, and the
+    // question it carried is in the ledger. Punctuation is not evidence — an earlier
+    // version of this fixture matched "?" in stdout and went red on a run whose
+    // question ended in a period.
     expect(run1.stdout.trim().length).toBeGreaterThan(0);
-    expect(/[?？]/.test(run1.stdout)).toBe(true);
+    expect(questionTexts(session)).not.toHaveLength(0);
   },
   hostTimeoutMs,
 );
@@ -128,6 +132,12 @@ const onlyAppearedSession = (drive: HostDrive, label: string): ObservedSession =
   expect(session.id).toBe(appearedSessionId);
   return session;
 };
+
+const questionTexts = (session: ObservedSession): string[] =>
+  session.ledger
+    .filter((entry) => entry.kind === "question")
+    .map((entry) => (typeof entry.text === "string" ? entry.text : ""))
+    .filter((text) => text.trim().length > 0);
 
 const requireText = (text: string | null, label: string): string => {
   if (text === null) {
