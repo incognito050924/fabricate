@@ -50,6 +50,9 @@ export const appendHookObservation = async (
 ): Promise<void> => {
   await appendJsonLine(join(session.dir, "hooks.jsonl"), {
     ...observation,
+    // The host sets this only for hook child processes. It is the sole runtime
+    // witness of which directory the installed plugin actually executes from.
+    plugin_root: process.env.CLAUDE_PLUGIN_ROOT ?? null,
     ts: nowIso(),
   });
 };
