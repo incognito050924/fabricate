@@ -22,17 +22,17 @@ bun run verify; echo "exit=$?"
 | --- | --- | --- | --- |
 | 없음 | — | — | **세션 A** — `git checkout -b bootstrap/walk`로 만든다 |
 | 있음 | 없음 | — | **세션 A** (중단됐던 것) |
-| 있음 | 있음 | IP-0·IP-1ⓐ가 빨감 | **세션 A** (중단됐던 것) |
-| 있음 | 있음 | IP-0·IP-1ⓐ만 초록 | **세션 B** |
+| 있음 | 있음 | IP-0ⓐ·IP-1ⓐ가 빨감 | **세션 A** (중단됐던 것) |
+| 있음 | 있음 | **IP-0ⓐ·IP-1ⓐ만 초록 (지금 여기다 — 15/60)** | **세션 B** |
 | 있음 | 있음 | 전부 초록 | `main`에 착지할 때다 (`GOAL.md` §3) |
 
 시작 프롬프트는 아래 **"시작 프롬프트"** 절에 세션별로 있다.
 
 **읽는 순서**: `GOAL.md` **전문**(짧다, 요약본을 쓰지 마라) → 이 문서 → 필요하면 `contract/original-request.md`.
 
-**한 줄 상태**: 목표 비준(개정 5) · 범위 확정 · 열린 질문 0 · 실측 전부 닫힘 · **코드 0줄** · **세션 둘**(A = 걷는 경로, B = 나머지 IP) · **동결과 무인 루프는 2026-07-29에 폐기**.
+**한 줄 상태**: 목표 비준(개정 5) · **세션 A 완료(2026-07-29)** — 걷는 경로가 실물로 뚫렸다. `bun run verify` → **15/60 초록, exit 1** (축 A 2/43 = IP-0ⓐ·IP-1ⓐ · 축 B 10/14 · 축 C 3/3). 브랜치는 `bootstrap/walk`.
 
-**다음 세션이 할 일**: 세션 A — **걷는 경로 하나를 뚫는다.** 설치 → 슬래시 명령 → 훅 셋 발화 → `start`/`turn record`/`close` → 디스크의 잠긴 레코드. 게이트는 얹지 않는다. 완료 조건은 **IP-0과 IP-1ⓐ가 초록**이고 나머지 41은 빨갛다.
+**다음 세션이 할 일**: 세션 B — **A가 뚫은 경로 위에 게이트를 얹는다.** `close` 거부 여섯 + ⓜ → `Stop` 턴 회계 → IP-5 → IP-6 → IP-4 → IP-3. 아래 **"세션 A가 남긴 것"** 절이 이 세션의 입력이다.
 
 ---
 
@@ -55,15 +55,154 @@ bun run verify; echo "exit=$?"
 
 | id | 무엇 | 상태 |
 | --- | --- | --- |
-| IP-0 | 설치 명령 하나로 남의 기계에서 바로 쓸 수 있다 (멱등·설정 보존) | 미착수 — **세션 A** |
-| IP-1 | 사용자 명령에서 시작해 끝까지 돌아 잠긴 레코드를 만든다 | ⓐ만 **세션 A**, 나머지는 B |
+| IP-0 | 설치 명령 하나로 남의 기계에서 바로 쓸 수 있다 (멱등·설정 보존) | **ⓐ 초록**(세션 A) · ⓑⓒⓓ 미착수 |
+| IP-1 | 사용자 명령에서 시작해 끝까지 돌아 잠긴 레코드를 만든다 | **ⓐ 초록**(세션 A) · 나머지 일곱 미착수 |
 | IP-2 | 못 끝낼 때 실제로 막힌다 (`close` 거부 여섯 + 원문 부재 ⓜ + 훅 셋) | 미착수 — 세션 B |
 | IP-3 | 새 세션이 레코드를 원문으로 읽고 시드로 쓴다 | 미착수 — 세션 B |
 | IP-4 | 유효 증거는 통과, 없거나 낡거나 남의 것이면 거부 | 미착수 — 세션 B |
 | IP-5 | 질문을 자기가 채점하지 않는다 (세션-맹검 위임 기록) | 미착수 — 세션 B |
 | IP-6 | 값어치 있는 것만 묻고, 물은 것은 구체화된다 | 미착수 — 세션 B |
 
-닫는 명령: **`bun run verify` 하나.** 미구현 — `package.json`에 스크립트가 없다.
+닫는 명령: **`bun run verify` 하나.** 구현됨 — 지금 **15/60 초록, exit 1**.
+
+---
+
+## 세션 A가 남긴 것 (2026-07-29) — 세션 B의 입력은 이 절이다
+
+### 0. 산출물과 실제 출력
+
+브랜치 `bootstrap/walk`. 커밋 여덟. `bun run verify`의 실제 출력(요약 줄과 축 B 전문, 축 A의 미충족 41개는 같은 형식이 반복되므로 넷만 옮긴다):
+
+```
+fabricate verify — 15/60 초록 (축 A 2/43 · 축 B 10/14 · 축 C 3/3)
+
+축 A — GOAL §2 통합 술어
+  IP-0b  두 번 돌려도 같은 결과다 — 훅 중복 등록 없음
+         fixture 없음: verify/fixtures/IP-0b.test.ts
+  IP-0c  기존 Claude Code 설정이 유실되지 않는다
+         fixture 없음: verify/fixtures/IP-0c.test.ts
+  IP-0d  음극: 설치가 실패하면 변경 전 상태가 보존된다
+         fixture 없음: verify/fixtures/IP-0d.test.ts
+  IP-1b  내부: start → turn record ×N → close 가 장부에 남는다
+         fixture 없음: verify/fixtures/IP-1b.test.ts
+  … (같은 형식으로 41개)
+
+축 B — 구조 검사
+  S-1   FAIL 진입점이 실재한다
+        --help 에 check 가 없다. check 는 IP-4 를 구현하는 세션 B 항목이다.
+  S-3   n/a  잠금을 우회하는 쓰기 경로가 없다
+        대상이 없다: close 가 아직 거부하지 않는다. IP-2 의 close 거부가 생기면 잠금 쓰기 경로를 판정한다.
+  S-12  n/a  verify 가 저장소와 사용자 홈에 파일을 만들거나 고치지 않는다
+        대상이 없다: 오늘 실측한 설치 연쇄가 ~/.claude/plugins/known_marketplaces.json,
+        installed_plugins.json, cache 디렉터리를 실행 중에 고친다. teardown 은 항목을 지우지만,
+        실행 중 사용자 홈을 전혀 만들거나 고치지 않는다는 문장은 아직 참이 아니다.
+  S-13  n/a  거부는 레코드를 남기지 않는다
+        대상이 없다: close 가 아직 원문 없는 세션을 거부하지 않는다. IP-2 의 거부가 생기면
+        intent 미생성을 판정한다.
+
+축 C — 도구 사슬
+
+15/60 초록 — exit 1
+```
+
+**초록인 축 B 열**: `S-2` · `S-4` · `S-5` · `S-6` · `S-7` · `S-8` · `S-9` · `S-10` · `S-11` · `S-14`. 실패 항목만 상세히 나오므로 목록에 없는 것이 초록이다.
+
+**IP-0ⓐ·IP-1ⓐ를 초록으로 만든 명령은 `bun run verify` 하나다.** 그 안에서 실제로 일어난 것: 임시 프로젝트에 플러그인을 설치하고 `claude -p`로 슬래시 명령을 쳐서 UPE·Stop 훅이 발화한 것을 관측하고, 재설치 후 다시 같은 것을 관측하고, 미설치 프로젝트에서는 아무 훅 증거도 안 생기는 것을 관측한다. 한 실행에 live `claude -p` 세션 넷이 돌아 **약 5~8분** 걸린다.
+
+수동으로도 한 번 돌렸고 그 출력이 경로가 살아 있다는 가장 직접적인 증거다 — 임시 프로젝트에서 `/fabricate:deep-interview 사내 대시보드 로그인이 가끔 실패하는데 원인을 못 찾겠다`를 치자 모델이 삼원 대안 질문을 냈고, 디스크에는 `active` · 원문 그대로의 `request.txt` · `{"kind":"start"}`와 `{"kind":"question",…}` 두 줄의 `ledger.jsonl` · UPE와 Stop 두 줄의 `hooks.jsonl`이 남았다.
+
+### 1. 정한 것 여섯 (`GOAL.md` §7이 구현자에게 맡긴 자리)
+
+1. **43개 id 표기와 파일명 매핑.** id는 ASCII `IP-<숫자><소문자>` — `ⓐ`→`a` … `ⓜ`→`m`. 파일은 `verify/fixtures/IP-2m.test.ts`. 축 B는 `S-1`…`S-14` → `verify/checks/S-14.ts`. 콜론은 어디에도 안 쓴다. 러너가 축 A 판정을 얻는 방법이 **JUnit `<testsuite file>`의 basename ↔ id 대조**라서, 파일명이 곧 id다.
+2. **세션 B가 check를 붙이는 이음매 — 축마다 다르다.**
+   - **축 A**: `verify/fixtures/<id>.test.ts`를 하나 추가한다. 그것이 전부다. 러너가 `bun test verify/fixtures --reporter=junit`를 **단 한 번** 돌려 파일별 결과를 읽는다. `tests>0 && failures==0 && errors==0`일 때만 `true`, 파일이 없으면 `false`(default-FAIL).
+   - **축 B**: `verify/checks/S-N.ts`가 `Check`를 default export 한다.
+     ```ts
+     type CheckOutcome = { ok: boolean; targets: string[]; detail: string };
+     type CheckContext = { repoRoot: string; tmpRoot: string; obsPath: string };
+     type Check = { id: string; title: string; run: (ctx: CheckContext) => Promise<CheckOutcome> };
+     ```
+     **판정은 러너가 한다** — `targets`가 비면 `ok`와 무관하게 `n/a`로 덮어쓴다. 모듈 자체가 없으면 `n/a`가 아니라 **FAIL**(`검사 모듈이 없다: …`)이다. 둘은 다른 상태이고 섞지 않는다.
+   - 축 A에 별도 `checks/` 모듈을 두지 않은 이유: STATE가 *"축 C의 `test`가 축 A와 같은 것을 본다"*고 못박았는데, check가 fixture를 또 돌리면 같은 fixture를 두 번 실행하게 된다. live 호스트 세션이 걸린 fixture에서 그 비용은 배가 된다.
+3. **러너 출력 형식.** 머리에 요약 한 줄, 축마다 **미충족 항목만** id·제목·사유로 상세히, 끝에 `N/60 초록 — exit N`. 초록 항목은 개별로 안 찍는다. `n/a`는 초록이 아니다. `exit 0`은 43 전부 `true` · 14 전부 `PASS` · 3 전부 통과일 때뿐이다.
+4. **`bin/fabricate`의 언어와 확장자.** 확장자 없는 shim 두 줄(`#!/usr/bin/env bun` + `import "./fabricate.ts"`), 로직은 `bin/fabricate.ts`. 실측: bun은 확장자 없는 shebang 파일을 그대로 실행한다. tsconfig의 `bin/**/*.ts`가 로직 파일을 담고 shim 두 줄은 타입 검사 밖에 남는다.
+5. **훅 셋이 CLI를 부르는 방식.** 껍데기 스크립트 파일을 따로 두지 않는다 — `hooks/hooks.json`이 직접 `bun "${CLAUDE_PLUGIN_ROOT}/bin/fabricate" hook <event>`를 부르고, 페이로드는 stdin으로 온다. `<event>`는 `user-prompt-expansion`·`pre-tool-use`·`stop`. UPE와 Stop은 매처를 비우고, `PreToolUse`만 매처 `"Skill"`을 쓴다 — 매처를 비우면 모든 도구 호출마다 CLI가 뜨기 때문이고, `"Skill"`은 `tool_name` 정규식이라 실제로 맞는다. **스킬 이름 판별은 매처가 아니라 CLI 안에서** `command_name` / `tool_input.skill`로 한다(`GOAL.md` §6-6).
+6. **임시 프로젝트 설치와 `claude -p` 구동.** 고유 이름 마켓플레이스 디렉터리를 임시로 만들고 그 안에 저장소를 가리키는 심볼릭 링크 `plug`를 두어 `{"name":"fabricate","source":"./plug"}`로 등록한다. 그 다음 임시 프로젝트에서 `claude plugin marketplace add <mktdir> --scope project` + `claude plugin install fabricate@<고유이름> --scope project`. 구동은 `claude -p --setting-sources project --allowedTools "Bash(fabricate:*)"`이고 프롬프트는 stdin. 정리는 `claude plugin marketplace remove <고유이름>` + 캐시 디렉터리 삭제. **이름이 고유해야 하는 이유**: 사용자가 README대로 진짜 설치를 해 둔 상태에서 `verify`가 같은 이름을 쓰면 사용자의 설치를 지운다(§4-9). 실측으로 정리 후 전역 레지스트리 잔재 0을 확인했다.
+
+**미결 1·2·3은 그대로 따랐다.** 미결 1(모델 호출 경로는 표식만 서고 원문이 없다) — `PreToolUse` 훅은 `request.txt`를 안 쓴다. 미결 2(CLI에 `--session` 없음) — 활성 표식이 정확히 하나일 때만 쓰고 0개·2개 이상이면 exit ≠ 0. 미결 3(합성 stdin = 훅 로직, 실제 `claude -p` = 설치 연쇄) — `S-8`·`S-9`가 합성 stdin, `S-5`~`S-7`과 fixture 둘이 실제 `claude -p`.
+
+### 2. 새로 정한 것 둘 — 실측이 강제했다
+
+- **CLI는 런타임 의존성이 0이다.** `zod`도 `citty`도 안 쓴다. 설치된 플러그인은 마켓플레이스 소스에서 그대로 실행되므로, `node_modules`를 import 하는 순간 번들 단계 없이는 배포본이 깨진다. **세션 B도 이 제약을 받는다** — CLI·훅 코드에서 `node_modules`를 import 하려면 먼저 번들 단계를 세워야 한다.
+- **CLI는 PATH 위에 있어야 한다.** `CLAUDE_PLUGIN_ROOT`는 훅 자식 프로세스에만 오고 **모델의 Bash 도구 환경에는 오지 않는다**(실측). 그래서 스킬이 매 턴 부를 경로를 모델이 알 방법이 `fabricate`가 PATH에 있는 것뿐이다. 문서의 설치 한 줄이 `bun link`로 시작하는 이유이고, `verify`는 전역을 더럽히지 않으려고 대신 임시 bin 디렉터리를 PATH 앞에 붙인다.
+
+### 3. 미결 2의 실측 결과 — CLI의 기준 디렉터리는 훅의 `cwd`와 갈리지 않는다
+
+- 훅 자식 프로세스의 `pwd` = 훅 페이로드의 `cwd` = Claude Code 프로젝트 디렉터리. 셋이 같다.
+- CLI 하위 명령은 자기 `process.cwd()`에서 **위로 올라가며 `.fabricate/`를 찾고**, 못 찾으면 시작 디렉터리를 쓴다. 서브디렉터리에서 `fabricate deep-interview start`를 불러 프로젝트 뿌리의 세션에 정확히 기록되는 것을 관측했다.
+- 세션 디렉터리는 훅만 만들기 때문에, 훅이 한 번도 안 돈 상태에서 CLI를 부르면 올라가도 아무것도 못 찾고 *"활성 인터뷰 세션이 없습니다"*로 exit 1 한다 — 이것이 IP-1ⓐ 음극의 관측 지점이다.
+
+### 4. 자기시험 둘 — 명령과 실제 출력
+
+baseline: 깨끗한 트리에서 `bun run verify` → `15/60 초록 — exit 1`.
+
+**(가) `S-14` fixture 헌법.** `verify/_selftest-import-violation.ts`에 `import { fabricateDir } from "../src/project.ts";` 한 줄을 심고 재실행. baseline 대비 diff는 정확히 이것뿐이었다:
+
+```
+< fabricate verify — 15/60 초록 (축 A 2/43 · 축 B 10/14 · 축 C 3/3)
+> fabricate verify — 14/60 초록 (축 A 2/43 · 축 B 9/14 · 축 C 3/3)
+>   S-14  FAIL fixture 헌법: verify 는 src 를 import 하지 않는다
+>         src 를 import 한 verify 파일:
+>         - verify/_selftest-import-violation.ts -> ../src/project.ts
+```
+
+파일을 지운 뒤 `git status --porcelain -uall`이 비었고, 재실행 출력이 baseline과 **전체 diff 0**이었다.
+
+**(나) `S-2` 도달성.** `src/_selftest_unreachable.ts`를 심고(아무도 import 하지 않는다) 재실행. diff는 정확히 이것뿐:
+
+```
+> fabricate verify — 14/60 초록 (축 A 2/43 · 축 B 9/14 · 축 C 3/3)
+>   S-2   FAIL 운영 모듈 전부가 뿌리에서 도달 가능하다
+>         뿌리에서 도달하지 못한 파일:
+>         - src/_selftest_unreachable.ts
+```
+
+되돌린 뒤 `git status --porcelain -uall` 비었고 재실행 출력이 baseline과 **전체 diff 0**이었다.
+
+**중간에 한 번 실패했고 그것이 두 결함을 드러냈다.** (나)의 첫 시행에서 되돌림 재실행이 baseline과 달랐다. 트리는 깨끗했으므로 코드 차이가 아니라 live 관측의 비결정성이었고, 파고들어 둘을 고쳤다(아래 6번). 고친 뒤 새 baseline 위에서 (가)·(나)를 처음부터 다시 돌린 것이 위 결과다.
+
+### 5. 실측 — 설치 연쇄의 실물 형상 (2026-07-29, Claude Code 2.1.220)
+
+*"실측 1"* 절의 설치 연쇄 항목을 이만큼 더 좁힌다. 다시 재지 마라.
+
+- **`directory` 소스 마켓플레이스에서 `${CLAUDE_PLUGIN_ROOT}`는 캐시 복사본이 아니라 살아 있는 소스 디렉터리다.** `~/.claude/plugins/cache/<mkt>/<plugin>/<version>/`에 복사본이 생기기는 하는데 실행되는 것은 소스다. 그래서 **저장소를 고치면 재설치 없이 즉시 반영되고**, `S-10`("설치된 경로가 이 저장소를 가리킨다")이 문자 그대로 검사 가능하다 — 훅이 매 줄에 자기 `CLAUDE_PLUGIN_ROOT`를 `hooks.jsonl`에 적고, `S-10`이 그것의 realpath를 저장소 realpath와 대조한다.
+- **같은 버전으로 재설치하면 no-op이다** (*"already installed"*, exit 0). IP-0ⓑ의 멱등이 여기서 나온다. 소스가 살아 있으므로 no-op이어도 낡은 코드가 돌지 않는다.
+- `marketplace add`는 상대경로로 줘도 **프로젝트 설정에 절대경로를 박는다**(`extraKnownMarketplaces.<name>.source.path`). 이미 알려진 구멍이고, 대응은 옮긴 자리에서 설치 한 줄을 다시 돌리는 것이다(README에 적었다).
+- **마켓플레이스 매니페스트의 `plugins[].source`는 마켓플레이스 뿌리 안의 경로여야 한다.** 절대경로도, `..`도, `{"source":"directory","path":…}` 객체 형태도 `claude plugin validate`에서 죽는다. **뿌리 안의 심볼릭 링크는 통과하고 링크를 따라 해석된다** — `verify`의 격리가 이것 위에 서 있다.
+- **`--scope project` 설치도 전역 `~/.claude/plugins/{known_marketplaces,installed_plugins}.json`을 고친다.** `claude plugin marketplace remove <name>`을 임시 프로젝트 안에서 돌리면 프로젝트 선언·전역 마켓플레이스 항목·설치 항목이 함께 지워진다(실측: 정리 후 두 파일에서 이름 검색 결과 0).
+- **`Stop` 페이로드에 `effort`와 `last_assistant_message`가 온다.** *"실측 1"*의 `Stop` 항목은 *"문서 예시의 `stop_reason`·`effort`는 오지 않는다"*고 적었는데 **`effort`는 2.1.220에서 온다.** `stop_reason`은 여전히 안 온다.
+- `PreToolUse`(매처 `Skill`)는 **모델이 Skill 도구를 부를 때만** 발화한다. 사용자가 슬래시 명령을 타이핑한 경로에서는 관측되지 않는 실행이 더 많았다 — `verify`가 이 훅을 보려고 모델에게 *"Skill 도구로 이 스킬을 불러라"*고 지시하는 별도 구동을 하나 더 도는 이유다.
+
+### 6. 새로 드러난 미결 — 여섯
+
+1. **`S-12`와 `S-5`~`S-7`이 서로를 막는다.** `S-5`~`S-7`은 *"설치된 경로로 실제 발화"*만 인정하는데, 그 설치가 사용자 홈의 호스트 레지스트리를 고친다. `verify`는 정리 후 잔재를 0으로 만들지만 *"실행 중에도 안 고친다"*는 문장은 거짓이다. **`GOAL.md` §4-9의 적용 범위를 §4-7처럼 정직하게 긋는 개정이 필요할 수 있다** — 사용자 결정 사항이므로 세션 B가 임의로 `S-12`를 완화하지 마라.
+2. **live 관측의 비결정성이 어디까지인지 모른다.** 두 원인을 잡았지만(6-a, 6-b) 표본이 열 번 남짓이다. `verify`가 간헐적으로 빨개지면 눈금부터 의심하지 말고 관측 로그를 봐라.
+3. **IP-1ⓐ의 *"첫 질문이 사용자에게 간다"*는 모델 순응에 의존한다.** 지금 증거는 *"stdout이 비어 있지 않다 + 장부에 `question` 항목이 있다"*이고, 장부 항목은 모델이 스킬 지시대로 `turn record`를 불러야 생긴다. 안 부르면 IP-1ⓐ가 빨개진다 — 이것은 하네스의 전제 그 자체(스킬이 지시하고 훅이 안 지킨 것을 잡는다)라서 결함이 아니라 성질이다. 세션 B가 `Stop` 턴 회계를 얹으면 같은 사실을 훅이 직접 잡는다.
+4. **사용자의 진짜 설치와 `verify`가 공존하는 것을 안 재 봤다.** 이름이 다르므로 충돌하지 않아야 하지만, 사용자가 `bun link` + `claude plugin install`을 해 둔 기계에서 `verify`를 돌린 관측이 없다.
+5. **플러그인 설치가 저장소 전체를 캐시로 복사한다.** `source: "./"`라서 `node_modules`까지 복사본이 생긴다(실행되지는 않는다). 디스크만 먹는 문제이고 `.claude-plugin`에 포함 목록을 두는 방법이 있는지 안 재 봤다.
+6. **`bin/fabricate` shim 두 줄은 타입 검사 밖에 있다.** tsconfig의 include 글롭이 확장자 없는 파일을 못 담는다. 두 줄이라 감당 가능하지만, 거기에 로직이 늘면 조용히 검사를 벗어난다.
+
+### 7. `verify/`를 건드린 커밋 — 세션 B가 따로 봐야 할 diff
+
+STATE의 *"눈금을 고치고 싶을 때"* 규율에 따라 별도로 든다. 세션 A가 `verify/`를 고친 커밋은 셋이다.
+
+- `8660986` 러너와 축 셋 신설(이 세션의 산출물 자체다).
+- `beaf46b` fixture 둘 신설.
+- `92e620a` **관측 교정 둘.** 이것만 눈금을 사후에 고친 것이라 근거를 남긴다.
+  - IP-1ⓐ가 *"첫 질문이 갔다"*를 **stdout의 물음표**로 재고 있었다. 질문이 마침표로 끝난 실행에서 빨개졌다 — 맞춤법 우연이지 증거가 아니다. **장부의 `question` 항목**으로 바꿨다. 느슨해진 것이 아니라 걷는 경로의 실제 증거를 본다.
+  - `driveClaude`가 호스트 종료 **즉시** 세션 파일을 읽어 `Stop` 훅의 쓰기와 경합했다. `Stop` 기록이 통째로 빠진 실행이 한 번 관측됐다. **고정 2초 정착 대기**를 뒀다 — *원하는 것이 생길 때까지* 폴링하면 관측이 성공 쪽으로 편향되므로 조건 없는 고정 대기다.
+
+같은 커밋에서 운영 코드도 하나 고쳤다(`281250e`): `stop_hook_active`나 `prompt_id`가 없으면 `Stop` 훅이 던지고 exit 1로 죽으면서 `hooks.jsonl`에 한 줄도 안 남겼다. 관측 전용 훅이 자기 로그를 조용히 잃는 것은 §4-7 위반이고, 호스트 페이로드 키는 안정적이지 않다(공식 문서의 `command_text`는 안 오고, `effort`는 STATE가 안 온다고 적은 자리에 왔다). 선택 필드로 읽도록 고쳤다.
 
 ---
 
@@ -503,9 +642,12 @@ bun run verify; echo "exit=$?"
   -> 2a4ba701d13dbf3670871d840224c86f66f1cb237cfc0772a62c230ca71c088f 여야 한다.
 - git checkout bootstrap/walk. main 이 아니다.
 - bun install
-- STATE.md 에서 세션 A 가 남긴 여섯 항목을 읽어라. 이것이 이 세션의 입력이다.
+- STATE.md 의 "세션 A 가 남긴 것" 절 전문을 읽어라. 이것이 이 세션의 입력이다.
 - bun run verify; echo "exit=$?"
-  -> exit != 0 이고 IP-0 과 IP-1ⓐ 가 초록이어야 한다. 아니면 A 가 안 끝난 것이다.
+  -> 15/60 초록 · exit 1 이고 축 A 에서 IP-0a 와 IP-1a 만 초록이어야 한다.
+     한 실행에 live claude -p 세션 넷이 돌아 5~8 분 걸린다. 기다려라.
+     아니면 A 가 안 끝났거나 관측이 흔들린 것이다 — 눈금부터 의심하지 말고
+     "새로 드러난 미결" 2 번을 읽어라.
 
 [1] 인수 검사 — 통과해야 [2] 로 간다
   A 가 자기시험을 "돌렸다" 고 적고 스텁만 남겼을 수 있다. 하나를 직접 재현해라:
@@ -552,10 +694,16 @@ bun run verify; echo "exit=$?"
 
 ## 저장소 현재 상태
 
-**작업 트리에 코드가 없다.** 1차 시도 산출물(197 파일)은 커밋 `499cd3c`에서 삭제됐고 `git show`로만 읽는다.
+**`bootstrap/walk`에 걷는 경로가 서 있다** (2026-07-29, 세션 A). 1차 시도 산출물(197 파일)은 커밋 `499cd3c`에서 삭제됐고 `git show`로만 읽는다 — 한 줄도 승계하지 않았다.
 
 | 있는 것 | 무엇 |
 | --- | --- |
+| `.claude-plugin/` | 마켓플레이스 `fabricate-local` + 플러그인 `fabricate`. 슬래시 명령 표면 `/fabricate:deep-interview` |
+| `bin/fabricate` · `bin/fabricate.ts` | 확장자 없는 shim 두 줄 + 단일 뿌리. 훅 셋이 전부 이것을 부른다 |
+| `src/` (11 모듈) | 세션 위치 · 훅 처리 · 장부 append · intent write · 도움말. 전부 뿌리에서 도달 가능(`S-2` 초록) |
+| `hooks/hooks.json` | UPE · PreToolUse(매처 `Skill`) · Stop. 껍데기 스크립트 없이 직접 CLI 호출 |
+| `skills/deep-interview/SKILL.md` | 인터뷰 프롬프트. 매 턴 CLI를 부르라는 지시 포함 |
+| `verify/` | 러너 + 축 A 43 열거 + `checks/S-1..S-14` + `lib/` + `fixtures/IP-0a·IP-1a` |
 | `GOAL.md` | **비준됨 + 개정 5.** 본문 해시 `2a4ba701d13dbf36…` |
 | `STATE.md` | 이 문서. **2026-07-29 축소 판.** 그 전 판은 `git show ad4f6be:STATE.md` |
 | `contract/original-request.md` | 원 요청 + 개정 1·2·3. **읽기 전용** |
@@ -563,15 +711,17 @@ bun run verify; echo "exit=$?"
 | `contract/criteria.*` · `contract-draft.md` · `gate-a/` | 69개 조건. **참고 신호** — 완료 정의 아님 |
 | `audit/2026-07-26-piece3-audit.md` | 1차 실패의 실측. `GOAL.md` §3의 근거 |
 | `decisions/0001-…` | 1차 시도의 증거 어휘 매핑. 참고 |
-| `package.json` · `tsconfig.json` · `biome.json` · `bun.lock` | 도구 사슬. 의존성은 zod·citty만 |
+| `package.json` · `tsconfig.json` · `biome.json` · `bun.lock` | 도구 사슬. `bin`·`verify` 스크립트 있음. **`zod`·`citty`는 선언만 되어 있고 CLI는 쓰지 않는다** |
 | `IMPLEMENTATION-ORCHESTRATION.md` · `DITTO-PRE-MORTEM.md` | **논외** (2026-07-28 사용자 확인). 세션 A·B는 읽지 않는다 |
 
 | 없는 것 | 뜻 |
 | --- | --- |
-| `src/` · 테스트 | 코드 0줄 |
-| `package.json`의 `bin` · `verify` 스크립트 | 진입점과 단일 닫기 명령이 없다 |
-| `bin/` · `verify/` · `skills/` · `hooks/` · 플러그인 매니페스트 | 아키텍처 네 부분 중 셋이 없다 |
-| `.fabricate/` | 상태 저장 위치 |
+| `close`의 거부 여섯 + ⓜ | 게이트가 없다. `close`는 지금 무조건 레코드를 쓴다 — 세션 B |
+| `Stop`의 턴 회계 · `turnstate.json` | Stop 훅은 지금 관측 로그만 남긴다 — 세션 B |
+| `fabricate check` 하위 명령 | IP-4가 세션 B라 짓지 않았다. `S-1`이 그래서 FAIL이다 |
+| `deep-interview show` | IP-3이 세션 B다 |
+| `agents/*.md` | 위임이 필요한 자리는 IP-5뿐이고 세션 B다 |
+| `verify/fixtures/`의 나머지 41 | 축 A가 2/43인 이유. 정상 산출물이다 |
 
 ---
 
@@ -579,7 +729,9 @@ bun run verify; echo "exit=$?"
 
 Q1(1차 코드 처분: 삭제) · Q2(GOAL 비준: 완료) · Q3(원 요청 범위 충돌: 개정 3으로 닫힘) · Q4(입출력 계약 사전 고정: 채택 안 함) 전부 닫혔다. 여기서 "열린 질문"은 **사용자만 답할 수 있는 것**을 뜻한다.
 
-**구현하며 정할 미결**은 위 "닫힌 결정 셋"에 있고 전부 닫혔다. 세션 A가 실측할 것 하나만 남았다 — CLI가 `.fabricate/`를 찾는 기준 디렉터리가 훅의 `cwd`와 갈리는가.
+**구현하며 정할 미결**은 위 "닫힌 결정 셋"에 있고 전부 닫혔다. 세션 A가 실측할 것으로 남겨 뒀던 것(CLI가 `.fabricate/`를 찾는 기준 디렉터리)도 닫혔다 — **갈리지 않는다.** 위 "세션 A가 남긴 것" 3번.
+
+**세션 A가 새로 연 미결 여섯**은 같은 절 6번에 있다. 그중 **하나는 사용자만 답할 수 있다**: `S-12`(*"verify가 사용자 홈을 안 고친다"*)와 `S-5`~`S-7`(*"설치된 경로로 실제 발화만 인정"*)이 상호배제라, `GOAL.md` §4-9의 적용 범위를 §4-7처럼 긋는 개정이 필요할 수 있다. **§9를 밟아야 하고 세션 B가 임의로 `S-12`를 완화해서는 안 된다.**
 
 ### 아직 비준 안 된 `GOAL.md` 개정 6 후보 둘 — 지금 고치지 않는다
 
@@ -607,4 +759,5 @@ Q1(1차 코드 처분: 삭제) · Q2(GOAL 비준: 완료) · Q3(원 요청 범�
 | 2026-07-28 | **적대적 검증 2차** — 서른 남짓. 동결↔자기시험 교착 · `exit 0`의 정의 부재 · 축 커버리지 구멍. 세션 A를 A1/A2로 분할 |
 | 2026-07-28 | **적대적 검증 3차** — 2차 처방이 병을 옮겼을 뿐임을 확인. 동결 범위 확대 · 축 B 9→16 · 집계 자기시험 신설 |
 | 2026-07-29 | **적대적 검증 4차** — 치명 12 · 중대 15 · 사소 8. 3차 처방도 병을 옮겼을 뿐이었다. 실측 셋을 확정: **`claude -p`가 `~/.claude.json`을 매 호출 변경**(→ `S-12`와 `S-5~S-7`이 상호배제였다) · **Bun이 `.env`를 자동 로드**(→ 집계 자기시험 override가 원클릭 초록) · **perl 래퍼가 시그널 사망을 exit 0으로 보고.** 새로 닫은 미지: `--setting-sources project`는 `.claude/agents/`를 싣는다. 전문은 `git show ad4f6be:STATE.md` |
+| 2026-07-29 | **세션 A — 걷는 경로가 실물로 뚫렸다.** 코드 0줄 → 플러그인 표면 + CLI 단일 뿌리 + 훅 셋 + `verify` 러너 + fixture 둘. `bun run verify` **15/60 초록, exit 1**(축 A 2/43 = IP-0ⓐ·IP-1ⓐ · 축 B 10/14 · 축 C 3/3). 음극 자기시험 둘(`S-14`·`S-2`) 전이·되돌림 모두 관측. 새 실측: **`${CLAUDE_PLUGIN_ROOT}`는 캐시가 아니라 살아 있는 소스** · **`CLAUDE_PLUGIN_ROOT`는 모델 Bash 환경에 안 온다**(→ CLI는 PATH 위에, 런타임 의존성 0) · 마켓플레이스 `source`는 뿌리 안 경로여야 하고 **심볼릭 링크는 통과**(→ verify 격리) · `Stop`에 `effort`가 온다. 고친 결함 셋: 훅이 선택 키 결손에 기록을 잃음 · `runProcess`가 stdin 미전달 · 관측이 훅 쓰기와 경합. 전문은 "세션 A가 남긴 것" 절 |
 | 2026-07-29 | **축소 수술 (사용자 결정).** 4라운드 데이터가 결론이었다 — 착수 가능 선언 이후 STATE가 **13KB → 221KB(16배)**로 자라는 동안 발견 수는 **19 → ~30 → ~30 → 35**로 줄지 않았고 코드는 0줄이었다. 원인은 `GOAL.md:192` §5가 **비-목표로 못박은 "조건 목록 · 판정표 · 테스트 동결 절차의 재구축"**을 짓고 있었다는 것(1차 조건 69 ↔ 폐기 시점 62)이고, 치명 다섯은 §8이 **이미 잔여로 선언한 것**을 §4-5가 금지한 방식(*"판정하는 척하는 스키마"*)으로 닫으려다 생긴 것이었다. **폐기**: 동결 매니페스트 · 최소 관측 계약 · 계측 · `--selftest-exit` · 양극/집계 자기시험 · 무인 구동 루프(`drive.sh`·`fab-verifier`·allowlist·`.drive/`·`AGENT_STOP`) · A1/A2 분할 · 옛 `S-13`·`S-16`. **남긴 방어 셋**: fixture 헌법 검사 · 도달성 검사 · 사람이 `verify/` diff를 본다. **세션 A를 "눈금"에서 "걷는 경로"로 재정의**(fixture 헌법 규칙 4가 원래 그렇게 적었다). 축 62 → **60**, 세션 셋 → **둘**, STATE 221KB → 이 판. **문서 적대적 검증도 중단한다** — 문서 검증은 수렴하지 않고, 실물 검증은 수렴한다 |
