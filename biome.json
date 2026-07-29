@@ -11,5 +11,5 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
-  "files": { "ignore": ["contract/**", "node_modules/**"] }
+  "files": { "ignore": ["contract/**", "node_modules/**", ".fabricate/**"] }
 }
