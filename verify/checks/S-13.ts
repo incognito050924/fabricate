@@ -44,7 +44,7 @@ const check: Check = {
 
     const close = await runProcess(
       join(ctx.repoRoot, "bin", "fabricate"),
-      ["deep-interview", "close"],
+      ["deep-interview", "close", "--goal-hash", "no-request"],
       { cwd: projectDir },
     );
 
@@ -62,7 +62,7 @@ const check: Check = {
 
     return {
       ok: intentFiles.length === 0,
-      targets: ["fabricate deep-interview close"],
+      targets: ["fabricate deep-interview close --goal-hash no-request"],
       detail:
         intentFiles.length === 0
           ? ""

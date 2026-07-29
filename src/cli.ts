@@ -68,8 +68,8 @@ const dispatchDeepInterview = async (args: string[], env: CliEnv): Promise<CliRe
     return await recordStart(env.cwd);
   }
 
-  if (subcommand === "close" && args.length === 1) {
-    return await closeIntent(env.cwd);
+  if (subcommand === "close") {
+    return await closeIntent(env.cwd, args.slice(1));
   }
 
   if (subcommand === undefined) {
