@@ -415,9 +415,12 @@ bun run verify; echo "exit=$?"
   슬래시 명령 이름은 /<plugin>:<skill-dir> 다 — 디렉터리 이름이 사용자 표면이다
 - verify/ 러너 — [3] 이 정본
 - verify/fixtures/ 에 IP-0 과 IP-1ⓐ 의 fixture 둘
-- .gitignore 에 .fabricate/ · .idea/ · fabricate.iml
-  (실측: 이 셋이 규칙에 안 걸린다. .idea/ 는 :136 의 .idea/* 를
-   :138 의 !.idea/codeStyles 가 되뚫어서 필요하다)
+- .gitignore 에 .fabricate/ · .idea/ · fabricate.iml · .claude/settings.local.json
+  (실측: 앞 셋이 규칙에 안 걸린다. .idea/ 는 :136 의 .idea/* 를
+   :138 의 !.idea/codeStyles 가 되뚫어서 필요하다.
+   settings.local.json 은 지금 사용자 전역 ~/.config/git/ignore 로만 무시되므로
+   다른 기계에서는 안 무시된다 — 저장소 .gitignore 에 넣어야 한다.
+   사람이 권한 편의로 그 파일을 만들면 [4] 의 porcelain 검사가 깨진다)
 - tsconfig.json 의 include 에 verify/**/* 와 bin/**/*.ts
 
 [3] verify 가 보는 것 — STATE.md "verify 가 보는 것" 절이 정본
