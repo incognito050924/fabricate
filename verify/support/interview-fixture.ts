@@ -179,6 +179,32 @@ export const addCompleteInterview = async (fixture: InterviewFixture): Promise<s
 };
 
 export const record = async (fixture: InterviewFixture, args: string[]): Promise<ProcessResult> => {
+  if (recordKind(args) === "question") {
+    const question = flagValue(args, "--id");
+    const text = flagValue(args, "--text");
+    if (question !== null && text !== null) {
+      await expectOk(
+        await fabricate(fixture, [
+          "turn",
+          "record",
+          "--kind",
+          "review",
+          "--question",
+          question,
+          "--text",
+          text,
+          "--verdict",
+          "pass",
+          "--reviewer",
+          "blind-reviewer",
+          "--reason",
+          "세션 서사 없이 답할 수 있는 질문입니다",
+        ]),
+        `turn record review ${question}`,
+      );
+    }
+  }
+
   const result = await fabricate(fixture, ["turn", "record", ...args]);
   await expectOk(result, `turn record ${args.join(" ")}`);
 
@@ -191,6 +217,14 @@ export const record = async (fixture: InterviewFixture, args: string[]): Promise
   }
 
   return result;
+};
+
+const recordKind = (args: string[]): string | null => flagValue(args, "--kind");
+
+const flagValue = (args: string[], flag: string): string | null => {
+  const index = args.indexOf(flag);
+  const value = index === -1 ? undefined : args[index + 1];
+  return value === undefined ? null : value;
 };
 
 export const close = async (

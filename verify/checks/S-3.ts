@@ -84,6 +84,25 @@ const check: Check = {
       ["deep-interview", "start"],
       ["turn", "record", "--kind", "fragment", "--id", "F1", "--text", "로그인 실패"],
       ["turn", "record", "--kind", "dimension", "--id", "D1", "--text", "실패 조건"],
+      // A question only records after a session-blind review passes it (IP-5ⓐ), so this
+      // check exercises that path too. One more non-close CLI path that must not write
+      // an intent record.
+      [
+        "turn",
+        "record",
+        "--kind",
+        "review",
+        "--question",
+        "Q1",
+        "--text",
+        "언제 실패하나요?",
+        "--verdict",
+        "pass",
+        "--reviewer",
+        "blind-reviewer",
+        "--reason",
+        "세션 서사 없이 답할 수 있다",
+      ],
       [
         "turn",
         "record",

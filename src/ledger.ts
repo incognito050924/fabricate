@@ -44,7 +44,13 @@ export const recordTurn = async (
   const ledgerPath = join(selected.session.dir, "ledger.jsonl");
   const request = await readUtf8IfExists(join(selected.session.dir, "request.txt"));
   const state = analyzeLedger(await readJsonLines(ledgerPath));
-  const prepared = prepareRecord(parsed.kind, parsed.flags, state, request);
+  const prepared = prepareRecord(
+    parsed.kind,
+    parsed.flags,
+    state,
+    request,
+    selected.session.sessionId,
+  );
 
   if (!prepared.ok) {
     return prepared.result;
@@ -125,6 +131,7 @@ const prepareRecord = (
   flags: Map<string, string | true>,
   state: ReturnType<typeof analyzeLedger>,
   request: string | null,
+  sessionId: string,
 ): PreparedRecord => {
   if (!knownKinds.has(kind)) {
     return reject(`알 수 없는 kind 입니다: ${kind}`);
@@ -167,6 +174,39 @@ const prepareRecord = (
     });
   }
 
+  if (kind === "review") {
+    const question = requiredFutureQuestionId(flags, "question", state);
+    const text = requiredString(flags, "text");
+    const verdict = requiredString(flags, "verdict");
+    const reviewer = requiredString(flags, "reviewer");
+    const reason = requiredString(flags, "reason");
+    if (!question.ok) return question;
+    if (!text.ok) return text;
+    if (!verdict.ok) return verdict;
+    if (!reviewer.ok) return reviewer;
+    if (!reason.ok) return reason;
+    if (verdict.value !== "pass" && verdict.value !== "reject") {
+      return reject("--verdict 값은 pass 또는 reject 여야 합니다.");
+    }
+
+    const normalizedReviewer = normalizeContextName(reviewer.value);
+    if (
+      normalizedReviewer.includes("driver") ||
+      normalizedReviewer === normalizeContextName(sessionId)
+    ) {
+      return reject("판단자가 드라이버와 같은 컨텍스트입니다.");
+    }
+
+    return accept({
+      kind,
+      question: question.value,
+      text: text.value,
+      verdict: verdict.value,
+      reviewer: reviewer.value,
+      reason: reason.value,
+    });
+  }
+
   if (kind === "question") {
     const id = requiredId(flags, "id", state);
     const text = requiredString(flags, "text");
@@ -181,6 +221,16 @@ const prepareRecord = (
       if (!state.fragments.has(fragmentId)) {
         return reject(`존재하지 않는 fragment 입니다: ${fragmentId}`);
       }
+    }
+    const review = state.reviews.get(id.value);
+    if (review === undefined) {
+      return reject("세션-맹검 검토 없이 질문할 수 없습니다.");
+    }
+    if (review.verdict === "reject") {
+      return reject("세션-맹검 검토가 질문을 거부했습니다.");
+    }
+    if (!sameBytes(review.text, text.value)) {
+      return reject("검토받은 질문 문안과 다릅니다.");
     }
     return accept({ kind, id: id.value, text: text.value, dimension: dimension.value, covers });
   }
@@ -301,6 +351,7 @@ const prepareRecord = (
 const knownKinds = new Set([
   "fragment",
   "dimension",
+  "review",
   "question",
   "answer",
   "restate",
@@ -315,6 +366,7 @@ const knownKinds = new Set([
 const allowedFlags: Record<string, Set<string>> = {
   fragment: new Set(["id", "text"]),
   dimension: new Set(["id", "text", "depends-on"]),
+  review: new Set(["question", "text", "verdict", "reviewer", "reason"]),
   question: new Set(["id", "text", "dimension", "covers"]),
   answer: new Set(["id", "question", "text", "unsure", "overturns"]),
   restate: new Set(["id", "answer", "text"]),
@@ -345,6 +397,24 @@ const requiredString = (flags: Map<string, string | true>, name: string): String
 };
 
 const requiredId = (
+  flags: Map<string, string | true>,
+  name: string,
+  state: ReturnType<typeof analyzeLedger>,
+): StringResult => {
+  const id = requiredString(flags, name);
+  if (!id.ok) {
+    return id;
+  }
+  if (!idPattern.test(id.value)) {
+    return { ok: false, result: fail(`id 형식이 올바르지 않습니다: ${id.value}\n`) };
+  }
+  if (state.usedIds.has(id.value)) {
+    return { ok: false, result: fail(`중복 id 입니다: ${id.value}\n`) };
+  }
+  return id;
+};
+
+const requiredFutureQuestionId = (
   flags: Map<string, string | true>,
   name: string,
   state: ReturnType<typeof analyzeLedger>,
@@ -396,6 +466,12 @@ const isEcho = (restateText: string, answerText: string): boolean => {
   }
   return overlap / answerTokens.size >= 0.8;
 };
+
+const sameBytes = (left: string, right: string): boolean =>
+  Buffer.compare(Buffer.from(left), Buffer.from(right)) === 0;
+
+const normalizeContextName = (value: string): string =>
+  value.toLowerCase().replace(/[^\p{Letter}\p{Number}]+/gu, "");
 
 const tokenSet = (text: string): Set<string> =>
   new Set(

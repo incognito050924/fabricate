@@ -54,15 +54,39 @@ fabricate turn record --kind dimension --id d1 --text "<이 차원이 무엇인�
 fabricate turn record --kind dimension --id d2 --text "…" --depends-on d1
 ```
 
-**③ 질문을 보낸다.** 보내기 직전에 적는다.
+**③ 질문을 쓰고, 보내기 전에 남에게 읽힌다.**
+
+당신은 대화 서사를 안다. 그래서 **자기 질문이 서사 없이도 답할 수 있는지 판정할 수 없다** —
+빠진 맥락을 머릿속에서 무의식적으로 채워 읽기 때문이다. 자기 채점이 구조적으로 불가능한
+유일한 자리이고, 그래서 이 위임은 **선택이 아니다.**
+
+호스트의 Agent 도구로 **`question-blind-reviewer`** 서브에이전트를 띄우고,
+**질문 문안 하나만** 건넨다. 대화 기록도, 앞선 답변도, 인터뷰의 목적도 주지 마라 —
+주는 순간 그쪽도 드라이버가 되고 판정이 자기 채점이 된다.
+(그 에이전트를 못 부르면, 대화 맥락을 전혀 싣지 않은 새 서브에이전트에게
+`agents/question-blind-reviewer.md`의 지시를 그대로 주고 같은 형식으로 받는다.)
+
+돌아온 판정을 그대로 적는다. **질문보다 먼저 적는다.**
 
 ```sh
-fabricate turn record --kind question --id q1 --text "<사용자에게 보낼 질문 그대로>" \
+fabricate turn record --kind review --question q1 --text "<검토받은 질문 문안 그대로>" \
+  --verdict pass --reviewer question-blind-reviewer --reason "<돌아온 사유 그대로>"
+```
+
+`reject`가 돌아오면 **그 질문은 사용자에게 가지 않는다.** 사유를 보고 고쳐 쓴 뒤 다시 검토받는다.
+같은 `--question` id로 다시 `review`를 적으면 마지막 판정이 유효하다.
+
+`pass`를 받았으면 그때 질문을 적고 사용자에게 보낸다.
+
+```sh
+fabricate turn record --kind question --id q1 --text "<검토받은 문안 그대로>" \
   --dimension d1 --covers f1,f2
 ```
 
-`--dimension`은 **필수다.** 어느 차원을 위한 질문인지 못 적는 질문은 목표에 안 닿는 질문이고,
-발사 자격이 없다. `--covers`는 이 질문이 다루는 조각들이다.
+- `--text`는 **검토받은 문안과 한 글자도 달라선 안 된다.** 검토받고 다른 것을 보내면
+  검토는 아무것도 안 한 것이다.
+- `--dimension`은 **필수다.** 어느 차원을 위한 질문인지 못 적는 질문은 목표에 안 닿는 질문이고,
+  발사 자격이 없다. `--covers`는 이 질문이 다루는 조각들이다.
 
 ---
 

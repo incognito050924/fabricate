@@ -32,6 +32,14 @@ export type QuestionState = {
   covers: string[];
 };
 
+export type ReviewState = {
+  question: string;
+  text: string;
+  verdict: "pass" | "reject";
+  reviewer: string;
+  reason: string;
+};
+
 export type AnswerState = {
   id: string;
   question: string;
@@ -55,6 +63,7 @@ export type InterviewState = {
   fragments: Map<string, FragmentState>;
   dimensions: Map<string, DimensionState>;
   questions: Map<string, QuestionState>;
+  reviews: Map<string, ReviewState>;
   answers: Map<string, AnswerState>;
   restates: Map<string, { id: string; answer: string; text: string }>;
   contradictions: Map<string, ContradictionState>;
@@ -76,6 +85,7 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
   const fragments = new Map<string, FragmentState>();
   const dimensions = new Map<string, DimensionState>();
   const questions = new Map<string, QuestionState>();
+  const reviews = new Map<string, ReviewState>();
   const answers = new Map<string, AnswerState>();
   const restates = new Map<string, { id: string; answer: string; text: string }>();
   const contradictions = new Map<string, ContradictionState>();
@@ -112,6 +122,24 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
           answer: null,
         });
         usedIds.add(id);
+      }
+      continue;
+    }
+
+    if (kind === "review") {
+      const question = stringValue(entry.question);
+      const text = stringValue(entry.text);
+      const verdict = stringValue(entry.verdict);
+      const reviewer = stringValue(entry.reviewer);
+      const reason = stringValue(entry.reason);
+      if (
+        question !== null &&
+        text !== null &&
+        (verdict === "pass" || verdict === "reject") &&
+        reviewer !== null &&
+        reason !== null
+      ) {
+        reviews.set(question, { question, text, verdict, reviewer, reason });
       }
       continue;
     }
@@ -261,6 +289,7 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
     fragments,
     dimensions,
     questions,
+    reviews,
     answers,
     restates,
     contradictions,

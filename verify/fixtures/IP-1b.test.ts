@@ -24,6 +24,7 @@ test("start, turn record, close 가 장부에 순서대로 남고 표식 없이�
       "fragment",
       "fragment",
       "dimension",
+      "review",
       "question",
       "answer",
       "restate",
