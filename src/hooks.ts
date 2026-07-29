@@ -1,7 +1,13 @@
 import { join } from "node:path";
 import { FABRICATE_COMMAND_NAME } from "./constants.ts";
 import { pathExists, writeFileIfAbsent } from "./files.ts";
-import { booleanField, objectField, parseJsonObject, stringField } from "./json.ts";
+import {
+  objectField,
+  optionalBoolean,
+  optionalString,
+  parseJsonObject,
+  stringField,
+} from "./json.ts";
 import { projectDirFromHookPayload } from "./project.ts";
 import type { CliResult } from "./result.ts";
 import { ok } from "./result.ts";
@@ -32,20 +38,27 @@ const handleUserPromptExpansion = async (payload: Record<string, unknown>): Prom
 
   const projectDir = projectDirFromHookPayload(stringField(payload, "cwd"));
   const sessionId = stringField(payload, "session_id");
-  const promptId = stringField(payload, "prompt_id");
+  const promptId = optionalString(payload, "prompt_id");
   const session = await ensureHookSession({
     createdBy: "user-prompt-expansion",
     projectDir,
     sessionId,
     promptId,
   });
+  const commandArgs = optionalString(payload, "command_args");
 
-  await writeFileIfAbsent(join(session.dir, "request.txt"), stringField(payload, "command_args"));
+  // An empty argument is not user text. Writing an empty request.txt would let a
+  // session claim it has the user's words when it does not (GOAL.md IP-2ⓜ).
+  if (commandArgs !== null && commandArgs.length > 0) {
+    await writeFileIfAbsent(join(session.dir, "request.txt"), commandArgs);
+  }
+
   await appendHookObservation(session, {
-    hook_event_name: stringField(payload, "hook_event_name"),
+    hook_event_name: optionalString(payload, "hook_event_name"),
     prompt_id: promptId,
     session_id: sessionId,
     command_name: commandName,
+    request_written: commandArgs !== null && commandArgs.length > 0,
   });
 
   return ok();
@@ -61,7 +74,7 @@ const handlePreToolUse = async (payload: Record<string, unknown>): Promise<CliRe
 
   const projectDir = projectDirFromHookPayload(stringField(payload, "cwd"));
   const sessionId = stringField(payload, "session_id");
-  const promptId = stringField(payload, "prompt_id");
+  const promptId = optionalString(payload, "prompt_id");
   const session = await ensureHookSession({
     createdBy: "pre-tool-use",
     projectDir,
@@ -70,7 +83,7 @@ const handlePreToolUse = async (payload: Record<string, unknown>): Promise<CliRe
   });
 
   await appendHookObservation(session, {
-    hook_event_name: stringField(payload, "hook_event_name"),
+    hook_event_name: optionalString(payload, "hook_event_name"),
     prompt_id: promptId,
     session_id: sessionId,
     skill: skillName,
@@ -95,9 +108,9 @@ const handleStop = async (payload: Record<string, unknown>): Promise<CliResult> 
       dir,
     },
     {
-      hook_event_name: stringField(payload, "hook_event_name"),
-      prompt_id: stringField(payload, "prompt_id"),
-      stop_hook_active: booleanField(payload, "stop_hook_active"),
+      hook_event_name: optionalString(payload, "hook_event_name"),
+      prompt_id: optionalString(payload, "prompt_id"),
+      stop_hook_active: optionalBoolean(payload, "stop_hook_active"),
     },
   );
 

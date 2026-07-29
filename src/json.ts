@@ -20,14 +20,18 @@ export const stringField = (object: JsonObject, key: string): string => {
   return value;
 };
 
-export const booleanField = (object: JsonObject, key: string): boolean => {
+// Optional readers exist because the host's payload keys are not stable: the official
+// docs promise `command_text`, which never arrives, and `effort` arrived on 2.1.220
+// where it was measured absent before. An observation-only hook must never lose its
+// record because a key it merely reports moved.
+export const optionalString = (object: JsonObject, key: string): string | null => {
   const value = object[key];
+  return typeof value === "string" ? value : null;
+};
 
-  if (typeof value !== "boolean") {
-    throw new Error(`${key} 값이 불리언이 아닙니다.`);
-  }
-
-  return value;
+export const optionalBoolean = (object: JsonObject, key: string): boolean | null => {
+  const value = object[key];
+  return typeof value === "boolean" ? value : null;
 };
 
 export const objectField = (object: JsonObject, key: string): JsonObject => {

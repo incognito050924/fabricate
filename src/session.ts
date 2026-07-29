@@ -15,7 +15,7 @@ export type MarkerInput = {
   createdBy: string;
   projectDir: string;
   sessionId: string;
-  promptId: string;
+  promptId: string | null;
 };
 
 export const sessionsDir = (projectDir: string): string =>
