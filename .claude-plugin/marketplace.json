@@ -1,0 +1,12 @@
+{
+  "name": "fabricate-local",
+  "owner": { "name": "ecoletree" },
+  "description": "Local marketplace for the fabricate interview harness.",
+  "plugins": [
+    {
+      "name": "fabricate",
+      "source": "./",
+      "description": "Claude Code plugin surface for the fabricate interview harness."
+    }
+  ]
+}

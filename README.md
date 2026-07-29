@@ -22,8 +22,12 @@
 Claude Code 플러그인이다. 저장소 뿌리에서 **이 한 줄**을 돌리고 Claude Code를 재시작한다.
 
 ```sh
-claude plugin marketplace add . && claude plugin install fabricate@fabricate-local
+bun link && claude plugin marketplace add . && claude plugin install fabricate@fabricate-local
 ```
+
+세 토막이 각각 하는 일: `bun link`가 `fabricate` 명령을 PATH에 올리고(스킬이 매 턴 이걸 부른다 —
+플러그인 뿌리 경로는 모델의 셸 환경에 오지 않는다, 2026-07-29 실측), 나머지 둘이 슬래시 명령과
+훅 셋을 등록한다.
 
 재시작 뒤 인터뷰를 연다.
 
@@ -34,7 +38,7 @@ claude plugin marketplace add . && claude plugin install fabricate@fabricate-loc
 - 같은 줄을 다시 돌려도 결과가 같다 — 호스트가 *already installed*로 no-op 처리한다.
 - 마켓플레이스 소스가 `directory`라 **저장소를 옮기면 등록된 경로가 낡는다.** 옮긴 뒤에는
   옮긴 자리에서 같은 줄을 다시 돌린다.
-- 지우려면: `claude plugin marketplace remove fabricate-local`.
+- 지우려면: `claude plugin marketplace remove fabricate-local && bun unlink`.
 
 ## 무엇을 만드는가 · 지금 어디인가
 

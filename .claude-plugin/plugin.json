@@ -1,0 +1,6 @@
+{
+  "name": "fabricate",
+  "version": "0.0.1",
+  "description": "Claude Code interview harness for locked intent records.",
+  "author": { "name": "ecoletree" }
+}
