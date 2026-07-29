@@ -221,6 +221,36 @@ const check: Check = {
       failures.push(`거부 close 뒤 intent 파일 생성: ${filesAfterRejectedClose.join(", ")}`);
     }
 
+    const checkBeforeClose = await runProcess(fabricate, ["check", sessionId], {
+      cwd: projectDir,
+    });
+    targets.push(commandLine(checkBeforeClose));
+    if (checkBeforeClose.code === 0) {
+      failures.push("잠기지 않은 intent check 가 성공했다.");
+    }
+    const filesAfterCheckBeforeClose = await intentFiles(projectDir);
+    if (filesAfterCheckBeforeClose.length > 0) {
+      failures.push(
+        `잠기지 않은 intent check 뒤 intent 파일 생성: ${filesAfterCheckBeforeClose.join(", ")}`,
+      );
+    }
+
+    const checkRecordBeforeClose = await runProcess(
+      fabricate,
+      ["check", "record", "--intent", sessionId, "--goal", "0", "--command", "printf ok"],
+      { cwd: projectDir },
+    );
+    targets.push(commandLine(checkRecordBeforeClose));
+    if (checkRecordBeforeClose.code === 0) {
+      failures.push("잠기지 않은 intent check record 가 성공했다.");
+    }
+    const filesAfterCheckRecordBeforeClose = await intentFiles(projectDir);
+    if (filesAfterCheckRecordBeforeClose.length > 0) {
+      failures.push(
+        `잠기지 않은 intent check record 뒤 intent 파일 생성: ${filesAfterCheckRecordBeforeClose.join(", ")}`,
+      );
+    }
+
     const goalHash = createHash("sha256").update("로그인 실패 조건을 확인한다").digest("hex");
     const acceptedClose = await runProcess(
       fabricate,
@@ -238,6 +268,42 @@ const check: Check = {
     ) {
       failures.push(
         `통과 close 의 intent 파일이 하나가 아니다: ${filesAfterAcceptedClose.join(", ")}`,
+      );
+    }
+
+    const checkRecordAfterClose = await runProcess(
+      fabricate,
+      ["check", "record", "--intent", sessionId, "--goal", "0", "--command", "printf ok"],
+      { cwd: projectDir },
+    );
+    targets.push(commandLine(checkRecordAfterClose));
+    if (checkRecordAfterClose.code !== 0) {
+      failures.push(`잠긴 intent check record 실패: exit ${checkRecordAfterClose.code}`);
+    }
+    const filesAfterCheckRecordAfterClose = await intentFiles(projectDir);
+    if (
+      filesAfterCheckRecordAfterClose.length !== 1 ||
+      filesAfterCheckRecordAfterClose[0] !== `${sessionId}.json`
+    ) {
+      failures.push(
+        `잠긴 intent check record 뒤 intent 파일이 바뀌었다: ${filesAfterCheckRecordAfterClose.join(", ")}`,
+      );
+    }
+
+    const checkAfterClose = await runProcess(fabricate, ["check", sessionId], {
+      cwd: projectDir,
+    });
+    targets.push(commandLine(checkAfterClose));
+    if (checkAfterClose.code !== 0) {
+      failures.push(`잠긴 intent check 실패: exit ${checkAfterClose.code}`);
+    }
+    const filesAfterCheckAfterClose = await intentFiles(projectDir);
+    if (
+      filesAfterCheckAfterClose.length !== 1 ||
+      filesAfterCheckAfterClose[0] !== `${sessionId}.json`
+    ) {
+      failures.push(
+        `잠긴 intent check 뒤 intent 파일이 바뀌었다: ${filesAfterCheckAfterClose.join(", ")}`,
       );
     }
 

@@ -1,3 +1,4 @@
+import { dispatchCheck } from "./check.ts";
 import { helpText } from "./help.ts";
 import { type HookEvent, handleHook } from "./hooks.ts";
 import { closeIntent } from "./intent.ts";
@@ -38,6 +39,10 @@ const dispatch = async (argv: string[], env: CliEnv): Promise<CliResult> => {
 
   if (command === "turn") {
     return await dispatchTurn(argv.slice(1), env);
+  }
+
+  if (command === "check") {
+    return await dispatchCheck(env.cwd, argv.slice(1));
   }
 
   return fail(`알 수 없는 명령입니다: ${command}\n`);
