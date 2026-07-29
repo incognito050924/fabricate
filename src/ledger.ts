@@ -493,17 +493,20 @@ const prepareRecord = (
 
   if (kind === "challenge") {
     const id = requiredId(flags, "id", state);
-    const answer = requiredString(flags, "answer");
     const citation = requiredString(flags, "citation");
     const text = requiredString(flags, "text");
     const question = requiredString(flags, "question");
     if (!id.ok) return id;
-    if (!answer.ok) return answer;
     if (!citation.ok) return citation;
     if (!text.ok) return text;
     if (!question.ok) return question;
-    if (!state.answers.has(answer.value)) {
-      return reject(`존재하지 않는 answer 입니다: ${answer.value}`);
+    // An answer that contradicts the code is one thing to challenge. A question whose
+    // premise contradicts the code is the other, and it comes first — it is the one
+    // that reaches the user. Requiring --answer made that second one unrecordable, so
+    // questions built on false premises went out unchallenged (D-3).
+    const answer = optionalString(flags, "answer");
+    if (answer !== null && !state.answers.has(answer)) {
+      return reject(`존재하지 않는 answer 입니다: ${answer}`);
     }
     if (!state.questions.has(question.value)) {
       return reject(`존재하지 않는 question 입니다: ${question.value}`);
@@ -513,7 +516,7 @@ const prepareRecord = (
     return accept({
       kind,
       id: id.value,
-      answer: answer.value,
+      ...(answer === null ? {} : { answer }),
       citation: citation.value,
       text: text.value,
       question: question.value,
@@ -726,12 +729,30 @@ const commaList = (value: string | null): string[] => {
   return value.split(",").filter((item) => item.length > 0);
 };
 
+// A parrot restate is one that gives the answer back without adding anything. Two
+// ways to be one, and short answers only have the first available to them: with a
+// one-word answer the old ratio hit 1/1 the moment the restate named the choice, so
+// what the rule taught the driver was to dodge the user's word, not to think harder
+// (D-5). Below the floor the ratio carries no information, so only "adds nothing at
+// all" applies.
+const shortAnswerFloor = 5;
+
 const isEcho = (restateText: string, answerText: string): boolean => {
   const answerTokens = tokenSet(answerText);
   if (answerTokens.size === 0) {
     return false;
   }
+
   const restateTokens = tokenSet(restateText);
+  const addsNothing = [...restateTokens].every((token) => answerTokens.has(token));
+  if (addsNothing) {
+    return true;
+  }
+
+  if (answerTokens.size < shortAnswerFloor) {
+    return false;
+  }
+
   let overlap = 0;
   for (const token of answerTokens) {
     if (restateTokens.has(token)) {

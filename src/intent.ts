@@ -1,5 +1,11 @@
 import { join } from "node:path";
-import { appendJsonLine, ensureDir, readJsonLines, readUtf8IfExists } from "./files.ts";
+import {
+  appendJsonLine,
+  ensureDir,
+  readJsonLines,
+  readUtf8IfExists,
+  removeIfPresent,
+} from "./files.ts";
 import { analyzeLedger, readinessLine } from "./interview-state.ts";
 import { fabricateDir, projectDirFromCommandCwd } from "./project.ts";
 import type { CliResult } from "./result.ts";
@@ -83,6 +89,11 @@ export const closeIntent = async (cwd: string, args: string[]): Promise<CliResul
       2,
     )}\n`,
   );
+
+  // The marker is what tells the Stop hook an interview is live. A closed interview
+  // is not live, and leaving the marker behind blocked every turn that followed —
+  // the interview ended and ordinary conversation became impossible (D-4).
+  await removeIfPresent(join(selected.session.dir, "active"));
 
   return ok(`${readinessText}\n잠긴 의도 레코드를 썼습니다: ${intentPath}\n`);
 };

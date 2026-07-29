@@ -1,4 +1,4 @@
-import { appendFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
 export type JsonObject = Record<string, unknown>;
@@ -36,6 +36,10 @@ export const writeFileIfAbsent = async (path: string, data: string): Promise<voi
     }
     throw error;
   }
+};
+
+export const removeIfPresent = async (path: string): Promise<void> => {
+  await rm(path, { force: true });
 };
 
 export const appendJsonLine = async (path: string, value: JsonObject): Promise<void> => {

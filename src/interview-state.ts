@@ -86,7 +86,8 @@ export type MaterialityState = {
 
 export type ChallengeState = {
   id: string;
-  answer: string;
+  // Null when the challenge is against the question's own premise, not an answer.
+  answer: string | null;
   citation: string;
   text: string;
   question: string;
@@ -389,13 +390,7 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
       const citation = stringValue(entry.citation);
       const text = stringValue(entry.text);
       const question = stringValue(entry.question);
-      if (
-        id !== null &&
-        answer !== null &&
-        citation !== null &&
-        text !== null &&
-        question !== null
-      ) {
+      if (id !== null && citation !== null && text !== null && question !== null) {
         challenges.set(id, { id, answer, citation, text, question });
         usedIds.add(id);
       }
@@ -472,8 +467,17 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
   };
 };
 
+// The counts keep their machine-readable key=value form; the Korean says what each
+// one is counting. Before this the line was four English identifiers and a user
+// could not tell what it was measuring.
 export const readinessLine = (readiness: Readiness): string =>
-  `준비도: contradictions=${readiness.contradictions} unsure=${readiness.unsure} demoted=${readiness.demoted} ready=${readiness.ready}`;
+  [
+    "준비도:",
+    `안 풀린 어긋남 contradictions=${readiness.contradictions}`,
+    `· 확신 못 한 답 unsure=${readiness.unsure}`,
+    `· 근거 없이 닫은 것 demoted=${readiness.demoted}`,
+    `· 닫아도 되는가 ready=${readiness.ready}`,
+  ].join(" ");
 
 const readinessFor = (
   dimensions: Map<string, DimensionState>,
