@@ -22,7 +22,7 @@
 Claude Code 플러그인이다. 저장소 뿌리에서 **이 한 줄**을 돌리고 Claude Code를 재시작한다.
 
 ```sh
-bun link && claude plugin marketplace add . && claude plugin install fabricate@fabricate-local
+bun link && claude plugin marketplace add ./ && claude plugin install fabricate@fabricate-local
 ```
 
 세 토막이 각각 하는 일: `bun link`가 `fabricate` 명령을 PATH에 올리고(스킬이 매 턴 이걸 부른다 —

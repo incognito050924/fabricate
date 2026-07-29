@@ -190,7 +190,7 @@ baseline: 깨끗한 트리에서 `bun run verify` → `15/60 초록 — exit 1`.
 1. **`S-12`와 `S-5`~`S-7`이 서로를 막는다.** `S-5`~`S-7`은 *"설치된 경로로 실제 발화"*만 인정하는데, 그 설치가 사용자 홈의 호스트 레지스트리를 고친다. `verify`는 정리 후 잔재를 0으로 만들지만 *"실행 중에도 안 고친다"*는 문장은 거짓이다. **`GOAL.md` §4-9의 적용 범위를 §4-7처럼 정직하게 긋는 개정이 필요할 수 있다** — 사용자 결정 사항이므로 세션 B가 임의로 `S-12`를 완화하지 마라.
 2. **live 관측의 비결정성이 어디까지인지 모른다.** 두 원인을 잡았지만(6-a, 6-b) 표본이 열 번 남짓이다. `verify`가 간헐적으로 빨개지면 눈금부터 의심하지 말고 관측 로그를 봐라.
 3. **IP-1ⓐ의 *"첫 질문이 사용자에게 간다"*는 모델 순응에 의존한다.** 지금 증거는 *"stdout이 비어 있지 않다 + 장부에 `question` 항목이 있다"*이고, 장부 항목은 모델이 스킬 지시대로 `turn record`를 불러야 생긴다. 안 부르면 IP-1ⓐ가 빨개진다 — 이것은 하네스의 전제 그 자체(스킬이 지시하고 훅이 안 지킨 것을 잡는다)라서 결함이 아니라 성질이다. 세션 B가 `Stop` 턴 회계를 얹으면 같은 사실을 훅이 직접 잡는다.
-4. **사용자의 진짜 설치와 `verify`가 공존하는 것을 안 재 봤다.** 이름이 다르므로 충돌하지 않아야 하지만, 사용자가 `bun link` + `claude plugin install`을 해 둔 기계에서 `verify`를 돌린 관측이 없다.
+4. ~~**사용자의 진짜 설치와 `verify`가 공존하는 것을 안 재 봤다.**~~ **닫혔다 (2026-07-29)** — 위 "미결 4 닫힘" 절. 공존하고, 사용자 설치는 무사하며, `--setting-sources project` 격리가 user 스코프 설치를 가린다.
 5. **플러그인 설치가 저장소 전체를 캐시로 복사한다.** `source: "./"`라서 `node_modules`까지 복사본이 생긴다(실행되지는 않는다). 디스크만 먹는 문제이고 `.claude-plugin`에 포함 목록을 두는 방법이 있는지 안 재 봤다.
 6. **`bin/fabricate` shim 두 줄은 타입 검사 밖에 있다.** tsconfig의 include 글롭이 확장자 없는 파일을 못 담는다. 두 줄이라 감당 가능하지만, 거기에 로직이 늘면 조용히 검사를 벗어난다.
 
@@ -282,6 +282,57 @@ STATE의 *"눈금을 고치고 싶을 때"* 규율에 따라 별도로 든다. �
 `start` · `turn record` 각 종류 · 거부되는 `close`)를 실제로 돌린 뒤 `.fabricate/intent/` 가
 안 생기는 것을 관측하고, 마지막에 통과하는 `close` **하나만이** 파일을 만드는 것을 관측한다.
 **`criteria.ts` 와 `run.ts` 는 한 글자도 안 고쳤다.**
+
+### 거짓 초록 하나 — `verify` 가 **문서에 적힌 설치 명령**을 안 돌리고 있었다 (2026-07-29)
+
+**축 A 43/43 이 전부 초록인 상태에서, 사용자가 `README.md` 의 설치 한 줄을 실제로 치자 첫 토막이
+죽었다.**
+
+```
+λ bun link && claude plugin marketplace add . && claude plugin install fabricate@fabricate-local
+✘ Invalid marketplace source format. Try: owner/repo, https://..., or ./path
+```
+
+**실측 (2026-07-29, `claude 2.1.220`)**:
+
+- **`.` 는 형식 파싱 단계에서 거부된다** (`Invalid marketplace source format`).
+- **`./` · `./경로` · 절대경로는 파싱을 통과한다** — 없는 경로를 주면 `Path does not exist` /
+  `Marketplace file not found` 라는 **다른** 오류가 난다. 이 차이가 판별점이다.
+- 고친 줄(`add ./`)을 실제로 돌려 **둘 다 exit 0** 을 확인했다.
+
+**왜 눈금이 못 잡았나**: `GOAL.md` IP-0ⓐ 는 *"문서에 적힌 설치 명령 하나"* 를 증거로 요구하는데,
+`verify/lib/host-session.ts` 는 **README 를 읽지 않는다** — 자기 임시 마켓플레이스를 **절대경로로**
+넘긴다. 그래서 README 의 인자 형식이 틀려도 초록이었다. **fixture 헌법 넷을 다 지켜도 뚫린 자리이고,
+사람이 실제로 쳐 봐서 드러났다** — `GOAL.md` §7 마지막 관문이 왜 사람 몫인지의 실물이다.
+
+**교정**: `README.md` 를 `.` → `./` 로 고치고, **`verify/fixtures/IP-0a.test.ts` 에 셋을 더했다.**
+**눈금 크기는 안 건드렸다**(60은 60) — 이 요구는 IP-0ⓐ 문안 안에 이미 있었고 fixture 가 안 보고
+있었을 뿐이다.
+
+1. **README 의 소스 토큰을 빈 임시 디렉터리에서 실제 호스트로 돌린다.** 매니페스트가 없어
+   **등록이 일어나지 않으므로** 사용자 설정을 안 건드린다(§4-9 개정 6). 출력에
+   `Invalid marketplace source format` 이 나오면 FAIL.
+2. README 의 `<플러그인>@<마켓플레이스>` 를 `.claude-plugin/marketplace.json` 과 **바이트 대조.**
+3. `package.json` 의 `bin.fabricate` 가 실재하는 파일이고, README 에 PATH 에 올리는 토막이 있다.
+
+**음극 자기시험(직접 관측)**: README 를 `./` → `.` 로 되돌리자 1번이 **FAIL 로 뒤집혔고**
+(`Invalid marketplace source format` 수신), 되돌리자 다시 통과했다.
+
+**남은 괴리 — 알면서 남긴다**: `verify` 는 여전히 README 의 줄을 **그대로** 돌리지 않는다.
+그러면 `fabricate-local` 이라는 **사용자와 같은 이름**으로 등록되고 정리 단계가 **사용자의 진짜
+설치를 지운다**(§4-9 개정 6이 금지한 것). 그래서 검사하는 것은 **인자의 형식과 이름의 일치**이고,
+`--scope` 플래그 차이와 `bun link` 의 전역 효과는 여전히 사람 몫이다.
+
+### 미결 4 닫힘 — 사용자의 진짜 설치와 `verify` 가 공존한다 (2026-07-29)
+
+세션 A 가 *"안 재 봤다"* 로 남긴 항목이다. **사용자가 `fabricate@fabricate-local` 을 user 스코프로
+실제 설치한 상태에서 `bun run verify` 를 완주시켰다.**
+
+- 결과 **59/60 · 축 A 43/43** — 설치가 없던 실행과 같다.
+- **사용자 설치가 무사하다**: `fabricate-local` 마켓플레이스와 `fabricate@fabricate-local`(enabled)
+  이 그대로 있고, 전역 레지스트리에 `fabricate-verify-*` 잔재 **0**.
+- `uninstalled` 구동이 여전히 *"Unknown command"* 를 받는다 → **`--setting-sources project` 격리가
+  user 스코프 설치를 실제로 가린다.** 이것이 이번에 처음 관측됐다.
 
 ### `GOAL.md` 개정 6 — §4-9의 적용 범위 (2026-07-29 사용자 비준)
 
