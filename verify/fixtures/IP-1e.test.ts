@@ -3,6 +3,7 @@ import {
   createSlashSession,
   fabricate,
   ledger,
+  recommendation,
   record,
   withInterviewFixture,
 } from "../support/interview-fixture.ts";
@@ -41,6 +42,7 @@ test("question 은 실제 dimension 에 묶여야 하고 거부된 question 은 
       "D404",
       "--text",
       "어떤 조건에서 로그인 실패가 나나요?",
+      ...recommendation,
     ]);
 
     expect(unknownDimension.code).not.toBe(0);

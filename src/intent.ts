@@ -176,9 +176,11 @@ const closeReasons = (
       ![...state.questions.values()].some((question) => question.covers.includes(fragment.id)),
   );
   if (state.fragments.size === 0) {
-    reasons.push("미커버 조각: fragment 가 없습니다.");
+    reasons.push("사용자 말을 조각으로 하나도 안 쪼갰습니다.");
   } else if (uncoveredFragments.length > 0) {
-    reasons.push(`미커버 조각: ${uncoveredFragments.map((fragment) => fragment.id).join(", ")}`);
+    reasons.push(
+      `어느 질문에도 안 걸린 조각: ${uncoveredFragments.map((fragment) => fragment.id).join(", ")}`,
+    );
   }
 
   const unresolvedDimensions = [...state.dimensions.values()].filter(
@@ -186,7 +188,7 @@ const closeReasons = (
   );
   if (unresolvedDimensions.length > 0) {
     reasons.push(
-      `미해소 차원: ${unresolvedDimensions.map((dimension) => dimension.id).join(", ")}`,
+      `안 닫힌 쟁점: ${unresolvedDimensions.map((dimension) => dimension.id).join(", ")}`,
     );
   }
 
@@ -195,18 +197,20 @@ const closeReasons = (
   );
   if (unevaluatedDimensions.length > 0) {
     reasons.push(
-      `무증거 해소: ${unevaluatedDimensions.map((dimension) => dimension.id).join(", ")}`,
+      `근거 없이 닫으려 한 쟁점: ${unevaluatedDimensions.map((dimension) => dimension.id).join(", ")}`,
     );
   }
 
   const staleDimensions = [...state.dimensions.values()].filter((dimension) => dimension.stale);
   if (staleDimensions.length > 0) {
-    reasons.push(`stale 노드: ${staleDimensions.map((dimension) => dimension.id).join(", ")}`);
+    reasons.push(
+      `전제가 뒤집혀 다시 열린 쟁점: ${staleDimensions.map((dimension) => dimension.id).join(", ")}`,
+    );
   }
 
   const unconfirmedAnswers = [...state.answers.values()].filter((answer) => !answer.confirmed);
   if (unconfirmedAnswers.length > 0) {
-    reasons.push(`미교정 불일치: ${unconfirmedAnswers.map((answer) => answer.id).join(", ")}`);
+    reasons.push(`확인 못 받은 답변: ${unconfirmedAnswers.map((answer) => answer.id).join(", ")}`);
   }
 
   const unresolvedContradictions = [...state.contradictions.values()].filter(
@@ -223,7 +227,7 @@ const closeReasons = (
   }
   if (unresolvedContradictions.length > 0) {
     reasons.push(
-      `미해소 모순: ${unresolvedContradictions
+      `안 풀린 어긋남: ${unresolvedContradictions
         .map((contradiction) => contradiction.id)
         .join(", ")}`,
     );
@@ -238,8 +242,15 @@ const closeReasons = (
   );
   if (unroutedAmbiguities.length > 0) {
     reasons.push(
-      `중대성 라우팅 없음: ${unroutedAmbiguities.map((ambiguity) => ambiguity.id).join(", ")}`,
+      `물을지 가정할지 안 정한 모호점: ${unroutedAmbiguities.map((ambiguity) => ambiguity.id).join(", ")}`,
     );
+  }
+
+  // Goal 2: the CLI has carried criterion/example/rule from the start, but nothing
+  // required an interview to write one, so the gate below had nothing to check and
+  // passed in silence.
+  if (state.criteria.size === 0) {
+    reasons.push("완료 판정 기준이 없습니다.");
   }
 
   const hardCriteriaWithoutExamples = [...state.criteria.values()].filter(

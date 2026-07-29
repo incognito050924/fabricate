@@ -60,7 +60,7 @@ test("overturns 없는 답은 하류 차원을 stale 로 만들지 않는다", a
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("stale 노드");
+    expect(rejected.stderr).toContain("전제가 뒤집혀 다시 열린 쟁점");
     expect(rejected.stderr).toContain("D1");
     expect(rejected.stderr).toContain("D2");
     expect(await intentFiles(fixture)).toEqual([]);
@@ -115,7 +115,7 @@ test("overturns 없는 답은 하류 차원을 stale 로 만들지 않는다", a
     const accepted = await close(fixture, hash);
 
     expect(accepted.code).toBe(0);
-    expect(accepted.stderr).not.toContain("stale 노드");
+    expect(accepted.stderr).not.toContain("전제가 뒤집혀 다시 열린 쟁점");
     expect(await intentFiles(fixture)).toEqual(["session-1.json"]);
   });
 });

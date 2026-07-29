@@ -36,7 +36,7 @@ test("모순 패스는 마지막 답 뒤에 돌아야 하고, 찾은 모순은 �
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("미해소 모순");
+    expect(rejected.stderr).toContain("안 풀린 어긋남");
     expect(rejected.stderr).toContain("C1");
     expect(await intentFiles(fixture)).toEqual([]);
   });

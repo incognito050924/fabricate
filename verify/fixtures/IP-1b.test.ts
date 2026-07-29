@@ -31,6 +31,9 @@ test("start, turn record, close 가 장부에 순서대로 남고 표식 없이�
       "confirm",
       "resolve",
       "contradiction-pass",
+      "criterion",
+      "example",
+      "rule",
       "goal",
       "closed",
     ]);

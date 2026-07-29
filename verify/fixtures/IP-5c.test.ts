@@ -4,6 +4,7 @@ import {
   expectOk,
   fabricate,
   ledger,
+  recommendation,
   record,
   withInterviewFixture,
 } from "../support/interview-fixture.ts";
@@ -43,7 +44,7 @@ test("driver 로 정규화되는 reviewer 와 세션 id 자신은 거부되고, 
         ]);
 
         expect(rejected.code).not.toBe(0);
-        expect(rejected.stderr).toContain("판단자가 드라이버와 같은 컨텍스트입니다");
+        expect(rejected.stderr).toContain("검토자가 진행자와 같은 자리입니다");
         expect(await ledger(fixture)).toHaveLength(before.length);
       },
     );
@@ -87,6 +88,7 @@ test("driver 로 정규화되는 reviewer 와 세션 id 자신은 거부되고, 
       "F1",
       "--text",
       "어떤 조건에서 로그인 실패가 나나요?",
+      ...recommendation,
     ]);
     await expectOk(acceptedQuestion, "turn record question after non-driver review");
   });

@@ -125,7 +125,10 @@ export const stopHook = async (input: {
     })}\n`,
   });
 
-export const addCompleteInterview = async (fixture: InterviewFixture): Promise<string> => {
+export const addCompleteInterview = async (
+  fixture: InterviewFixture,
+  options: { criteria?: boolean } = {},
+): Promise<string> => {
   await record(fixture, ["--kind", "fragment", "--id", "F1", "--text", "로그인 실패"]);
   await record(fixture, ["--kind", "fragment", "--id", "F2", "--text", "재현 조건"]);
   await record(fixture, ["--kind", "dimension", "--id", "D1", "--text", "실패 조건"]);
@@ -173,12 +176,22 @@ export const addCompleteInterview = async (fixture: InterviewFixture): Promise<s
     "A1",
   ]);
   await record(fixture, ["--kind", "contradiction-pass", "--text", "교차 답변 검사 완료"]);
+
+  // Every interview has to write down what counts as done (goal 2), so the
+  // baseline interview writes one. Fixtures about the missing-criterion
+  // rejection opt out.
+  if (options.criteria !== false) {
+    await addCriterion(fixture);
+  }
+
   await record(fixture, ["--kind", "goal", "--text", "로그인 실패의 재현 조건이 확인되어야 한다"]);
 
   return goalHash(fixture);
 };
 
 export const record = async (fixture: InterviewFixture, args: string[]): Promise<ProcessResult> => {
+  const effectiveArgs = recordKind(args) === "question" ? withRecommendation(args) : args;
+
   if (recordKind(args) === "question") {
     const question = flagValue(args, "--id");
     const text = flagValue(args, "--text");
@@ -205,8 +218,8 @@ export const record = async (fixture: InterviewFixture, args: string[]): Promise
     }
   }
 
-  const result = await fabricate(fixture, ["turn", "record", ...args]);
-  await expectOk(result, `turn record ${args.join(" ")}`);
+  const result = await fabricate(fixture, ["turn", "record", ...effectiveArgs]);
+  await expectOk(result, `turn record ${effectiveArgs.join(" ")}`);
 
   if (args[1] === "goal") {
     const textIndex = args.indexOf("--text");
@@ -220,6 +233,64 @@ export const record = async (fixture: InterviewFixture, args: string[]): Promise
 };
 
 const recordKind = (args: string[]): string | null => flagValue(args, "--kind");
+
+// Goal 0: a question only records with the driver's recommendation and what it
+// rests on. Fixtures that call the CLI directly append this pair.
+export const recommendation = [
+  "--recommend",
+  "(가) 쪽으로 봅니다",
+  "--because",
+  "지금 장부에 적힌 답들이 그쪽을 가리킵니다",
+];
+
+// Goal 2: an interview only closes once it wrote down what counts as done.
+export const addCriterion = async (
+  fixture: InterviewFixture,
+  id = "K0",
+  exampleId = "E0",
+): Promise<void> => {
+  await record(fixture, [
+    "--kind",
+    "criterion",
+    "--id",
+    id,
+    "--text",
+    "재현 조건이 사용자 판정으로 확인됐는가",
+    "--type",
+    "hard",
+  ]);
+  await record(fixture, [
+    "--kind",
+    "example",
+    "--id",
+    exampleId,
+    "--criterion",
+    id,
+    "--text",
+    "월요일 오전 사내망에서 3회 재현",
+    "--verdict",
+    "충족",
+  ]);
+  await record(fixture, [
+    "--kind",
+    "rule",
+    "--criterion",
+    id,
+    "--text",
+    "사용자가 충족이라고 판정한 조건을 만족해야 한다",
+  ]);
+};
+
+// Every question carries the driver's recommendation and what it rests on (goal 0).
+// Fixtures that are not about that requirement get a default pair so they keep
+// exercising whatever they were written to exercise.
+const withRecommendation = (args: string[]): string[] => [
+  ...args,
+  ...(flagValue(args, "--recommend") === null ? ["--recommend", "(가) 쪽으로 봅니다"] : []),
+  ...(flagValue(args, "--because") === null
+    ? ["--because", "지금 장부에 적힌 답들이 그쪽을 가리킵니다"]
+    : []),
+];
 
 const flagValue = (args: string[], flag: string): string | null => {
   const index = args.indexOf(flag);

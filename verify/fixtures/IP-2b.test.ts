@@ -63,7 +63,7 @@ test("미커버 조각과 fragment 0개는 거부하고, 질문 covers 로 덮�
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("미커버 조각");
+    expect(rejected.stderr).toContain("어느 질문에도 안 걸린 조각");
     expect(rejected.stderr).toContain("F2");
     expect(await intentFiles(fixture)).toEqual([]);
   });
@@ -118,7 +118,7 @@ test("미커버 조각과 fragment 0개는 거부하고, 질문 covers 로 덮�
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("fragment 가 없습니다");
+    expect(rejected.stderr).toContain("사용자 말을 조각으로 하나도 안 쪼갰습니다");
     expect(await intentFiles(fixture)).toEqual([]);
   });
 

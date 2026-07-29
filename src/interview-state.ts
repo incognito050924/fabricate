@@ -51,6 +51,12 @@ export type AnswerState = {
   confirmed: boolean;
 };
 
+export type RemarkState = {
+  id: string;
+  text: string;
+  overturns: string | null;
+};
+
 export type ContradictionState = {
   id: string;
   text: string;
@@ -108,6 +114,7 @@ export type InterviewState = {
   questions: Map<string, QuestionState>;
   reviews: Map<string, ReviewState>;
   answers: Map<string, AnswerState>;
+  remarks: Map<string, RemarkState>;
   restates: Map<string, { id: string; answer: string; text: string }>;
   contradictions: Map<string, ContradictionState>;
   ambiguities: Map<string, AmbiguityState>;
@@ -136,6 +143,7 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
   const questions = new Map<string, QuestionState>();
   const reviews = new Map<string, ReviewState>();
   const answers = new Map<string, AnswerState>();
+  const remarks = new Map<string, RemarkState>();
   const restates = new Map<string, { id: string; answer: string; text: string }>();
   const contradictions = new Map<string, ContradictionState>();
   const ambiguities = new Map<string, AmbiguityState>();
@@ -235,18 +243,19 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
         usedIds.add(id);
         lastAnswerIndex = index;
 
-        if (overturns !== null) {
-          for (const staleId of dependentDimensionIds(overturns, dimensions)) {
-            const dimension = dimensions.get(staleId);
-            if (dimension !== undefined) {
-              dimensions.set(staleId, {
-                ...dimension,
-                resolved: false,
-                stale: true,
-              });
-            }
-          }
-        }
+        reopenDependents(overturns, dimensions);
+      }
+      continue;
+    }
+
+    if (kind === "remark") {
+      const id = stringValue(entry.id);
+      const text = stringValue(entry.text);
+      if (id !== null && text !== null) {
+        const overturns = stringValue(entry.overturns);
+        remarks.set(id, { id, text, overturns });
+        usedIds.add(id);
+        reopenDependents(overturns, dimensions);
       }
       continue;
     }
@@ -445,6 +454,7 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
     questions,
     reviews,
     answers,
+    remarks,
     restates,
     contradictions,
     ambiguities,
@@ -504,6 +514,29 @@ const readinessFor = (
     ...readiness,
     ready: readiness.contradictions === 0 && readiness.unsure === 0 && readiness.demoted === 0,
   };
+};
+
+// A premise that gets overturned drags everything that leaned on it back open,
+// whether the overturn arrived as an answer to a question or as something the
+// user brought up unprompted.
+const reopenDependents = (
+  overturns: string | null,
+  dimensions: Map<string, DimensionState>,
+): void => {
+  if (overturns === null) {
+    return;
+  }
+
+  for (const staleId of dependentDimensionIds(overturns, dimensions)) {
+    const dimension = dimensions.get(staleId);
+    if (dimension !== undefined) {
+      dimensions.set(staleId, {
+        ...dimension,
+        resolved: false,
+        stale: true,
+      });
+    }
+  }
 };
 
 const dependentDimensionIds = (

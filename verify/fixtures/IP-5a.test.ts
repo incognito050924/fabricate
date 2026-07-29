@@ -4,6 +4,7 @@ import {
   expectOk,
   fabricate,
   ledger,
+  recommendation,
   record,
   withInterviewFixture,
 } from "../support/interview-fixture.ts";
@@ -45,6 +46,7 @@ test("질문 전에 세션-맹검 review 가 장부에 남고, review 없이는 
       "F1",
       "--text",
       "어떤 조건에서 로그인 실패가 나나요?",
+      ...recommendation,
     ]);
     await expectOk(question, "turn record question");
 
@@ -76,10 +78,11 @@ test("질문 전에 세션-맹검 review 가 장부에 남고, review 없이는 
       "F1",
       "--text",
       "어떤 조건에서 로그인 실패가 나나요?",
+      ...recommendation,
     ]);
 
     expect(question.code).not.toBe(0);
-    expect(question.stderr).toContain("세션-맹검 검토 없이 질문할 수 없습니다");
+    expect(question.stderr).toContain("대화를 못 본 검토자의 판정 없이 질문할 수 없습니다");
     expect(await ledger(fixture)).toHaveLength(before.length);
   });
 });

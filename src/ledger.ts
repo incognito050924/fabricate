@@ -7,6 +7,7 @@ import { projectDirFromCommandCwd } from "./project.ts";
 import type { CliResult } from "./result.ts";
 import { fail, ok } from "./result.ts";
 import { selectActiveSession } from "./session.ts";
+import { statusBlock } from "./status.ts";
 
 export const recordStart = async (cwd: string): Promise<CliResult> => {
   const projectDir = await projectDirFromCommandCwd(cwd);
@@ -63,7 +64,10 @@ export const recordTurn = async (
     ...prepared.entry,
   });
 
-  return ok(prepared.stdout ?? "");
+  // Goal 3: the turn's standing is printed without anyone asking for it.
+  const after = analyzeLedger(await readJsonLines(ledgerPath));
+
+  return ok(`${prepared.stdout ?? ""}${statusBlock(after)}`);
 };
 
 const parseRecordArgs = (
@@ -197,7 +201,7 @@ const prepareRecord = (
       normalizedReviewer.includes("driver") ||
       normalizedReviewer === normalizeContextName(sessionId)
     ) {
-      return reject("판단자가 드라이버와 같은 컨텍스트입니다.");
+      return reject("검토자가 진행자와 같은 자리입니다. 대화를 못 본 다른 자리에서 받아야 합니다.");
     }
 
     return accept({
@@ -214,9 +218,16 @@ const prepareRecord = (
     const id = requiredId(flags, "id", state);
     const text = requiredString(flags, "text");
     const dimension = requiredString(flags, "dimension");
+    // Goal 0: a question the driver could answer alone is still asked, and every
+    // question carries the driver's own recommendation plus what it rests on.
+    // Without both, the user is deciding blind or is not being asked at all.
+    const recommend = requiredString(flags, "recommend");
+    const because = requiredString(flags, "because");
     if (!id.ok) return id;
     if (!text.ok) return text;
     if (!dimension.ok) return dimension;
+    if (!recommend.ok) return recommend;
+    if (!because.ok) return because;
     const dimensionRef = requireDimension(dimension.value, state);
     if (!dimensionRef.ok) return dimensionRef;
     const covers = commaList(optionalString(flags, "covers"));
@@ -227,15 +238,23 @@ const prepareRecord = (
     }
     const review = state.reviews.get(id.value);
     if (review === undefined) {
-      return reject("세션-맹검 검토 없이 질문할 수 없습니다.");
+      return reject("대화를 못 본 검토자의 판정 없이 질문할 수 없습니다.");
     }
     if (review.verdict === "reject") {
-      return reject("세션-맹검 검토가 질문을 거부했습니다.");
+      return reject("대화를 못 본 검토자가 이 질문을 거부했습니다.");
     }
     if (!sameBytes(review.text, text.value)) {
       return reject("검토받은 질문 문안과 다릅니다.");
     }
-    return accept({ kind, id: id.value, text: text.value, dimension: dimension.value, covers });
+    return accept({
+      kind,
+      id: id.value,
+      text: text.value,
+      dimension: dimension.value,
+      covers,
+      recommend: recommend.value,
+      because: because.value,
+    });
   }
 
   if (kind === "answer") {
@@ -263,6 +282,27 @@ const prepareRecord = (
     });
   }
 
+  // Goal 1: what the user brought up unprompted — a rebuttal, a change of
+  // direction, "why do we need that at all". It is bound to no question, so
+  // without this slot it can only survive as the driver's summary of it.
+  if (kind === "remark") {
+    const id = requiredId(flags, "id", state);
+    const text = requiredString(flags, "text");
+    if (!id.ok) return id;
+    if (!text.ok) return text;
+    const overturns = optionalString(flags, "overturns");
+    if (overturns !== null) {
+      const ref = requireDimension(overturns, state);
+      if (!ref.ok) return ref;
+    }
+    return accept({
+      kind,
+      id: id.value,
+      text: text.value,
+      ...(overturns === null ? {} : { overturns }),
+    });
+  }
+
   if (kind === "restate") {
     const id = requiredId(flags, "id", state);
     const answer = requiredString(flags, "answer");
@@ -275,7 +315,7 @@ const prepareRecord = (
       return reject(`존재하지 않는 answer 입니다: ${answer.value}`);
     }
     if (isEcho(text.value, answerState.text)) {
-      return reject(`재진술이 사용자 답변과 너무 겹칩니다: ${id.value}`);
+      return reject(`바꿔 말한 문장이 사용자 답변과 너무 겹칩니다: ${id.value}`);
     }
     return accept({ kind, id: id.value, answer: answer.value, text: text.value });
   }
@@ -545,6 +585,7 @@ const knownKinds = new Set([
   "review",
   "question",
   "answer",
+  "remark",
   "restate",
   "confirm",
   "resolve",
@@ -565,8 +606,9 @@ const allowedFlags: Record<string, Set<string>> = {
   fragment: new Set(["id", "text"]),
   dimension: new Set(["id", "text", "depends-on"]),
   review: new Set(["question", "text", "verdict", "reviewer", "reason"]),
-  question: new Set(["id", "text", "dimension", "covers"]),
+  question: new Set(["id", "text", "dimension", "covers", "recommend", "because"]),
   answer: new Set(["id", "question", "text", "unsure", "overturns"]),
+  remark: new Set(["id", "text", "overturns"]),
   restate: new Set(["id", "answer", "text"]),
   confirm: new Set(["restate", "verdict"]),
   resolve: new Set(["dimension", "evidence", "answer"]),

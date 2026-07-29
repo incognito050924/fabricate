@@ -180,7 +180,7 @@ test("중대성 라우팅은 assume, ask, must-ask 의 산출물 차이와 위�
     const rejected = await close(fixture, hash);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("중대성 라우팅 없음");
+    expect(rejected.stderr).toContain("물을지 가정할지 안 정한 모호점");
     expect(rejected.stderr).toContain("M1");
     expect(await intentFiles(fixture)).toEqual([]);
   });

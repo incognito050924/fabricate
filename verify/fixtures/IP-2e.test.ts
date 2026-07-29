@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import {
+  addCriterion,
   close,
   createSlashSession,
   intentFiles,
@@ -14,7 +15,7 @@ test("답변은 non-echo restate 뒤 accepted 확인에 닿아야 confirmed 가 
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("미교정 불일치");
+    expect(rejected.stderr).toContain("확인 못 받은 답변");
     expect(rejected.stderr).toContain("A1");
     expect(await intentFiles(fixture)).toEqual([]);
   });
@@ -25,7 +26,7 @@ test("답변은 non-echo restate 뒤 accepted 확인에 닿아야 confirmed 가 
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("미교정 불일치");
+    expect(rejected.stderr).toContain("확인 못 받은 답변");
     expect(rejected.stderr).toContain("A1");
     expect(await intentFiles(fixture)).toEqual([]);
   });
@@ -93,5 +94,6 @@ const createConfirmedShape = async (
     "A1",
   ]);
   await record(fixture, ["--kind", "contradiction-pass", "--text", "검사 완료"]);
+  await addCriterion(fixture);
   await record(fixture, ["--kind", "goal", "--text", "로그인 실패 조건이 확인되어야 한다"]);
 };

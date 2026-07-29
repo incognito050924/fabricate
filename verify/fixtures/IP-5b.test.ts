@@ -4,6 +4,7 @@ import {
   expectOk,
   fabricate,
   ledger,
+  recommendation,
   record,
   withInterviewFixture,
 } from "../support/interview-fixture.ts";
@@ -29,7 +30,7 @@ test("reject 된 review 와 검토 문안 불일치는 question 을 막고, 재�
     });
 
     expect(rejectedQuestion.code).not.toBe(0);
-    expect(rejectedQuestion.stderr).toContain("세션-맹검 검토가 질문을 거부했습니다");
+    expect(rejectedQuestion.stderr).toContain("대화를 못 본 검토자가 이 질문을 거부했습니다");
     expect((await ledger(fixture)).some((entry) => entry.kind === "question")).toBe(false);
 
     await expectOk(
@@ -115,4 +116,5 @@ const question = async (fixture: Fixture, input: { id: string; text: string }) =
     "F1",
     "--text",
     input.text,
+    ...recommendation,
   ]);

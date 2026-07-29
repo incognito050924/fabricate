@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   type InterviewFixture,
+  addCriterion,
   close,
   createSlashSession,
   expectOk,
@@ -119,6 +120,7 @@ const addReadyInterviewExceptGoal = async (fixture: InterviewFixture): Promise<v
     "A1",
   ]);
   await record(fixture, ["--kind", "contradiction-pass", "--text", "교차 답변 검사 완료"]);
+  await addCriterion(fixture);
 };
 
 const recordGoalAndExpectHash = async (
@@ -129,7 +131,8 @@ const recordGoalAndExpectHash = async (
   const result = await fabricate(fixture, ["turn", "record", "--kind", "goal", "--text", text]);
 
   await expectOk(result, "turn record goal");
-  expect(result.stdout).toBe(`goal-hash: ${expected}\n`);
+  // The per-turn status block follows the hash line on the same stream (goal 3).
+  expect(result.stdout.startsWith(`goal-hash: ${expected}\n`)).toBe(true);
   fixture.goals.push(text);
   return expected;
 };

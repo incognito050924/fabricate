@@ -40,7 +40,7 @@ test("뒤집힌 전제는 stale 로 다시 열리고, 뒤집힌 뒤 재해소하
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("stale 노드");
+    expect(rejected.stderr).toContain("전제가 뒤집혀 다시 열린 쟁점");
     expect(rejected.stderr).toContain("D1");
     expect(await intentFiles(fixture)).toEqual([]);
   });
