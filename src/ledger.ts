@@ -1,4 +1,5 @@
-import { join } from "node:path";
+import { existsSync, statSync } from "node:fs";
+import { isAbsolute, join, relative, resolve } from "node:path";
 import { appendJsonLine } from "./files.ts";
 import { readJsonLines, readUtf8IfExists } from "./files.ts";
 import { analyzeLedger, goalHashFor, idPattern } from "./interview-state.ts";
@@ -50,6 +51,7 @@ export const recordTurn = async (
     state,
     request,
     selected.session.sessionId,
+    projectDir,
   );
 
   if (!prepared.ok) {
@@ -132,6 +134,7 @@ const prepareRecord = (
   state: ReturnType<typeof analyzeLedger>,
   request: string | null,
   sessionId: string,
+  projectDir: string,
 ): PreparedRecord => {
   if (!knownKinds.has(kind)) {
     return reject(`알 수 없는 kind 입니다: ${kind}`);
@@ -341,6 +344,194 @@ const prepareRecord = (
     return accept({ kind, contradiction: contradiction.value, text: text.value });
   }
 
+  if (kind === "ambiguity") {
+    const id = requiredId(flags, "id", state);
+    const text = requiredString(flags, "text");
+    if (!id.ok) return id;
+    if (!text.ok) return text;
+    return accept({ kind, id: id.value, text: text.value });
+  }
+
+  if (kind === "interpretation") {
+    const id = requiredId(flags, "id", state);
+    const ambiguity = requiredString(flags, "ambiguity");
+    const text = requiredString(flags, "text");
+    const outcome = requiredString(flags, "outcome");
+    if (!id.ok) return id;
+    if (!ambiguity.ok) return ambiguity;
+    if (!text.ok) return text;
+    if (!outcome.ok) return outcome;
+    if (!state.ambiguities.has(ambiguity.value)) {
+      return reject(`존재하지 않는 ambiguity 입니다: ${ambiguity.value}`);
+    }
+    return accept({
+      kind,
+      id: id.value,
+      ambiguity: ambiguity.value,
+      text: text.value,
+      outcome: outcome.value,
+    });
+  }
+
+  if (kind === "materiality") {
+    const ambiguity = requiredString(flags, "ambiguity");
+    const route = requiredString(flags, "route");
+    if (!ambiguity.ok) return ambiguity;
+    if (!route.ok) return route;
+    if (!state.ambiguities.has(ambiguity.value)) {
+      return reject(`존재하지 않는 ambiguity 입니다: ${ambiguity.value}`);
+    }
+    if (route.value !== "assume" && route.value !== "ask" && route.value !== "must-ask") {
+      return reject("--route 값은 assume, ask, must-ask 중 하나여야 합니다.");
+    }
+
+    const assumption = optionalString(flags, "assumption");
+    const risk = optionalString(flags, "risk");
+    const question = optionalString(flags, "question");
+    const interpretations = [...state.interpretations.values()].filter(
+      (interpretation) => interpretation.ambiguity === ambiguity.value,
+    );
+    const distinctInterpretationTexts = new Set(
+      interpretations.map((interpretation) => interpretation.text),
+    );
+    const distinctOutcomes = new Set(
+      interpretations.map((interpretation) => interpretation.outcome),
+    );
+
+    if (route.value !== "assume" && assumption !== null) {
+      return reject("--assumption 은 assume route 에서만 받을 수 있습니다.");
+    }
+    if (route.value !== "must-ask" && risk !== null) {
+      return reject("--risk 는 must-ask route 에서만 받을 수 있습니다.");
+    }
+    if (question !== null && !state.questions.has(question)) {
+      return reject(`존재하지 않는 question 입니다: ${question}`);
+    }
+
+    if (route.value === "assume") {
+      if (distinctInterpretationTexts.size < 2) {
+        return reject("assume route 는 서로 다른 interpretation 이 둘 이상 필요합니다.");
+      }
+      if (distinctOutcomes.size !== 1) {
+        return reject("assume route 는 모든 interpretation outcome 이 같아야 합니다.");
+      }
+      if (assumption === null) {
+        return reject("--assumption 값이 필요합니다.");
+      }
+    }
+
+    if (route.value === "ask") {
+      if (distinctInterpretationTexts.size < 2) {
+        return reject("ask route 는 서로 다른 interpretation 이 둘 이상 필요합니다.");
+      }
+      if (distinctOutcomes.size < 2) {
+        return reject("ask route 는 interpretation outcome 이 둘 이상으로 갈려야 합니다.");
+      }
+      if (question === null) {
+        return reject("--question 값이 필요합니다.");
+      }
+    }
+
+    if (route.value === "must-ask") {
+      if (risk === null) {
+        return reject("--risk 값이 필요합니다.");
+      }
+      if (question === null) {
+        return reject("--question 값이 필요합니다.");
+      }
+    }
+
+    return accept({
+      kind,
+      ambiguity: ambiguity.value,
+      route: route.value,
+      ...(assumption === null ? {} : { assumption }),
+      ...(risk === null ? {} : { risk }),
+      ...(question === null ? {} : { question }),
+    });
+  }
+
+  if (kind === "challenge") {
+    const id = requiredId(flags, "id", state);
+    const answer = requiredString(flags, "answer");
+    const citation = requiredString(flags, "citation");
+    const text = requiredString(flags, "text");
+    const question = requiredString(flags, "question");
+    if (!id.ok) return id;
+    if (!answer.ok) return answer;
+    if (!citation.ok) return citation;
+    if (!text.ok) return text;
+    if (!question.ok) return question;
+    if (!state.answers.has(answer.value)) {
+      return reject(`존재하지 않는 answer 입니다: ${answer.value}`);
+    }
+    if (!state.questions.has(question.value)) {
+      return reject(`존재하지 않는 question 입니다: ${question.value}`);
+    }
+    const citationCheck = validateCitation(citation.value, projectDir);
+    if (!citationCheck.ok) return citationCheck;
+    return accept({
+      kind,
+      id: id.value,
+      answer: answer.value,
+      citation: citation.value,
+      text: text.value,
+      question: question.value,
+    });
+  }
+
+  if (kind === "criterion") {
+    const id = requiredId(flags, "id", state);
+    const text = requiredString(flags, "text");
+    const type = requiredString(flags, "type");
+    if (!id.ok) return id;
+    if (!text.ok) return text;
+    if (!type.ok) return type;
+    if (type.value !== "hard" && type.value !== "soft") {
+      return reject("--type 값은 hard 또는 soft 여야 합니다.");
+    }
+    return accept({ kind, id: id.value, text: text.value, type: type.value });
+  }
+
+  if (kind === "example") {
+    const id = requiredId(flags, "id", state);
+    const criterion = requiredString(flags, "criterion");
+    const text = requiredString(flags, "text");
+    const verdict = requiredString(flags, "verdict");
+    if (!id.ok) return id;
+    if (!criterion.ok) return criterion;
+    if (!text.ok) return text;
+    if (!verdict.ok) return verdict;
+    if (!state.criteria.has(criterion.value)) {
+      return reject(`존재하지 않는 criterion 입니다: ${criterion.value}`);
+    }
+    return accept({
+      kind,
+      id: id.value,
+      criterion: criterion.value,
+      text: text.value,
+      verdict: verdict.value,
+    });
+  }
+
+  if (kind === "rule") {
+    const criterion = requiredString(flags, "criterion");
+    const text = requiredString(flags, "text");
+    if (!criterion.ok) return criterion;
+    if (!text.ok) return text;
+    const criterionState = state.criteria.get(criterion.value);
+    if (criterionState === undefined) {
+      return reject(`존재하지 않는 criterion 입니다: ${criterion.value}`);
+    }
+    if (criterionState.type === "soft") {
+      return reject("soft 항목에는 기계 판정 기준을 만들지 않습니다. 사람 판정으로 남깁니다.");
+    }
+    if (criterionState.examples.length === 0) {
+      return reject("rule 은 example 이 하나 이상 기록된 뒤에만 받을 수 있습니다.");
+    }
+    return accept({ kind, criterion: criterion.value, text: text.value });
+  }
+
   const text = requiredString(flags, "text");
   if (!text.ok) return text;
   const goals = [...state.goals, text.value];
@@ -360,6 +551,13 @@ const knownKinds = new Set([
   "contradiction-pass",
   "contradiction",
   "contradiction-resolved",
+  "ambiguity",
+  "interpretation",
+  "materiality",
+  "challenge",
+  "criterion",
+  "example",
+  "rule",
   "goal",
 ]);
 
@@ -375,6 +573,13 @@ const allowedFlags: Record<string, Set<string>> = {
   "contradiction-pass": new Set(["text"]),
   contradiction: new Set(["id", "text", "between"]),
   "contradiction-resolved": new Set(["contradiction", "text"]),
+  ambiguity: new Set(["id", "text"]),
+  interpretation: new Set(["id", "ambiguity", "text", "outcome"]),
+  materiality: new Set(["ambiguity", "route", "assumption", "risk", "question"]),
+  challenge: new Set(["id", "answer", "citation", "text", "question"]),
+  criterion: new Set(["id", "text", "type"]),
+  example: new Set(["id", "criterion", "text", "verdict"]),
+  rule: new Set(["criterion", "text"]),
   goal: new Set(["text"]),
 };
 
@@ -444,6 +649,33 @@ const requireDimension = (
   state.dimensions.has(id)
     ? { ok: true }
     : { ok: false, result: fail(`존재하지 않는 dimension 입니다: ${id}\n`) };
+
+const validateCitation = (
+  citation: string,
+  projectDir: string,
+): { ok: true } | { ok: false; result: CliResult } => {
+  const match = /^(.*):([1-9][0-9]*)$/.exec(citation);
+  if (match === null) {
+    return { ok: false, result: fail("--citation 형식은 <경로>:<줄번호> 여야 합니다.\n") };
+  }
+
+  const pathPart = match[1];
+  if (pathPart === undefined || pathPart.length === 0) {
+    return { ok: false, result: fail("--citation 경로가 필요합니다.\n") };
+  }
+
+  const resolvedPath = isAbsolute(pathPart) ? resolve(pathPart) : resolve(projectDir, pathPart);
+  const relativePath = relative(projectDir, resolvedPath);
+  if (relativePath.startsWith("..") || isAbsolute(relativePath)) {
+    return { ok: false, result: fail("--citation 경로는 프로젝트 안에 있어야 합니다.\n") };
+  }
+
+  if (!existsSync(resolvedPath) || !statSync(resolvedPath).isFile()) {
+    return { ok: false, result: fail(`--citation 경로가 실재하지 않습니다: ${pathPart}\n`) };
+  }
+
+  return { ok: true };
+};
 
 const commaList = (value: string | null): string[] => {
   if (value === null) {

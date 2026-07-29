@@ -58,6 +58,49 @@ export type ContradictionState = {
   resolved: boolean;
 };
 
+export type AmbiguityState = {
+  id: string;
+  text: string;
+};
+
+export type InterpretationState = {
+  id: string;
+  ambiguity: string;
+  text: string;
+  outcome: string;
+};
+
+export type MaterialityState = {
+  ambiguity: string;
+  route: "assume" | "ask" | "must-ask";
+  assumption: string | null;
+  risk: string | null;
+  question: string | null;
+};
+
+export type ChallengeState = {
+  id: string;
+  answer: string;
+  citation: string;
+  text: string;
+  question: string;
+};
+
+export type CriterionState = {
+  id: string;
+  text: string;
+  type: "hard" | "soft";
+  examples: string[];
+  rule: string | null;
+};
+
+export type ExampleState = {
+  id: string;
+  criterion: string;
+  text: string;
+  verdict: string;
+};
+
 export type InterviewState = {
   entries: LedgerObject[];
   fragments: Map<string, FragmentState>;
@@ -67,6 +110,12 @@ export type InterviewState = {
   answers: Map<string, AnswerState>;
   restates: Map<string, { id: string; answer: string; text: string }>;
   contradictions: Map<string, ContradictionState>;
+  ambiguities: Map<string, AmbiguityState>;
+  interpretations: Map<string, InterpretationState>;
+  materialities: Map<string, MaterialityState>;
+  challenges: Map<string, ChallengeState>;
+  criteria: Map<string, CriterionState>;
+  examples: Map<string, ExampleState>;
   contradictionPassIndexes: number[];
   lastAnswerIndex: number | null;
   goals: string[];
@@ -89,6 +138,12 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
   const answers = new Map<string, AnswerState>();
   const restates = new Map<string, { id: string; answer: string; text: string }>();
   const contradictions = new Map<string, ContradictionState>();
+  const ambiguities = new Map<string, AmbiguityState>();
+  const interpretations = new Map<string, InterpretationState>();
+  const materialities = new Map<string, MaterialityState>();
+  const challenges = new Map<string, ChallengeState>();
+  const criteria = new Map<string, CriterionState>();
+  const examples = new Map<string, ExampleState>();
   const contradictionPassIndexes: number[] = [];
   const usedIds = new Set<string>();
   const goals: string[] = [];
@@ -279,6 +334,105 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
       if (text !== null) {
         goals.push(text);
       }
+      continue;
+    }
+
+    if (kind === "ambiguity") {
+      const id = stringValue(entry.id);
+      const text = stringValue(entry.text);
+      if (id !== null && text !== null) {
+        ambiguities.set(id, { id, text });
+        usedIds.add(id);
+      }
+      continue;
+    }
+
+    if (kind === "interpretation") {
+      const id = stringValue(entry.id);
+      const ambiguity = stringValue(entry.ambiguity);
+      const text = stringValue(entry.text);
+      const outcome = stringValue(entry.outcome);
+      if (id !== null && ambiguity !== null && text !== null && outcome !== null) {
+        interpretations.set(id, { id, ambiguity, text, outcome });
+        usedIds.add(id);
+      }
+      continue;
+    }
+
+    if (kind === "materiality") {
+      const ambiguity = stringValue(entry.ambiguity);
+      const route = stringValue(entry.route);
+      if (ambiguity !== null && isMaterialityRoute(route)) {
+        materialities.set(ambiguity, {
+          ambiguity,
+          route,
+          assumption: stringValue(entry.assumption),
+          risk: stringValue(entry.risk),
+          question: stringValue(entry.question),
+        });
+      }
+      continue;
+    }
+
+    if (kind === "challenge") {
+      const id = stringValue(entry.id);
+      const answer = stringValue(entry.answer);
+      const citation = stringValue(entry.citation);
+      const text = stringValue(entry.text);
+      const question = stringValue(entry.question);
+      if (
+        id !== null &&
+        answer !== null &&
+        citation !== null &&
+        text !== null &&
+        question !== null
+      ) {
+        challenges.set(id, { id, answer, citation, text, question });
+        usedIds.add(id);
+      }
+      continue;
+    }
+
+    if (kind === "criterion") {
+      const id = stringValue(entry.id);
+      const text = stringValue(entry.text);
+      const type = stringValue(entry.type);
+      if (id !== null && text !== null && (type === "hard" || type === "soft")) {
+        criteria.set(id, { id, text, type, examples: [], rule: null });
+        usedIds.add(id);
+      }
+      continue;
+    }
+
+    if (kind === "example") {
+      const id = stringValue(entry.id);
+      const criterion = stringValue(entry.criterion);
+      const text = stringValue(entry.text);
+      const verdict = stringValue(entry.verdict);
+      if (id !== null && criterion !== null && text !== null && verdict !== null) {
+        examples.set(id, { id, criterion, text, verdict });
+        usedIds.add(id);
+        const criterionState = criteria.get(criterion);
+        if (criterionState !== undefined) {
+          criteria.set(criterion, {
+            ...criterionState,
+            examples: [...criterionState.examples, id],
+          });
+        }
+      }
+      continue;
+    }
+
+    if (kind === "rule") {
+      const criterion = stringValue(entry.criterion);
+      const text = stringValue(entry.text);
+      const criterionState = criterion === null ? undefined : criteria.get(criterion);
+      if (criterionState !== undefined && text !== null) {
+        criteria.set(criterionState.id, {
+          ...criterionState,
+          rule: text,
+        });
+      }
     }
   }
 
@@ -293,6 +447,12 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
     answers,
     restates,
     contradictions,
+    ambiguities,
+    interpretations,
+    materialities,
+    challenges,
+    criteria,
+    examples,
     contradictionPassIndexes,
     lastAnswerIndex,
     goals,
@@ -377,3 +537,6 @@ const stringValue = (value: unknown): string | null => (typeof value === "string
 
 const stringArrayValue = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+
+const isMaterialityRoute = (value: string | null): value is "assume" | "ask" | "must-ask" =>
+  value === "assume" || value === "ask" || value === "must-ask";

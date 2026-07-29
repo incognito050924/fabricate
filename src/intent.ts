@@ -204,5 +204,36 @@ const closeReasons = (
     reasons.push(readinessLine(state.readiness));
   }
 
+  const unroutedAmbiguities = [...state.ambiguities.values()].filter(
+    (ambiguity) => !state.materialities.has(ambiguity.id),
+  );
+  if (unroutedAmbiguities.length > 0) {
+    reasons.push(
+      `중대성 라우팅 없음: ${unroutedAmbiguities.map((ambiguity) => ambiguity.id).join(", ")}`,
+    );
+  }
+
+  const hardCriteriaWithoutExamples = [...state.criteria.values()].filter(
+    (criterion) => criterion.type === "hard" && criterion.examples.length === 0,
+  );
+  if (hardCriteriaWithoutExamples.length > 0) {
+    reasons.push(
+      `hard 기준 예시 없음: ${hardCriteriaWithoutExamples
+        .map((criterion) => criterion.id)
+        .join(", ")}`,
+    );
+  }
+
+  const hardCriteriaWithoutRules = [...state.criteria.values()].filter(
+    (criterion) => criterion.type === "hard" && criterion.rule === null,
+  );
+  if (hardCriteriaWithoutRules.length > 0) {
+    reasons.push(
+      `hard 기준 rule 없음: ${hardCriteriaWithoutRules
+        .map((criterion) => criterion.id)
+        .join(", ")}`,
+    );
+  }
+
   return reasons;
 };
