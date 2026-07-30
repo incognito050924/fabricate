@@ -217,6 +217,21 @@ const check: Check = {
         "--text",
         "사용자가 충족이라고 판정한 조건을 만족해야 한다",
       ],
+      // The goal wording goes past the blind reader before it can be recorded (D-6).
+      [
+        "turn",
+        "record",
+        "--kind",
+        "goal-review",
+        "--text",
+        "로그인 실패 조건을 확인한다",
+        "--verdict",
+        "pass",
+        "--reviewer",
+        "blind-reviewer",
+        "--reason",
+        "문안만으로 무엇이 달성돼야 하는지 알 수 있습니다",
+      ],
       ["turn", "record", "--kind", "goal", "--text", "로그인 실패 조건을 확인한다"],
     ];
     const failures: string[] = [];
