@@ -149,5 +149,5 @@ test("사용자가 먼저 꺼낸 말을 요약으로 대체하지 말라고 스�
   const skill = await readFile(join(repoRoot, "skills", "deep-interview", "SKILL.md"), "utf8");
 
   expect(skill.includes("--kind remark")).toBe(true);
-  expect(skill.includes("사용자가 먼저 꺼낸 말")).toBe(true);
+  expect(skill.includes("brings up unprompted")).toBe(true);
 });

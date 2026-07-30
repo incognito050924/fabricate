@@ -1,49 +1,55 @@
 ---
 name: seed
-description: 앞선 인터뷰가 남긴 잠긴 의도 레코드를 읽어, 이전 대화를 복원하지 않고 그 뜻 위에서 작업을 시작한다. 새 세션이나 다른 에이전트가 "지난번에 정한 그것부터 이어서" 할 때 쓴다.
+description: Read the locked intent record an earlier interview left behind and start work on that meaning without replaying the conversation. Use it when a new session or a different agent picks up "the thing we settled last time".
 argument-hint: "<intent id>"
 ---
 
-# 잠긴 의도에서 시작한다
+# Start from the locked intent
 
-이 명령 뒤에 온 문자열이 **잠긴 의도 레코드의 id**다.
+The string after this command is **the id of a locked intent record**.
 
-당신은 그 인터뷰를 하지 않았고, 그 대화를 볼 수도 없다. **그래도 같은 뜻 위에 설 수 있다** —
-그게 그 레코드가 존재하는 이유다. 대화를 복원하려 하지 마라. 레코드를 읽어라.
+You did not run that interview and you cannot see that conversation. **You can still stand on the same
+meaning** — that is what the record exists for. Do not try to reconstruct the conversation. Read the record.
 
-## 첫 걸음 — 다른 것을 하기 전에 이것부터
+## First step — before anything else
 
 ```sh
 fabricate deep-interview show <id>
 ```
 
-이 명령이 내는 것은 둘이다.
+Two things come out of it.
 
-- **사용자가 실제로 쓴 문장.** 요약본이 아니라 원문 바이트 그대로다.
-- **목표 술어** — "무엇이 달성돼 있으면 완료인가"를 사용자의 말로 적은 것.
+- **The sentences the user actually wrote.** Not a summary — the original bytes.
+- **The goal predicate** — "what has to be true for this to be done", in the user's own words.
 
-명령이 실패하면 그 id 의 레코드가 없거나 아직 안 잠긴 것이다. **추측해서 메우지 마라.**
-사용자에게 id 를 확인하거나, 인터뷰가 아직 안 끝났다고 알린다.
+If the command fails, either there is no record under that id or it is not locked yet. **Do not fill the
+gap with a guess.** Check the id with the user, or tell them the interview has not finished.
 
-## 그 다음 — 무엇을 하고 무엇을 하지 않는가
+## Then — what to do and what not to
 
-- **원문을 당신의 말로 바꾸지 마라.** 그 레코드가 존재하는 이유가 정확히 그것을 막기 위해서다.
-  사용자에게 다시 말할 때도 원문을 인용한다.
-- **목표 술어를 완료 정의로 쓴다.** 당신이 새로 정하지 않는다. 술어에 없는 것을 "겸사겸사"
-  덧붙이지 않는다.
-- **레코드에 없는 것은 모른다고 말한다.** 인터뷰에서 안 다뤄진 대목이 나오면 그 자리에서
-  가정하지 말고 사용자에게 묻는다. 물을 것이 많으면 `/fabricate:deep-interview`로 다시 연다.
-- **완료를 주장하기 전에 기계에 물어본다.**
+- **Do not put the original into your own words.** Preventing exactly that is why the record exists.
+  Quote the original when you talk to the user about it too.
+- **Use the goal predicate as the definition of done.** You do not get to set a new one. Nothing gets
+  added "while we're here" that is not in the predicate.
+- **Say you do not know when the record does not say.** If something the interview never covered comes
+  up, ask the user instead of assuming on the spot. If there is a lot to ask, open
+  `/fabricate:deep-interview` again.
+- **Ask the machine before claiming it is done.**
 
   ```sh
   fabricate check <id>
   ```
 
-  목표 술어마다 충족 증거가 필요하다. 증거는 이렇게 만든다.
+  Every goal predicate needs evidence that it is satisfied. Evidence is made like this:
 
   ```sh
-  fabricate check record --intent <id> --goal <n> --command "<이 목표가 달성됐음을 확인하는 명령>"
+  fabricate check record --intent <id> --goal <n> --command "<a command that confirms this goal is met>"
   ```
 
-  `<n>`은 목표 술어의 순번(0부터)이다. `fabricate check <id>`가 exit 0 이 아니면
-  **완료가 아니다.** 무엇이 왜 부족한지가 출력에 나온다.
+  `<n>` is the goal predicate's position, counting from 0. If `fabricate check <id>` does not exit 0,
+  **it is not done.** The output says what is missing and why.
+
+## The words you write to the user
+
+Write in the language the user wrote in. This document and the CLI's output are in English because the
+reader there is you. **A sentence quoting the user stays exactly as they wrote it.**

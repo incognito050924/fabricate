@@ -106,6 +106,6 @@ test("전제를 치려면 여전히 실재하는 파일과 줄을 대야 한다"
 test("질문을 보내기 전 전제를 코드에 대보라고 스킬 설명서가 지시한다", async () => {
   const skill = await readFile(join(repoRoot, "skills", "deep-interview", "SKILL.md"), "utf8");
 
-  expect(skill.includes("질문의 전제")).toBe(true);
+  expect(skill.includes("Test the question's premise against the code")).toBe(true);
   expect(skill.includes("--kind challenge")).toBe(true);
 });

@@ -10,7 +10,7 @@ const frontmatter = (text: string): string => {
   const match = /^---\n([\s\S]*?)\n---/.exec(text);
 
   if (match === null || match[1] === undefined) {
-    throw new Error("SKILL.md 에 frontmatter 가 없습니다.");
+    throw new Error("SKILL.md has no frontmatter.");
   }
 
   return match[1];
@@ -19,15 +19,15 @@ const frontmatter = (text: string): string => {
 test("스킬 설명이 에이전트에게 '이럴 때 쓴다'가 아니라 '이럴 때 권한다'로 적혀 있다", async () => {
   const description = frontmatter(await skillText());
 
-  expect(description.includes("권한다")).toBe(true);
-  expect(description.includes("스스로 시작하지 않는다")).toBe(true);
+  expect(description.includes("Offer it when")).toBe(true);
+  expect(description.includes("do not start it on your own")).toBe(true);
 });
 
 test("시작은 사용자가 한다는 것이 설명서 본문에도 적혀 있다", async () => {
   const skill = await skillText();
 
-  expect(skill.includes("자동으로 켜지 않는다")).toBe(true);
-  expect(skill.includes("켤지는 사용자가 정한다")).toBe(true);
+  expect(skill.includes("does not switch itself on")).toBe(true);
+  expect(skill.includes("The user decides.")).toBe(true);
 });
 
 test("에이전트가 스스로 연 세션은 잠긴 레코드를 만들 수 없다 — 원문이 없기 때문이다", async () => {

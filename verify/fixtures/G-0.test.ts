@@ -133,5 +133,5 @@ test("혼자 답할 수 있는 질문도 건너뛰지 말라고 스킬 설명서
 
   expect(skill.includes("--recommend")).toBe(true);
   expect(skill.includes("--because")).toBe(true);
-  expect(skill.includes("혼자 답할 수 있는 질문도 건너뛰지 않는다")).toBe(true);
+  expect(skill.includes("could answer yourself by reading the code still gets asked")).toBe(true);
 });

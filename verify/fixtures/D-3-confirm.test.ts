@@ -20,8 +20,8 @@ const readSkill = async (): Promise<string> =>
 test("답마다 확인을 기다리지 말라고 스킬 설명서가 지시한다", async () => {
   const skill = await readSkill();
 
-  expect(skill.includes('"맞아"를 기다리지 않는다')).toBe(true);
-  expect(skill.includes("다음 질문과 같은 응답에")).toBe(true);
+  expect(skill.includes('Do not stop here waiting for a "yes"')).toBe(true);
+  expect(skill.includes("in the same response as the next\nquestion")).toBe(true);
 });
 
 // The confirmation is not dropped — it moves to one batched round trip before
@@ -29,8 +29,8 @@ test("답마다 확인을 기다리지 말라고 스킬 설명서가 지시한�
 test("끝내기 전 읽은 것을 한 번에 확인받으라고 스킬 설명서가 지시한다", async () => {
   const skill = await readSkill();
 
-  expect(skill.includes("한 번에 확인받는다")).toBe(true);
-  expect(skill.includes("끝내기 전 — 네 가지를 반드시 한다")).toBe(true);
+  expect(skill.includes("confirmed in one pass")).toBe(true);
+  expect(skill.includes("Before closing — four things, all required")).toBe(true);
 });
 
 // This is the fact the whole change rests on: batching the confirmation is only

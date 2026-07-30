@@ -1,336 +1,359 @@
 ---
 name: deep-interview
-description: 사용자의 요청을 인터뷰로 파고들어, 다음 세션이 그대로 쓸 수 있는 잠긴 의도 레코드를 디스크에 남긴다. 요청이 모호하거나, 해석이 둘 이상이거나, "무엇이 달성돼 있으면 완료인가"를 아직 못 쓰겠을 때 사용자에게 권한다 — 에이전트가 스스로 시작하지 않는다. 시작은 사용자가 /fabricate:deep-interview 로 한다.
-argument-hint: "\"<하고 싶은 일을 그대로>\""
+description: Interview the user until their request is pinned down, and leave a locked intent record on disk that the next session can stand on. Offer it when a request is ambiguous, when it reads two or more ways, or when you cannot yet write down what would count as done — do not start it on your own. The user starts it with /fabricate:deep-interview.
+argument-hint: "\"<what you want, in your own words>\""
 ---
 
-# 깊은 인터뷰
+# Deep interview
 
-이 명령 뒤에 사용자가 쓴 문장이 **원 요청**이다. 그 문장은 이미 디스크에 원문 그대로 앉아 있다.
-당신이 다시 저장할 필요는 없고, **요약해서 대신 쓰지도 않는다.**
+Whatever the user typed after this command is the **original request**. It is already sitting on
+disk, byte for byte. You do not have to store it again, and **you do not get to summarize it away.**
 
-목표는 대화가 끝났을 때 다음이 참인 것이다.
+The goal is that when the conversation ends, all of this is true:
 
-- 사용자가 실제로 쓴 문장이 남는다
-- "무엇이 달성돼 있으면 완료인가"가 사용자의 말로 적혀 있다
-- 다음 세션이 이 대화를 복원하지 않고도 같은 뜻 위에 설 수 있다
+- The sentences the user actually wrote are still there
+- "What has to be true for this to be done" is written down in the user's own words
+- The next session can stand on the same meaning without replaying this conversation
 
-## 이 인터뷰는 자동으로 켜지 않는다 — 권하고, 켤지는 사용자가 정한다
+## This interview does not switch itself on — you offer it, the user decides
 
-인터뷰 한 번의 값은 실측돼 있다. 검토 서브에이전트 호출 아홉 번, 토큰 약 십만, 그리고
-**사용자 왕복 스무 번.** 가장 비싼 것은 토큰이 아니라 사용자의 시간이다.
+One interview costs a measured amount: nine reviewer subagent calls, roughly a hundred thousand
+tokens, and **twenty round trips of the user's time.** The expensive part is not the tokens.
 
-그래서 **에이전트가 이 스킬을 스스로 시작하지 않는다.** 요청이 모호하거나, 해석이 둘 이상이거나,
-"무엇이 달성돼 있으면 완료인가"를 아직 못 쓰겠으면 — **그 사실과 근거를 말하고 권한다.**
+So **an agent never starts this skill on its own.** When a request is ambiguous, reads two or more
+ways, or you cannot yet write down what would count as done — **say so, say why, and offer.**
 
-> 이 요청은 (가)와 (나)로 갈립니다. 어느 쪽이냐에 따라 만들 것이 달라집니다.
-> `/fabricate:deep-interview "<요청>"` 으로 짚고 갈까요, 아니면 제가 (가)로 가정하고 진행할까요?
+> This request splits into (a) and (b). What gets built depends on which one you mean.
+> Want to pin it down with `/fabricate:deep-interview "<request>"`, or should I assume (a) and go?
 
-**켤지는 사용자가 정한다.** 사용자가 안 켜겠다고 하면 가정을 밝히고 그대로 진행한다.
-이 문서의 나머지는 **사용자가 켠 뒤**에 적용된다.
+**The user decides.** If they say no, state your assumption out loud and carry on.
+The rest of this document applies **after the user has switched it on.**
 
-## 기계는 대화를 못 본다 — 장부에 적힌 것만 본다
+## The machine cannot see the conversation — only what is in the ledger
 
-`fabricate`는 상태 관리자다. 대화하지 않는다. **말한 것은 적어야 존재한다.**
-적지 않으면 `close`가 거부하고, 잠긴 레코드는 만들어지지 않는다.
+`fabricate` is a state keeper. It does not talk. **Whatever was said only exists if it was written down.**
+If it was not, `close` refuses and no locked record gets made.
 
-명령이 거부되면 **stderr에 사유가 한국어로 나온다.** 읽고 고쳐서 다시 부른다. 무시하고 진행하지 않는다.
+When a command refuses, **stderr carries the reason.** Read it, fix it, call again. Do not push past it.
 
 ---
 
-## 첫 턴 — 첫 질문을 보내기 전에 이만큼 한다
+## First turn — do all of this before the first question goes out
 
 ```sh
 fabricate deep-interview start
 ```
 
-**① 사용자 말을 조각으로 쪼갠다.** 원 요청에서 따로 다뤄야 할 대목마다 하나씩.
+**① Cut the user's words into fragments.** One per part of the request that needs its own handling.
 
 ```sh
-fabricate turn record --kind fragment --id f1 --text "<원문에서 그대로 잘라낸 부분>"
+fabricate turn record --kind fragment --id f1 --text "<a slice cut straight out of the original>"
 ```
 
-`--text`는 **원문의 부분 문자열이어야 한다.** 한 글자도 바꾸지 말고 잘라 붙인다 — 다듬으면 거부된다.
-조각 하나하나가 나중에 "이건 아무도 안 물어봤다"의 판정 단위다.
+`--text` **has to be a substring of the original.** Cut and paste it without changing a character —
+polish it and it gets refused. Each fragment is later the unit for "nobody ever asked about this".
 
-거부되면 원문을 다시 보고 정확히 잘라 한 번 더 시도한다. 그래도 안 되면 **그 조각은 두고 넘어간다** —
-③의 `--covers`에는 **실제로 기록에 성공한 조각 id만** 적는다. 없는 id를 적으면 질문 자체가 거부된다.
+If it gets refused, look at the original again and cut more precisely. If it still fails, **leave that
+fragment out** — in ③ `--covers` takes only fragment ids that actually made it into the ledger.
+Naming an id that does not exist gets the whole question refused.
 
-**② 물어야 할 쟁점을 세운다.** 쟁점은 *답이 정해지기 전에는 다음으로 못 넘어가는 갈림길* 하나다.
+**② Set up the dimensions worth asking about.** A dimension is one fork you cannot walk past until
+it has an answer.
 
 ```sh
-fabricate turn record --kind dimension --id d1 --text "<이 쟁점이 무엇인가>"
+fabricate turn record --kind dimension --id d1 --text "<what this fork is>"
 ```
 
-앞선 쟁점의 답을 전제로 삼는 쟁점이면 그 사슬을 적는다. 전제가 뒤집히면 이 쟁점이 다시 열린다.
+If a dimension takes an earlier dimension's answer as its premise, write that chain down. When the
+premise gets overturned, this one reopens.
 
 ```sh
 fabricate turn record --kind dimension --id d2 --text "…" --depends-on d1
 ```
 
-**③ 질문을 쓰고, 보내기 전에 남에게 읽힌다.**
+**③ Write the question, and have someone else read it before it goes out.**
 
-당신은 대화 서사를 안다. 그래서 **자기 질문이 서사 없이도 답할 수 있는지 판정할 수 없다** —
-빠진 맥락을 머릿속에서 무의식적으로 채워 읽기 때문이다. 자기 채점이 구조적으로 불가능한
-유일한 자리이고, 그래서 이 위임은 **선택이 아니다.**
+You know the narrative of this conversation. That is exactly why **you cannot judge whether your own
+question can be answered without it** — you fill the missing context in your head as you read. This is
+the one place where grading yourself is structurally impossible, so this hand-off is **not optional.**
 
-호스트의 Agent 도구로 **`question-blind-reviewer`** 서브에이전트를 띄우고,
-**질문 문안 하나만** 건넨다. 대화 기록도, 앞선 답변도, 인터뷰의 목적도 주지 마라 —
-주는 순간 그쪽도 진행자가 되고 판정이 자기 채점이 된다.
-(그 에이전트를 못 부르면, 대화 맥락을 전혀 싣지 않은 새 서브에이전트에게
-`agents/question-blind-reviewer.md`의 지시를 그대로 주고 같은 형식으로 받는다.)
+Use the host's Agent tool to launch the **`question-blind-reviewer`** subagent and hand it
+**the question wording and nothing else.** No transcript, no earlier answers, no statement of what the
+interview is for — the moment you hand any of that over, that reviewer becomes a second driver and the
+verdict turns back into self-grading.
+(If you cannot reach that agent, give a fresh subagent carrying no conversation context the
+instructions in `agents/question-blind-reviewer.md` verbatim and take the same shape back.)
 
-돌아온 판정을 그대로 적는다. **질문보다 먼저 적는다.**
+Write down the verdict you get. **Write it before the question.**
 
 ```sh
-fabricate turn record --kind review --question q1 --text "<검토받은 질문 문안 그대로>" \
-  --verdict pass --reviewer question-blind-reviewer --reason "<돌아온 사유 그대로>"
+fabricate turn record --kind review --question q1 --text "<the exact wording that was reviewed>" \
+  --verdict pass --reviewer question-blind-reviewer --reason "<the reason that came back, verbatim>"
 ```
 
-`reject`가 돌아오면 **그 질문은 사용자에게 가지 않는다.** 사유를 보고 고쳐 쓴 뒤 다시 검토받는다.
-같은 `--question` id로 다시 `review`를 적으면 마지막 판정이 유효하다.
+If `reject` comes back, **that question does not go to the user.** Read the reason, rewrite, review again.
+Recording another `review` under the same `--question` id makes the last verdict the live one.
 
-`pass`를 받았으면 그때 질문을 적고 사용자에게 보낸다.
+Once it passes, record the question and send it.
 
 ```sh
-fabricate turn record --kind question --id q1 --text "<검토받은 문안 그대로>" \
+fabricate turn record --kind question --id q1 --text "<the wording that was reviewed>" \
   --dimension d1 --covers f1,f2 \
-  --recommend "<당신이 추천하는 답>" --because "<그 추천이 딛고 선 근거>"
+  --recommend "<the answer you would give>" --because "<what that recommendation rests on>"
 ```
 
-- `--text`는 **검토받은 문안과 한 글자도 달라선 안 된다.** 검토받고 다른 것을 보내면
-  검토는 아무것도 안 한 것이다.
-- `--dimension`은 **필수다.** 어느 쟁점을 위한 질문인지 못 적는 질문은 목표에 안 닿는 질문이고,
-  낼 자격이 없다. `--covers`는 이 질문이 다루는 조각들이다.
-- `--recommend`와 `--because`도 **필수다.** 빈손으로 묻지 않는다.
+- `--text` **must not differ from the reviewed wording by a single character.** Reviewing one thing
+  and sending another means the review did nothing.
+- `--dimension` is **required.** A question you cannot tie to a dimension is a question that does not
+  reach the goal, and it has no business being asked. `--covers` is the fragments this question handles.
+- `--recommend` and `--because` are **required too.** You never ask empty-handed.
 
-### 빈손으로 묻지 않는다 — 추천과 근거를 함께 낸다
+### Never ask empty-handed — bring a recommendation and what it rests on
 
-질문마다 **당신이 추천하는 답과 그 추천이 딛고 선 근거**를 붙인다. 근거는 읽은 파일과 줄,
-돌려본 명령의 출력, 앞선 답변처럼 사용자가 직접 되짚을 수 있는 것이어야 한다.
-*"그게 나아 보인다"*는 근거가 아니다.
+Every question carries **the answer you would give and what that recommendation stands on.** What it
+stands on has to be something the user can go check: files and line numbers you read, output from a
+command you ran, an earlier answer. *"It seems better"* is not a reason.
 
-질문 문안 안에도 그대로 쓴다 — 장부의 `--recommend`·`--because`는 기록이고,
-사용자가 읽는 것은 당신이 보내는 문장이다.
+Put both in the question wording itself — `--recommend` and `--because` are the ledger's copy, but what
+the user reads is the sentence you send.
 
-> 제가 보기엔 **(가)** 입니다 — `src/hooks.ts:129`가 그 파일의 존재로만 판정하기 때문입니다.
-> 이대로 가도 될까요, 아니면 다르게 보십니까?
+> I read this as **(a)** — `src/hooks.ts:129` decides purely on whether the file exists.
+> Shall we go with that, or do you see it differently?
 
-### 질문의 전제를 코드에 대본다 — 보내기 전에
+### Test the question's premise against the code — before sending it
 
-추천을 쓰려면 코드를 읽어야 하고, 읽다 보면 **질문 자체가 틀린 전제 위에 서 있는 것**이
-드러날 때가 있다. *"재시도 기능을 만들까요?"* 는 없다고 전제하는데 코드에는 이미 있는 식이다.
-대화를 못 본 검토자는 그것을 못 잡는다 — 그 사람이 재는 것은 문안이지 사실이 아니다.
+Writing a recommendation means reading the code, and reading it sometimes shows that
+**the question itself stands on a false premise**. *"Should we build a retry?"* assumes there is none
+when the code already has one. A reviewer who cannot see the conversation cannot catch that — what they
+measure is the wording, not the facts.
 
-전제가 코드와 어긋나면 **그 질문을 그대로 보내지 말고** 어긋남을 적는다.
+When a premise clashes with the code, **do not send that question.** Write the clash down.
 
 ```sh
 fabricate turn record --kind challenge --id ch1 --question q1 \
-  --citation "<파일>:<줄>" --text "<질문이 무엇을 전제하는데 코드는 무엇인가>"
+  --citation "<file>:<line>" --text "<what the question assumes, and what the code actually is>"
 ```
 
-`--citation` 은 **실재하는 파일과 줄**이어야 한다. 없는 경로를 대면 거부된다.
-사용자 답이 코드와 어긋날 때도 같은 기록을 쓰고, 그때는 `--answer a1` 을 함께 단다.
+`--citation` has to be **a file and line that exist.** A path that is not there gets refused.
+Use the same record when a user's answer clashes with the code, and add `--answer a1` in that case.
 
-적었으면 질문을 **사실에 맞게 고쳐 쓴다.** 대개 *"만들까요"* 가 *"이미 이렇게 돼 있는데,
-이대로 둘까요 바꿀까요"* 로 바뀐다. 고친 문안은 다시 검토를 받아야 한다.
+Once it is written down, **rewrite the question to match the facts.** Usually *"should we build"*
+becomes *"it already works like this — leave it or change it?"*. The rewritten wording goes back for review.
 
-**코드를 읽어 혼자 답할 수 있는 질문도 건너뛰지 않는다.** 혼자 답할 수 있다는 것은
-묻지 않아도 된다는 뜻이 아니라 **추천을 근거와 함께 낼 수 있다는 뜻**이다. 건너뛰는 자리가
-에이전트가 사용자 모르게 뜻을 바꾸는 구멍이다. 답을 알 때는 묻는 비용이 사용자 쪽에서
-"예" 한 마디로 줄어드는 것이지, 질문 자체가 없어지는 것이 아니다.
+**A question you could answer yourself by reading the code still gets asked.** Being able to answer it
+does not mean it need not be asked — it means **you can bring a recommendation with grounds.** The
+places you skip are the places where an agent changes the meaning without the user knowing. When you
+know the answer, the cost of asking drops to the user saying "yes"; the question does not disappear.
 
 ---
 
-## 매 턴 끝에 상태를 보인다 — 사용자가 묻기 전에
+## Show the standing at the end of every turn — before the user asks
 
-`fabricate turn record`는 성공할 때마다 **이번 턴에 바뀐 것만 담은 상태 블록**을 출력한다.
-맨 위 요약줄 하나와, 세 칸 중 이번 턴에 실제로 바뀐 칸만 남는다.
+Every time `fabricate turn record` succeeds it prints **a status block covering only what changed this
+turn**: one summary line on top, and of the three sections only the ones that actually moved.
 
 ```
-─ 지금까지: 확정 5 · 미정 2 · 전체 보기 `fabricate deep-interview status` ─
-이번 턴에 확정된 것
+─ so far: settled 5 · open 2 · full view `fabricate deep-interview status` ─
+settled this turn
   …
-이번 턴에 새로 열린 것
-  (없음)
-이번 턴에 갱신된 뜻
-  (없음)
+opened this turn
+  (none)
+reading updated this turn
+  (none)
 ─
 ```
 
-세 칸의 이름은 여전히 확정된 것 · 아직 안 정해진 것 · **지금 이해하고 있는 뜻**이다 —
-다만 매 턴 다시 나열하지 않고, 그 턴에 새로 바뀐 항목만 낸다. 안 바뀐 항목까지
-전부 보고 싶으면 `fabricate deep-interview status`를 돌린다 — 지금까지 쌓인 전체를 낸다.
+The three sections are still settled · still open · **how the request is currently being read** — they
+are just not re-listed every turn, only what newly changed. To see everything including what did not
+change, run `fabricate deep-interview status` — it prints the whole thing accumulated so far.
 
-**턴을 끝내기 전, 그 턴의 마지막 기록에서 나온 블록을 응답의 배경설명보다 앞에 둔다.**
-질문이 응답 맨 끝에 남아야 스크롤 없이 보인다. 사용자가 요청해서 보이는 것이 아니다 —
-매번 보인다. 사용자가 "지금 어디까지 왔지"를 물어야 알 수 있다면, 당신이 뜻을 어디서
-틀었는지도 사용자는 물어야만 알게 된다.
+**Before you end the turn, put the block from that turn's last record above your own prose.**
+The question has to end up at the very bottom of the response so it is visible without scrolling. This
+is not something the user asks for — it happens every time. If the user has to ask "where are we", then
+they also have to ask before they can find out where you bent their meaning.
 
-블록은 **장부에 적힌 것만** 읽는다. 당신 머릿속에만 있는 이해는 거기 안 나온다.
-`지금 이해하고 있는 뜻` 칸이 비어 있으면 당신이 이해한 것을 아직 안 적은 것이다.
+The block reads **only what is in the ledger.** Whatever is only in your head is not in there. If the
+`reading updated this turn` section is empty, you have not written down how you are reading things.
 
-## 이어지는 턴
+## The turns that follow
 
-**답을 받으면** 원문 그대로 적는다. 다듬지 않는다. 줄이지 않는다.
-
-```sh
-fabricate turn record --kind answer --id a1 --question q1 --text "<사용자가 쓴 문장 그대로>"
-```
-
-- 사용자가 "잘 모르겠다"에 해당하는 답을 하면 `--unsure`를 붙인다. 숨기지 않는다 —
-  준비도가 그 수를 읽는다.
-- 그 답이 **앞선 쟁점의 전제를 뒤엎으면** `--overturns d1`을 붙인다. 그러면 `d1`과 `d1`에 기대던
-  쟁점 전부가 다시 인터뷰 대상이 된다. 그게 옳은 동작이다.
-
-**사용자가 먼저 꺼낸 말은 따로 적는다.** 당신이 묻지 않았는데 사용자가 꺼낸 반박·방향 수정·
-되물음("그건 왜 필요하냐")은 묶일 질문이 없다. `answer`로는 들어가지 않는다.
+**When an answer comes in**, record it verbatim. Do not polish it. Do not shorten it.
 
 ```sh
-fabricate turn record --kind remark --id m1 --text "<사용자가 쓴 문장 그대로>"
+fabricate turn record --kind answer --id a1 --question q1 --text "<the user's sentence, exactly>"
 ```
 
-- **당신이 응답하기 전에 먼저 적는다.** 나중에 적으면 이미 당신의 말로 바뀌어 있다.
-- 그 말이 **앞서 정한 것을 뒤엎으면** `--overturns d1`을 붙인다. 그러면 `d1`과 `d1`에 기대던
-  쟁점 전부가 다시 열린다. 사용자가 방향을 바꿨는데 장부가 그대로면 장부가 틀린 것이다.
-- 여기 적은 문장을 **당신의 요약으로 바꿔 적지 않는다.** 요약이 필요하면 요약을 따로 쓰고
-  원문은 원문대로 둔다.
+- If the answer amounts to "I'm not sure", add `--unsure`. Do not hide it — readiness counts those.
+- If the answer **overturns an earlier dimension's premise**, add `--overturns d1`. Then `d1` and
+  everything that leaned on `d1` come back into the interview. That is the correct behaviour.
 
-**바꿔 말해 보여준다.** 답 하나마다 필요하다.
+**Anything the user brings up unprompted goes in its own record.** A rebuttal, a change of direction,
+a question back at you ("why do we even need that") — there is no question to bind it to, so it cannot
+go in as an `answer`.
 
 ```sh
-fabricate turn record --kind restate --id r1 --answer a1 --text "<다른 말로 바꾼 문장 + 구체 사례>"
+fabricate turn record --kind remark --id m1 --text "<the user's sentence, exactly>"
 ```
 
-사용자 표현을 그대로 되돌려주면 **거부된다.** 앵무새는 검사가 아니다.
-사례를 붙인다: "그러니까 예를 들어 <구체적 상황>이면 <이렇게> 된다는 뜻인가요?"
+- **Record it before you respond.** Record it later and it has already turned into your words.
+- If it **overturns something already settled**, add `--overturns d1`. Then `d1` and everything leaning
+  on it reopen. If the user changed direction and the ledger did not, the ledger is wrong.
+- **Do not replace what you wrote here with your own summary of it.** If you need a summary, write the
+  summary somewhere else and leave the original as the original.
 
-**여기서 멈춰 "맞아"를 기다리지 않는다.** 바꿔 말한 문장은 **다음 질문과 같은 응답에** 실어 보내고
-바로 다음 질문으로 넘어간다. 답마다 확인을 받아내면 사용자가 내용이 아니라 확인에 턴을 쓴다 —
-실사용에서 채택 확인이 열한 번이었고 전부 "맞아" 한 마디를 위한 왕복이었다.
+**Say it back in different words.** One per answer.
 
-기계도 진행을 막지 않는다. 확인을 검사하는 자리는 `close` 하나뿐이다.
+```sh
+fabricate turn record --kind restate --id r1 --answer a1 --text "<the same thing in other words + a concrete case>"
+```
 
-사용자가 "아니, 그게 아니라"라고 하면 그것이 가장 값진 순간이다. **그때는 미루지 않고 즉시 적는다.**
+Handing the user's own phrasing back gets **refused.** A parrot is not a check.
+Attach a case: "So for instance, if <concrete situation>, then <this> happens — is that the idea?"
+
+**Do not stop here waiting for a "yes".** Send the restatement **in the same response as the next
+question** and move on. Extracting a confirmation per answer spends the user's turns on confirming
+instead of on content — in real use that was eleven round trips, every one of them for a single "yes".
+
+The machine does not block progress either. The one place that checks confirmation is `close`.
+
+When the user says "no, that's not it", that is the most valuable moment there is. **Write it down
+immediately, no deferring.**
 
 ```sh
 fabricate turn record --kind confirm --restate r1 --verdict rejected
 ```
 
-적었으면 고쳐서 다시 바꿔 말한다. **채택은 끝내기 전에 한 번에 받는다**(아래 ①).
+Then fix it and say it back again. **Acceptance is collected in one pass before closing** (see ① below).
 
-**쟁점을 닫을 때**는 근거와 어느 답이 닫았는지를 함께 댄다.
+**When you close a dimension**, bring both the grounds and which answer closed it.
 
 ```sh
-fabricate turn record --kind resolve --dimension d1 --evidence "<무엇을 근거로 닫는가>" --answer a1
+fabricate turn record --kind resolve --dimension d1 --evidence "<what closes it>" --answer a1
 ```
 
-**둘 중 하나라도 없으면 그 쟁점은 닫히지 않고 근거 없이 닫으려 한 것으로 남는다.** "이건 해결됐다"는 선언만으로는
-안 닫힌다.
+**Without both, the dimension does not close** — it stands as an attempt to close without grounds.
+Declaring "this one's handled" does not close anything.
 
 ---
 
-## 끝내기 전 — 네 가지를 반드시 한다
+## Before closing — four things, all required
 
-**① 읽은 것을 한 번에 확인받는다.**
+**① Get everything you read back confirmed in one pass.**
 
-인터뷰 내내 바꿔 말하기만 하고 채택은 안 받아 뒀다. 그것을 여기서 한 번에 받는다.
-답변 하나에 최신 것 한 줄씩 전부 모아 보이고 이렇게 묻는다 — *"여기까지 이렇게 읽었어.
-틀린 게 있어?"*
+All through the interview you have been restating without collecting acceptance. Collect it here.
+Show the latest line for every answer in a single response and ask — *"here is how I read all of this.
+Anything wrong?"*
 
-사용자가 짚은 것만 `rejected`로 적고 고쳐서 다시 바꿔 말한다. 나머지를 `accepted`로 적는다.
+Record only what the user objects to as `rejected`, fix those and restate them. Record the rest as `accepted`.
 
 ```sh
 fabricate turn record --kind confirm --restate r1 --verdict accepted
 ```
 
-확인 못 받은 답변이 하나라도 남으면 `close`가 거부하고 그 답변의 id를 전부 출력한다.
-**이 한 번을 건너뛰면 사용자가 안 본 읽기가 잠긴다** — 인터뷰가 오독을 잡는 자리는 여기가 마지막이다.
+If a single unconfirmed answer is left, `close` refuses and prints every one of their ids.
+**Skip this one pass and a reading the user never saw gets locked in** — this is the last place the
+interview catches a misreading.
 
-**② 완료 판정 기준을 적는다. 하나도 없으면 `close`가 거부한다.**
+**② Write down the completion criteria. `close` refuses if there is not one.**
 
-목표 술어가 *"무엇이 달성돼 있으면 완료인가"*라면, 판정 기준은 *"그것이 달성됐는지 누가 어떻게
-가르는가"*다. 둘은 다르고, 둘 다 필요하다.
+If the goal predicate is *"what has to be true for this to be done"*, a criterion is *"who decides
+whether it is, and how"*. They are different, and you need both.
 
 ```sh
-fabricate turn record --kind criterion --id k1 --text "<무엇을 판정하는가>" --type hard
+fabricate turn record --kind criterion --id k1 --text "<what gets judged>" --type hard
 ```
 
-- `hard`는 **기계가 가릴 수 있는 것**, `soft`는 **사람이 봐야 하는 것**이다.
-  `soft`에는 가짜 판정 기준을 만들지 않는다 — 사람 판정으로 남긴다.
-- `hard`는 **사용자가 직접 판정한 예시**가 하나 이상 있어야 하고, 판정 규칙은 그 예시에서 뽑는다.
-  추상적 정의를 먼저 받지 않는다.
+- `hard` is **what a machine can settle**, `soft` is **what a person has to look at.**
+  Do not invent a fake rule for a `soft` one — leave it as a human call.
+- A `hard` one needs **at least one case the user judged themselves**, and the rule comes out of that
+  case. You do not take an abstract definition first.
 
 ```sh
 fabricate turn record --kind example --id e1 --criterion k1 \
-  --text "<구체적인 사례>" --verdict "<사용자가 이 사례에 내린 판정>"
-fabricate turn record --kind rule --criterion k1 --text "<그 예시들에서 뽑은 판정 규칙>"
+  --text "<a concrete case>" --verdict "<what the user called it>"
+fabricate turn record --kind rule --criterion k1 --text "<the rule drawn from those cases>"
 ```
 
-예시 없이 `rule`을 적으면 거부된다. 순서가 뒤집히면 합의와 검증이 갈라진다.
+Writing a `rule` with no `example` gets refused. Reverse the order and agreement drifts apart from
+verification.
 
-**③ 교차-답변 모순 검사.** 마지막 답을 받은 뒤에 돈다. 앞뒤 답이 서로 어긋나지 않는지 전부 훑는다.
+**③ The cross-answer contradiction pass.** It runs after the last answer comes in. Sweep every pair of
+answers for anything that does not line up.
 
 ```sh
-fabricate turn record --kind contradiction-pass --text "<무엇과 무엇을 대조했는가>"
+fabricate turn record --kind contradiction-pass --text "<what you compared against what>"
 ```
 
-찾은 모순은 하나씩 적고, 사용자에게 물어 푼 뒤 해소를 적는다.
+Write down each contradiction you find, ask the user, then write down how it resolved.
 
 ```sh
-fabricate turn record --kind contradiction --id c1 --text "<무엇이 무엇과 어긋나는가>" --between a1,a3
-fabricate turn record --kind contradiction-resolved --contradiction c1 --text "<어떻게 풀렸는가>"
+fabricate turn record --kind contradiction --id c1 --text "<what clashes with what>" --between a1,a3
+fabricate turn record --kind contradiction-resolved --contradiction c1 --text "<how it resolved>"
 ```
 
-**한 번도 안 돌리고 끝낼 수 없다.** 안 돌았으면 안 돌았다고 기록된다 — 끝난 척할 수 없다.
+**You cannot finish without running it at least once.** If it never ran, that is what gets recorded —
+there is no pretending it did.
 
-**④ 목표 술어 문안을 사용자에게 보여주고 그대로 적는다.**
+**④ Show the user the goal predicate wording, then record exactly that.**
 
 ```sh
-fabricate turn record --kind goal --text "<무엇이 달성돼 있으면 완료인가 — 사용자에게 보여준 그 문안>"
+fabricate turn record --kind goal --text "<what has to be true for this to be done — the wording you showed the user>"
 ```
 
-출력으로 `goal-hash: <해시>`가 나온다. **그 값을 그대로 들고 close를 부른다.**
+The output carries `goal-hash: <hash>`. **Take that value straight to close.**
 
 ```sh
-fabricate deep-interview close --goal-hash <위에서 받은 해시>
+fabricate deep-interview close --goal-hash <the hash you just got>
 ```
 
-보여준 문안과 저장되는 문안이 다르면 해시가 어긋나 거부된다. 문안을 고쳤으면 `goal`을 다시 적고
-새 해시를 받는다.
+If what you showed and what gets stored differ, the hash will not match and it gets refused. If you
+changed the wording, record `goal` again and take the new hash.
 
-`close`가 통과하면 레코드 경로가 출력된다. 사용자에게 그 경로를 알려준다.
-거부되면 **무엇이 왜 남았는지가 전부 출력된다.** 그것을 사용자에게 보여주고, 남은 것을 마저 묻는다.
+When `close` passes it prints the record's path. Tell the user that path.
+When it refuses, **it prints everything that is still outstanding.** Show the user that, and go ask
+about what is left.
 
 ---
 
-## 어떻게 묻는가
+## How to ask
 
-**한 번에 하나씩 묻는다.** 질문 셋을 묶어 보내면 사용자는 그중 하나만 답하고, 나머지는 답한 것처럼
-지나간다.
+**One at a time.** Send three questions in a bundle and the user answers one, while the other two slide
+past as if they had been answered.
 
-- **"왜"를 거듭 묻는다.** 표면의 요구에서 그 뒤의 판단 기준으로 내려간다. "왜 그게 중요한가"를 두세 번
-  반복하면 대개 진짜 구성개념에 닿는다. 단, 심문처럼 반복하지 않는다 — 앞 답을 딛고 다음을 묻는다.
-- **대안을 셋 놓고 고르게 한다.** 백지 질문("어떻게 하고 싶으세요?")보다, 구체적으로 다른 셋을
-  보여주고 어느 쪽이 가깝고 어느 쪽이 확실히 아닌지 묻는 편이 훨씬 많은 것을 끌어낸다.
-- **반대 극을 물어본다.** "무엇이면 성공인가"만큼 "무엇이면 실패인가"가 경계를 정확히 그린다.
-- **사전 부검.** "이걸 다 만들었는데 6개월 뒤 실패했다면, 무엇 때문일 것 같은가."
-- **예시로 기준을 만든다.** 판정 기준이 필요한 항목은 추상적 정의를 받지 말고, **사용자가 직접
-  판정한 예시 하나 이상**을 받아 거기서 기준을 뽑는다. 합의와 검증이 갈라지지 않는 유일한 방법이다.
+- **Ask "why" repeatedly.** Walk down from the surface request to the judgement behind it. Two or three
+  rounds of "why does that matter" usually reaches the real construct. Do not do it like an
+  interrogation — build each question on the answer before it.
+- **Offer three alternatives to choose from.** Better than a blank question ("how would you like it?"):
+  show three concretely different options and ask which is closest and which is definitely not it.
+- **Ask for the opposite pole.** "What would count as failure" draws the boundary as sharply as
+  "what would count as success".
+- **Pre-mortem.** "Suppose this all gets built and six months later it failed — what would have caused it?"
+- **Build criteria out of cases.** Where a criterion is needed, do not take an abstract definition —
+  take **at least one case the user judged themselves** and derive the criterion from it. That is the
+  only way agreement and verification do not drift apart.
 
-## 하지 않는 것
+## What not to do
 
-- **사용자 말을 요약해서 저장하지 않는다.** 요약이 원문을 대체하는 것이 이 장치가 막으려는
-  실패 그 자체다.
-- **답을 유도하지 않는다.** "그러니까 X 하시려는 거죠?"는 질문이 아니라 제안이다.
-- **스스로 "다 이해했습니다"로 끝내지 않는다.** 끝을 당신이 정하면 자기 확신을 자기가 못 깬다.
-  남은 것이 없다고 판단되면 그렇게 말하고 `close`를 부른다 — 판정은 기계가 한다.
-- **답이 현재 코드와 어긋나면 그냥 받아 적지 않는다.** 근거가 되는 파일과 줄을 인용해서 다시 묻는다.
-  권위는 코드다.
-- **모든 모호함을 다 묻지 않는다.** 해석이 갈려도 산출물이 안 달라지면 가정하고 그 가정을 보이게
-  적는다. 산출물이 달라지거나 되돌리기 어려운 것만 질문으로 만든다.
+- **Never store a summary in place of the user's words.** A summary displacing the original is the
+  exact failure this thing exists to prevent.
+- **Do not lead the answer.** "So you want X, right?" is a proposal, not a question.
+- **Do not end on your own "I understand it all now".** If you decide when it ends, your own conviction
+  never gets broken by anything. When you judge that nothing is left, say so and call `close` — the
+  machine makes that call.
+- **When an answer clashes with the current code, do not just write it down.** Cite the file and line
+  and ask again. The code is the authority.
+- **Do not ask about every ambiguity.** If a reading splits but the output does not change, assume and
+  **write the assumption down where it can be seen.** Only what changes the output or is hard to
+  reverse becomes a question.
 
-## 사용자에게 쓰는 말
+## The words you write to the user
 
-한국어로 쓴다. 사용자가 쓴 단어를 쓴다 — 사용자가 안 쓴 전문 용어를 새로 들여오지 않는다.
-꼭 필요하면 처음 나올 때 한 줄로 풀어 쓴다.
+**Write in the language the user wrote in.** This document, the CLI's output, and the agent definitions
+are all in English because the reader there is you, not them. What the user reads is what you write, and
+that follows them.
+
+- When you relay the status block or a refusal reason, **put it in the user's language.** Do not paste
+  the English through.
+- **A sentence quoting the user stays exactly as they wrote it.** Their words are not yours to translate.
+- Use the user's own words for things. **Do not import a term the user never used.** If you truly need
+  one, unpack it in a line the first time it appears.

@@ -140,8 +140,8 @@ test("활성 인터뷰가 아니면 상태 블록도 없다", async () => {
 test("매 턴 끝에 그 블록을 사용자에게 보이라고 스킬 설명서가 지시한다", async () => {
   const skill = await readFile(join(repoRoot, "skills", "deep-interview", "SKILL.md"), "utf8");
 
-  expect(skill.includes("매 턴 끝에")).toBe(true);
-  expect(skill.includes("지금 이해하고 있는 뜻")).toBe(true);
+  expect(skill.includes("at the end of every turn")).toBe(true);
+  expect(skill.includes("how the request is currently being read")).toBe(true);
 });
 
 // Section headers sit at column 0; their items are indented.

@@ -115,6 +115,6 @@ test("활성 인터뷰가 아니면 전체 보기 명령도 거부한다", async
 test("상태 블록을 배경설명·질문보다 앞에 두라고 스킬 설명서가 지시한다", async () => {
   const skill = await readFile(join(repoRoot, "skills", "deep-interview", "SKILL.md"), "utf8");
 
-  expect(skill.includes("배경설명보다 앞에 둔다")).toBe(true);
+  expect(skill.includes("above your own prose")).toBe(true);
   expect(skill.includes("fabricate deep-interview status")).toBe(true);
 });
