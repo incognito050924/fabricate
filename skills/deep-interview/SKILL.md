@@ -301,11 +301,28 @@ fabricate turn record --kind contradiction-resolved --contradiction c1 --text "<
 **You cannot finish without running it at least once.** If it never ran, that is what gets recorded —
 there is no pretending it did.
 
-**④ Show the user the goal predicate wording, then record exactly that.**
+**④ Show the user the goal predicate wording, then record exactly that — and name the remarks it carries.**
+
+Before you write it, go back through **every `remark`** and ask, one at a time: is this in the wording?
+The predicate is your prose, not the user's, and this is the step where the user's own decisions go
+missing. In real use the predicate got rewritten four times and every rewrite was the user putting back
+something they had already said.
 
 ```sh
-fabricate turn record --kind goal --text "<what has to be true for this to be done — the wording you showed the user>"
+fabricate turn record --kind goal --text "<what has to be true for this to be done — the wording you showed the user>" \
+  --covers m1,m4,m7
 ```
+
+`--covers` is the remarks this wording actually carries. A remark that does **not** belong in the
+predicate — the user renaming something, or asking why you asked at all — gets set aside instead, with
+the reason it is not a completion condition.
+
+```sh
+fabricate turn record --kind set-aside --remark m16 --reason "<why this is not goal content>"
+```
+
+A remark that is neither carried nor set aside makes `close` refuse, and it prints those ids. Silence is
+the failure this step exists to catch, so "I did not mention it" is not one of the outcomes.
 
 The output carries `goal-hash: <hash>`. **Take that value straight to close.**
 

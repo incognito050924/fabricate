@@ -116,6 +116,18 @@ const open = (state: InterviewState): string[] => {
     lines.push("no goal predicate yet");
   }
 
+  // D-5: what the user brought up unprompted is what the goal predicate kept
+  // losing, and the user is the one who caught it every time. This is where they
+  // get to catch it without reading the ledger. Before a predicate exists there
+  // is nothing to be uncovered against, and the line above already says so.
+  if (state.goals.length > 0) {
+    for (const remark of state.remarks.values()) {
+      if (!state.goalCovers.has(remark.id) && !state.setAsides.has(remark.id)) {
+        lines.push(`${remark.id} not in the goal predicate — ${short(remark.text)}`);
+      }
+    }
+  }
+
   return lines;
 };
 

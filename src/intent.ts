@@ -224,6 +224,28 @@ const closeReasons = (
     );
   }
 
+  // D-5: the fragment check above only covers the original request. Everything
+  // the user decided mid-interview came in as a `remark`, and the goal predicate
+  // — written fresh by the driver — was never checked against any of it. Four
+  // times in one session the user had to put back something they had already
+  // said. Every remark now has to be either carried into the predicate or set
+  // aside with a reason.
+  //
+  // What this cannot see is a later goal record dropping what an earlier one
+  // carried: `goalCovers` is the union over all of them. That is the same line
+  // GOAL.md §8 draws — the machine checks that the accounting happened, not that
+  // the wording is faithful.
+  const unaccountedRemarks = [...state.remarks.values()].filter(
+    (remark) => !state.goalCovers.has(remark.id) && !state.setAsides.has(remark.id),
+  );
+  if (unaccountedRemarks.length > 0) {
+    reasons.push(
+      `Remarks the goal predicate never accounts for: ${unaccountedRemarks
+        .map((remark) => remark.id)
+        .join(", ")}`,
+    );
+  }
+
   const unresolvedContradictions = [...state.contradictions.values()].filter(
     (contradiction) => !contradiction.resolved,
   );

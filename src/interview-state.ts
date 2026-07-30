@@ -57,6 +57,13 @@ export type RemarkState = {
   overturns: string | null;
 };
 
+// A remark the driver judged not to be goal content, with the reason. The other
+// half of remark coverage; the covered half rides on the goal record's `covers`.
+export type SetAsideState = {
+  remark: string;
+  reason: string;
+};
+
 export type ContradictionState = {
   id: string;
   text: string;
@@ -124,9 +131,12 @@ export type InterviewState = {
   challenges: Map<string, ChallengeState>;
   criteria: Map<string, CriterionState>;
   examples: Map<string, ExampleState>;
+  setAsides: Map<string, SetAsideState>;
   contradictionPassIndexes: number[];
   lastAnswerIndex: number | null;
   goals: string[];
+  // Remark ids the goal records claim to carry, unioned over every goal record.
+  goalCovers: Set<string>;
   goalHash: string;
   usedIds: Set<string>;
   readiness: Readiness;
@@ -153,9 +163,11 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
   const challenges = new Map<string, ChallengeState>();
   const criteria = new Map<string, CriterionState>();
   const examples = new Map<string, ExampleState>();
+  const setAsides = new Map<string, SetAsideState>();
   const contradictionPassIndexes: number[] = [];
   const usedIds = new Set<string>();
   const goals: string[] = [];
+  const goalCovers = new Set<string>();
   let lastAnswerIndex: number | null = null;
 
   for (const [index, entry] of entries.entries()) {
@@ -343,6 +355,18 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
       const text = stringValue(entry.text);
       if (text !== null) {
         goals.push(text);
+        for (const remarkId of stringArrayValue(entry.covers)) {
+          goalCovers.add(remarkId);
+        }
+      }
+      continue;
+    }
+
+    if (kind === "set-aside") {
+      const remark = stringValue(entry.remark);
+      const reason = stringValue(entry.reason);
+      if (remark !== null && reason !== null) {
+        setAsides.set(remark, { remark, reason });
       }
       continue;
     }
@@ -458,9 +482,11 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
     challenges,
     criteria,
     examples,
+    setAsides,
     contradictionPassIndexes,
     lastAnswerIndex,
     goals,
+    goalCovers,
     goalHash: goalHashFor(goals),
     usedIds,
     readiness,

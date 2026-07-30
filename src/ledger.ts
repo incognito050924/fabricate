@@ -622,11 +622,36 @@ const prepareRecord = (
     return accept({ kind, criterion: criterion.value, text: text.value });
   }
 
+  // D-5: the goal predicate is the driver's own prose, and nothing tied it back to
+  // what the user actually said. Fragment coverage only covers the original
+  // request; every decision the user brought up mid-interview arrives as a
+  // `remark` and was outside every check. So the goal record now names which
+  // remarks it carries, in the same shape as `question --covers`.
+  if (kind === "set-aside") {
+    const remark = requiredString(flags, "remark");
+    const reason = requiredString(flags, "reason");
+    if (!remark.ok) return remark;
+    if (!reason.ok) return reason;
+    if (!state.remarks.has(remark.value)) {
+      return reject(`No such remark: ${remark.value}`);
+    }
+    return accept({ kind, remark: remark.value, reason: reason.value });
+  }
+
   const text = requiredString(flags, "text");
   if (!text.ok) return text;
+  const covers = commaList(optionalString(flags, "covers"));
+  for (const remarkId of covers) {
+    if (!state.remarks.has(remarkId)) {
+      return reject(`No such remark: ${remarkId}`);
+    }
+  }
   const goals = [...state.goals, text.value];
   const goalHash = goalHashFor(goals);
-  return accept({ kind, text: text.value, goal_hash: goalHash }, `goal-hash: ${goalHash}\n`);
+  return accept(
+    { kind, text: text.value, covers, goal_hash: goalHash },
+    `goal-hash: ${goalHash}\n`,
+  );
 };
 
 const knownKinds = new Set([
@@ -649,6 +674,7 @@ const knownKinds = new Set([
   "criterion",
   "example",
   "rule",
+  "set-aside",
   "goal",
 ]);
 
@@ -672,7 +698,8 @@ const allowedFlags: Record<string, Set<string>> = {
   criterion: new Set(["id", "text", "type"]),
   example: new Set(["id", "criterion", "text", "verdict"]),
   rule: new Set(["criterion", "text"]),
-  goal: new Set(["text"]),
+  "set-aside": new Set(["remark", "reason"]),
+  goal: new Set(["text", "covers"]),
 };
 
 const accept = (entry: Record<string, unknown>, stdout?: string): PreparedRecord => ({
