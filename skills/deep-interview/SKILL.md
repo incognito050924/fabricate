@@ -341,7 +341,7 @@ fabricate turn record --kind set-aside --remark m16 --reason "<why this is not g
 A remark that is neither carried nor set aside makes `close` refuse, and it prints those ids. Silence is
 the failure this step exists to catch, so "I did not mention it" is not one of the outcomes.
 
-The output carries `goal-hash: <hash>`. **Take that value straight to close.**
+The `goal` record's output carries `goal-hash: <hash>`. **Take that value straight to close.**
 
 ```sh
 fabricate deep-interview close --goal-hash <the hash you just got>
