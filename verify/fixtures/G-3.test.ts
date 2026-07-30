@@ -6,6 +6,7 @@ import {
   fabricate,
   record,
   repoRoot,
+  stopHook,
   withInterviewFixture,
 } from "../support/interview-fixture.ts";
 
@@ -47,6 +48,7 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 이번 턴에 �
       "--text",
       "언제 실패하나요?",
     ]);
+    await stopHook({ fixture, promptId: "prompt-1" });
 
     const openState = await record(fixture, [
       "--kind",
@@ -58,8 +60,9 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 이번 턴에 �
       "--text",
       "월요일 오전 사내망에서 반복됩니다",
     ]);
+    await stopHook({ fixture, promptId: "prompt-2" });
 
-    // A1 is new this turn. D1 opened turns ago and did not change — it must
+    // A1 is new this turn. D1 opened a turn ago and did not change — it must
     // not repeat here even though it is still unresolved.
     expect(section(openState.stdout, "opened this turn")).toContain("A1");
     expect(section(openState.stdout, "opened this turn")).not.toContain("D1");
@@ -75,6 +78,7 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 이번 턴에 �
       "--text",
       "사내망 접속 시 월요일 첫 인증만 튕긴다는 뜻으로 읽었습니다",
     ]);
+    await stopHook({ fixture, promptId: "prompt-3" });
 
     // The driver's own reading of the user's intent is its own section — it
     // shows up on the turn that wrote it, not on a later, unrelated turn.
@@ -90,6 +94,7 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 이번 턴에 �
       "--verdict",
       "accepted",
     ]);
+    await stopHook({ fixture, promptId: "prompt-4" });
 
     expect(section(interpreted.stdout, "settled this turn")).toContain("A1");
 

@@ -1,13 +1,6 @@
-import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { FABRICATE_COMMAND_NAME } from "./constants.ts";
-import {
-  appendJsonLine,
-  pathExists,
-  readJsonLines,
-  readUtf8IfExists,
-  writeFileIfAbsent,
-} from "./files.ts";
+import { appendJsonLine, pathExists, readJsonLines, writeFileIfAbsent } from "./files.ts";
 import {
   objectField,
   optionalBoolean,
@@ -18,7 +11,14 @@ import {
 import { projectDirFromHookPayload } from "./project.ts";
 import type { CliResult } from "./result.ts";
 import { ok } from "./result.ts";
-import { appendHookObservation, ensureHookSession, sessionDir } from "./session.ts";
+import {
+  appendHookObservation,
+  ensureHookSession,
+  readTurnState,
+  sessionDir,
+  turnStatePath,
+  writeTurnState,
+} from "./session.ts";
 
 export type HookEvent = "user-prompt-expansion" | "pre-tool-use" | "stop";
 
@@ -133,14 +133,14 @@ const handleStop = async (payload: Record<string, unknown>): Promise<CliResult> 
   }
 
   const ledgerLength = (await readJsonLines(join(dir, "ledger.jsonl"))).length;
-  const previous = await readTurnState(join(dir, "turnstate.json"));
+  const statePath = turnStatePath(dir);
+  const previous = await readTurnState(statePath);
   const sameTurn = previous?.prompt_id === promptId;
   const startLength = sameTurn ? previous.start_L : (previous?.last_L ?? 0);
   const ledgerAdvanced = ledgerLength > startLength;
-  const turnStatePath = join(dir, "turnstate.json");
 
   if (ledgerAdvanced) {
-    await writeTurnState(turnStatePath, {
+    await writeTurnState(statePath, {
       prompt_id: promptId,
       start_L: startLength,
       last_L: ledgerLength,
@@ -157,7 +157,7 @@ const handleStop = async (payload: Record<string, unknown>): Promise<CliResult> 
       last_L: ledgerLength,
       reason: "An active interview turn ended without the ledger growing.",
     });
-    await writeTurnState(turnStatePath, {
+    await writeTurnState(statePath, {
       prompt_id: promptId,
       start_L: startLength,
       last_L: ledgerLength + 1,
@@ -165,7 +165,7 @@ const handleStop = async (payload: Record<string, unknown>): Promise<CliResult> 
     return ok();
   }
 
-  await writeTurnState(turnStatePath, {
+  await writeTurnState(statePath, {
     prompt_id: promptId,
     start_L: startLength,
     last_L: ledgerLength,
@@ -177,44 +177,4 @@ const handleStop = async (payload: Record<string, unknown>): Promise<CliResult> 
         "This is an active interview session and the ledger did not grow this turn. Record this turn with `fabricate turn record ...` before you send a question or a judgement to the user.",
     })}\n`,
   );
-};
-
-const writeTurnState = async (path: string, state: TurnState): Promise<void> => {
-  await writeFile(path, `${JSON.stringify(state)}\n`, "utf8");
-};
-
-type TurnState = {
-  prompt_id: string;
-  start_L: number;
-  last_L: number;
-};
-
-const readTurnState = async (path: string): Promise<TurnState | null> => {
-  const text = await readUtf8IfExists(path);
-
-  if (text === null) {
-    return null;
-  }
-
-  const parsed = JSON.parse(text) as unknown;
-
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    return null;
-  }
-
-  const object = parsed as Record<string, unknown>;
-
-  if (
-    typeof object.prompt_id !== "string" ||
-    typeof object.start_L !== "number" ||
-    typeof object.last_L !== "number"
-  ) {
-    return null;
-  }
-
-  return {
-    prompt_id: object.prompt_id,
-    start_L: object.start_L,
-    last_L: object.last_L,
-  };
 };

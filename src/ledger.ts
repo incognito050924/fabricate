@@ -6,7 +6,7 @@ import { analyzeLedger, goalHashFor, idPattern } from "./interview-state.ts";
 import { projectDirFromCommandCwd } from "./project.ts";
 import type { CliResult } from "./result.ts";
 import { fail, ok } from "./result.ts";
-import { selectActiveSession } from "./session.ts";
+import { readTurnState, selectActiveSession, turnStatePath } from "./session.ts";
 import { statusBlock, statusDiff } from "./status.ts";
 
 export const recordStart = async (cwd: string): Promise<CliResult> => {
@@ -61,7 +61,9 @@ export const recordTurn = async (
 
   const ledgerPath = join(selected.session.dir, "ledger.jsonl");
   const request = await readUtf8IfExists(join(selected.session.dir, "request.txt"));
-  const state = analyzeLedger(await readJsonLines(ledgerPath));
+  const entries = await readJsonLines(ledgerPath);
+  const state = analyzeLedger(entries);
+  const atTurnStart = analyzeLedger(entries.slice(0, await turnStartLength(selected.session.dir)));
   const prepared = prepareRecord(
     parsed.kind,
     parsed.flags,
@@ -83,7 +85,21 @@ export const recordTurn = async (
   // Goal 3: the turn's standing is printed without anyone asking for it.
   const after = analyzeLedger(await readJsonLines(ledgerPath));
 
-  return ok(`${prepared.stdout ?? ""}${statusDiff(state, after)}`);
+  return ok(`${prepared.stdout ?? ""}${statusDiff(atTurnStart, after)}`);
+};
+
+// The block the user reads is the one printed by the turn's last record, and a
+// real turn writes several records back to back (answer, restate, resolve). So
+// the diff runs from where the turn began, not from the record before this one —
+// otherwise everything the earlier records changed is silently dropped.
+//
+// Stop is what marks a turn boundary, and it leaves the ledger length behind in
+// turnstate.json. Before the first Stop there is no file, and the turn began at
+// the top of the ledger. If a turn was interrupted Stop never fired, so the next
+// block spans both turns — it over-reports rather than losing anything.
+const turnStartLength = async (sessionDirPath: string): Promise<number> => {
+  const state = await readTurnState(turnStatePath(sessionDirPath));
+  return state?.last_L ?? 0;
 };
 
 const parseRecordArgs = (

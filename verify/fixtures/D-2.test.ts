@@ -6,6 +6,7 @@ import {
   fabricate,
   record,
   repoRoot,
+  stopHook,
   withInterviewFixture,
 } from "../support/interview-fixture.ts";
 
@@ -44,7 +45,7 @@ test("매 기록마다 요약줄이 맨 앞에 온다 — 확정·미정 개수"
   });
 });
 
-test("이번 턴에 안 바뀐 것은 다시 안 나온다 — diff만 보인다", async () => {
+test("앞선 턴에 열린 것은 다시 안 나온다 — diff만 보인다", async () => {
   await withInterviewFixture("d-2-diff-only", async (fixture) => {
     await createSlashSession(fixture);
 
@@ -59,7 +60,11 @@ test("이번 턴에 안 바뀐 것은 다시 안 나온다 — diff만 보인다
     ]);
     expect(section(dimensionTurn.stdout, "opened this turn")).toContain("D1");
 
-    // A later, unrelated turn must not repeat D1 — it did not change this turn.
+    // The turn ends. Stop is what marks the boundary, so the next turn's diff
+    // starts from here.
+    await stopHook({ fixture, promptId: "prompt-1" });
+
+    // A later turn must not repeat D1 — it did not change in that turn.
     await record(fixture, ["--kind", "fragment", "--id", "F1", "--text", "로그인 실패"]);
     const questionTurn = await record(fixture, [
       "--kind",
@@ -75,6 +80,56 @@ test("이번 턴에 안 바뀐 것은 다시 안 나온다 — diff만 보인다
     ]);
 
     expect(questionTurn.stdout).not.toContain("D1");
+  });
+});
+
+// The block the user sees is the one from the turn's *last* record. Diffing that
+// record against the one before it drops everything the earlier records in the
+// same turn changed — and a real turn writes answer, restate and resolve back to
+// back. The turn, not the record, is the unit.
+test("한 턴에 기록이 여럿이면 마지막 블록이 그 턴 전체를 담는다", async () => {
+  await withInterviewFixture("d-2-turn-scope", async (fixture) => {
+    await createSlashSession(fixture);
+    await record(fixture, ["--kind", "fragment", "--id", "F1", "--text", "로그인 실패"]);
+    await record(fixture, ["--kind", "dimension", "--id", "D1", "--text", "실패 조건"]);
+    await record(fixture, [
+      "--kind",
+      "question",
+      "--id",
+      "Q1",
+      "--dimension",
+      "D1",
+      "--covers",
+      "F1",
+      "--text",
+      "언제 실패하나요?",
+    ]);
+    await stopHook({ fixture, promptId: "prompt-1" });
+
+    // One turn, two records. A1 lands first and R1 lands last.
+    await record(fixture, [
+      "--kind",
+      "answer",
+      "--id",
+      "A1",
+      "--question",
+      "Q1",
+      "--text",
+      "월요일 오전 사내망에서 반복됩니다",
+    ]);
+    const last = await record(fixture, [
+      "--kind",
+      "restate",
+      "--id",
+      "R1",
+      "--answer",
+      "A1",
+      "--text",
+      "사내망 접속 시 첫 인증만 튕긴다는 뜻으로 읽었습니다",
+    ]);
+
+    expect(section(last.stdout, "opened this turn")).toContain("A1");
+    expect(section(last.stdout, "reading updated this turn")).toContain("A1");
   });
 });
 

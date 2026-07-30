@@ -1,7 +1,14 @@
-import { readdir } from "node:fs/promises";
+import { readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { FABRICATE_DIR } from "./constants.ts";
-import { appendJsonLine, ensureDir, nowIso, pathExists, writeFileIfAbsent } from "./files.ts";
+import {
+  appendJsonLine,
+  ensureDir,
+  nowIso,
+  pathExists,
+  readUtf8IfExists,
+  writeFileIfAbsent,
+} from "./files.ts";
 import type { CliResult } from "./result.ts";
 import { fail } from "./result.ts";
 
@@ -16,6 +23,52 @@ export type MarkerInput = {
   projectDir: string;
   sessionId: string;
   promptId: string | null;
+};
+
+// Written by the Stop hook at the end of every turn, so it is also the only
+// record of where the current turn began. Two readers: the hook, which asks
+// whether the ledger grew, and the status block, which asks what changed.
+export type TurnState = {
+  prompt_id: string;
+  start_L: number;
+  last_L: number;
+};
+
+export const turnStatePath = (sessionDirPath: string): string =>
+  join(sessionDirPath, "turnstate.json");
+
+export const writeTurnState = async (path: string, state: TurnState): Promise<void> => {
+  await writeFile(path, `${JSON.stringify(state)}\n`, "utf8");
+};
+
+export const readTurnState = async (path: string): Promise<TurnState | null> => {
+  const text = await readUtf8IfExists(path);
+
+  if (text === null) {
+    return null;
+  }
+
+  const parsed = JSON.parse(text) as unknown;
+
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return null;
+  }
+
+  const object = parsed as Record<string, unknown>;
+
+  if (
+    typeof object.prompt_id !== "string" ||
+    typeof object.start_L !== "number" ||
+    typeof object.last_L !== "number"
+  ) {
+    return null;
+  }
+
+  return {
+    prompt_id: object.prompt_id,
+    start_L: object.start_L,
+    last_L: object.last_L,
+  };
 };
 
 export const sessionsDir = (projectDir: string): string =>
