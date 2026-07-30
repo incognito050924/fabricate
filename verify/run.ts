@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { criteria, structureChecks } from "./criteria.ts";
 import { parseJUnitFile } from "./lib/junit.ts";
 import { runProcess, tailOutput } from "./lib/process.ts";
+import { type SweepResult, sweepStaleVerifyMarketplaces } from "./lib/stale-marketplaces.ts";
 import type { Check, CheckContext, ProcessResult, StructureStatus } from "./types.ts";
 
 type AxisAResult = {
@@ -33,6 +34,9 @@ const main = async (): Promise<number> => {
   const obsPath = join(tmpRoot, "host-observation.json");
 
   try {
+    // A killed run never reaches its teardown, so its marketplace entry and cache
+    // directory stay in the user's home. Sweep them before starting (GOAL.md §4-9).
+    const swept = await sweepStaleVerifyMarketplaces(repoRoot);
     const testRun = await runFixtures(repoRoot, tmpRoot, obsPath);
     const axisA = await axisAFromJUnit(testRun, join(tmpRoot, "junit.xml"));
     const axisB = await runStructureChecks({
@@ -47,7 +51,7 @@ const main = async (): Promise<number> => {
     ];
 
     const output = formatReport(axisA, axisB, axisC);
-    process.stdout.write(output.text);
+    process.stdout.write(sweepReport(swept) + output.text);
     return output.exitCode;
   } finally {
     await rm(tmpRoot, { force: true, recursive: true });
@@ -241,6 +245,23 @@ const formatReport = (
     text: `${lines.join("\n")}\n`,
     exitCode,
   };
+};
+
+// Silence would read as "nothing was left behind". Say what was cleaned and what
+// resisted, so a leak that the sweep cannot fix stays visible (§4-7).
+const sweepReport = (swept: SweepResult): string => {
+  const lines: string[] = [];
+
+  if (swept.removed.length > 0) {
+    lines.push(`앞선 구동이 남긴 verify 마켓플레이스 ${swept.removed.length}건을 지웠다:`);
+    lines.push(...swept.removed.map((name) => `  - ${name}`));
+  }
+
+  for (const failure of swept.failed) {
+    lines.push(`verify 마켓플레이스를 못 지웠다: ${failure.name} (${failure.detail})`);
+  }
+
+  return lines.length === 0 ? "" : `${lines.join("\n")}\n\n`;
 };
 
 const indentDetail = (detail: string, spaces: number): string => {
