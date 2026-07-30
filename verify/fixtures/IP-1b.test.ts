@@ -34,6 +34,7 @@ test("start, turn record, close 가 장부에 순서대로 남고 표식 없이�
       "criterion",
       "example",
       "rule",
+      "goal-review",
       "goal",
       "closed",
     ]);

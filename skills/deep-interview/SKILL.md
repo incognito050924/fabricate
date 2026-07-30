@@ -77,18 +77,22 @@ You know the narrative of this conversation. That is exactly why **you cannot ju
 question can be answered without it** — you fill the missing context in your head as you read. This is
 the one place where grading yourself is structurally impossible, so this hand-off is **not optional.**
 
-Use the host's Agent tool to launch the **`question-blind-reviewer`** subagent and hand it
-**the question wording and nothing else.** No transcript, no earlier answers, no statement of what the
-interview is for — the moment you hand any of that over, that reviewer becomes a second driver and the
-verdict turns back into self-grading.
+Use the host's Agent tool to launch the **`blind-reviewer`** subagent and hand it
+**the question wording and nothing else**, saying only that it is a question. No transcript, no earlier
+answers, no statement of what the interview is for — the moment you hand any of that over, that reviewer
+becomes a second driver and the verdict turns back into self-grading.
 (If you cannot reach that agent, give a fresh subagent carrying no conversation context the
-instructions in `agents/question-blind-reviewer.md` verbatim and take the same shape back.)
+instructions in `agents/blind-reviewer.md` verbatim and take the same shape back.)
+
+It runs two gates and either one can fail: **can this be answered without the narrative**, and **can the
+words in it be understood by someone who was not here.** The second one exists because the first one
+never caught vocabulary — a long question that explains itself gets answered whatever words it rides on.
 
 Write down the verdict you get. **Write it before the question.**
 
 ```sh
 fabricate turn record --kind review --question q1 --text "<the exact wording that was reviewed>" \
-  --verdict pass --reviewer question-blind-reviewer --reason "<the reason that came back, verbatim>"
+  --verdict pass --reviewer blind-reviewer --reason "<the reason that came back, verbatim>"
 ```
 
 If `reject` comes back, **that question does not go to the user.** Read the reason, rewrite, review again.
@@ -308,10 +312,23 @@ The predicate is your prose, not the user's, and this is the step where the user
 missing. In real use the predicate got rewritten four times and every rewrite was the user putting back
 something they had already said.
 
+The wording goes past the **`blind-reviewer`** first, the same way a question does — hand it the goal
+wording and nothing else, saying only that it is the goal predicate. This is the text that gets locked
+and handed to a session that will never see this conversation, so the reviewer is standing in for that
+session: if they cannot tell what has to be true from the wording alone, neither will it.
+
+```sh
+fabricate turn record --kind goal-review --text "<the exact goal wording>" \
+  --verdict pass --reviewer blind-reviewer --reason "<the reason that came back, verbatim>"
+```
+
 ```sh
 fabricate turn record --kind goal --text "<what has to be true for this to be done — the wording you showed the user>" \
   --covers m1,m4,m7
 ```
+
+The `goal` record is refused unless a passing `goal-review` exists for **that exact wording**. Change one
+character and it needs reviewing again.
 
 `--covers` is the remarks this wording actually carries. A remark that does **not** belong in the
 predicate — the user renaming something, or asking why you asked at all — gets set aside instead, with

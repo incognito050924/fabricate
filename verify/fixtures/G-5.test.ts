@@ -35,7 +35,7 @@ const 배송물 = async (): Promise<{ path: string; text: string }[]> => {
   const paths = [
     join(repoRoot, "skills", "deep-interview", "SKILL.md"),
     join(repoRoot, "skills", "seed", "SKILL.md"),
-    join(repoRoot, "agents", "question-blind-reviewer.md"),
+    join(repoRoot, "agents", "blind-reviewer.md"),
     join(repoRoot, "README.md"),
     ...(await readdir(join(repoRoot, "src"))).map((name) => join(repoRoot, "src", name)),
   ];

@@ -215,36 +215,34 @@ const prepareRecord = (
 
   if (kind === "review") {
     const question = requiredFutureQuestionId(flags, "question", state);
-    const text = requiredString(flags, "text");
-    const verdict = requiredString(flags, "verdict");
-    const reviewer = requiredString(flags, "reviewer");
-    const reason = requiredString(flags, "reason");
     if (!question.ok) return question;
-    if (!text.ok) return text;
+    const verdict = blindVerdict(flags, sessionId);
     if (!verdict.ok) return verdict;
-    if (!reviewer.ok) return reviewer;
-    if (!reason.ok) return reason;
-    if (verdict.value !== "pass" && verdict.value !== "reject") {
-      return reject("--verdict must be pass or reject.");
-    }
-
-    const normalizedReviewer = normalizeContextName(reviewer.value);
-    if (
-      normalizedReviewer.includes("driver") ||
-      normalizedReviewer === normalizeContextName(sessionId)
-    ) {
-      return reject(
-        "The reviewer is the driver itself. The verdict has to come from a context that has not seen the conversation.",
-      );
-    }
 
     return accept({
       kind,
       question: question.value,
-      text: text.value,
-      verdict: verdict.value,
-      reviewer: reviewer.value,
-      reason: reason.value,
+      text: verdict.text,
+      verdict: verdict.verdict,
+      reviewer: verdict.reviewer,
+      reason: verdict.reason,
+    });
+  }
+
+  // D-6: the blind reviewer only ever stood in front of questions. The goal
+  // predicate — the one thing that gets locked and handed to the next session —
+  // went out unread. It is the surface where "a reader who was not here can
+  // understand this" is the entire promise (IP-3), so it gets the same reader.
+  if (kind === "goal-review") {
+    const verdict = blindVerdict(flags, sessionId);
+    if (!verdict.ok) return verdict;
+
+    return accept({
+      kind,
+      text: verdict.text,
+      verdict: verdict.verdict,
+      reviewer: verdict.reviewer,
+      reason: verdict.reason,
     });
   }
 
@@ -640,6 +638,15 @@ const prepareRecord = (
 
   const text = requiredString(flags, "text");
   if (!text.ok) return text;
+  const goalReview = state.goalReviews.get(text.value);
+  if (goalReview === undefined) {
+    return reject(
+      "This goal wording has no blind review. Record `--kind goal-review` for the exact wording first.",
+    );
+  }
+  if (goalReview.verdict === "reject") {
+    return reject("The reviewer that has not seen the conversation rejected this goal wording.");
+  }
   const covers = commaList(optionalString(flags, "covers"));
   for (const remarkId of covers) {
     if (!state.remarks.has(remarkId)) {
@@ -658,6 +665,7 @@ const knownKinds = new Set([
   "fragment",
   "dimension",
   "review",
+  "goal-review",
   "question",
   "answer",
   "remark",
@@ -682,6 +690,7 @@ const allowedFlags: Record<string, Set<string>> = {
   fragment: new Set(["id", "text"]),
   dimension: new Set(["id", "text", "depends-on"]),
   review: new Set(["question", "text", "verdict", "reviewer", "reason"]),
+  "goal-review": new Set(["text", "verdict", "reviewer", "reason"]),
   question: new Set(["id", "text", "dimension", "covers", "recommend", "because"]),
   answer: new Set(["id", "question", "text", "unsure", "overturns"]),
   remark: new Set(["id", "text", "overturns"]),
@@ -700,6 +709,48 @@ const allowedFlags: Record<string, Set<string>> = {
   rule: new Set(["criterion", "text"]),
   "set-aside": new Set(["remark", "reason"]),
   goal: new Set(["text", "covers"]),
+};
+
+type BlindVerdict =
+  | { ok: true; text: string; verdict: string; reviewer: string; reason: string }
+  | { ok: false; result: CliResult };
+
+// Shared by every surface the blind reviewer reads. The one thing it has to
+// enforce is that the verdict did not come from the driver's own context —
+// a self-graded blind review is not a blind review.
+const blindVerdict = (flags: Map<string, string | true>, sessionId: string): BlindVerdict => {
+  const text = requiredString(flags, "text");
+  const verdict = requiredString(flags, "verdict");
+  const reviewer = requiredString(flags, "reviewer");
+  const reason = requiredString(flags, "reason");
+  if (!text.ok) return text;
+  if (!verdict.ok) return verdict;
+  if (!reviewer.ok) return reviewer;
+  if (!reason.ok) return reason;
+  if (verdict.value !== "pass" && verdict.value !== "reject") {
+    return { ok: false, result: fail("--verdict must be pass or reject.\n") };
+  }
+
+  const normalizedReviewer = normalizeContextName(reviewer.value);
+  if (
+    normalizedReviewer.includes("driver") ||
+    normalizedReviewer === normalizeContextName(sessionId)
+  ) {
+    return {
+      ok: false,
+      result: fail(
+        "The reviewer is the driver itself. The verdict has to come from a context that has not seen the conversation.\n",
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    text: text.value,
+    verdict: verdict.value,
+    reviewer: reviewer.value,
+    reason: reason.value,
+  };
 };
 
 const accept = (entry: Record<string, unknown>, stdout?: string): PreparedRecord => ({

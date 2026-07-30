@@ -128,6 +128,24 @@ const recordGoalAndExpectHash = async (
   text: string,
 ): Promise<string> => {
   const expected = goalHash({ goals: [...fixture.goals, text] });
+  // The goal wording goes past the blind reader first (D-6).
+  await expectOk(
+    await fabricate(fixture, [
+      "turn",
+      "record",
+      "--kind",
+      "goal-review",
+      "--text",
+      text,
+      "--verdict",
+      "pass",
+      "--reviewer",
+      "blind-reviewer",
+      "--reason",
+      "문안만으로 무엇이 달성돼야 하는지 알 수 있습니다",
+    ]),
+    "turn record goal-review",
+  );
   const result = await fabricate(fixture, ["turn", "record", "--kind", "goal", "--text", text]);
 
   await expectOk(result, "turn record goal");

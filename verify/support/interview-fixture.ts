@@ -218,6 +218,31 @@ export const record = async (fixture: InterviewFixture, args: string[]): Promise
     }
   }
 
+  // D-6: the goal wording goes past the same blind reader the questions do.
+  // Fixtures that are about that gate call the CLI directly instead.
+  if (recordKind(args) === "goal") {
+    const text = flagValue(args, "--text");
+    if (text !== null) {
+      await expectOk(
+        await fabricate(fixture, [
+          "turn",
+          "record",
+          "--kind",
+          "goal-review",
+          "--text",
+          text,
+          "--verdict",
+          "pass",
+          "--reviewer",
+          "blind-reviewer",
+          "--reason",
+          "문안만으로 무엇이 달성돼야 하는지 알 수 있습니다",
+        ]),
+        "turn record goal-review",
+      );
+    }
+  }
+
   const result = await fabricate(fixture, ["turn", "record", ...effectiveArgs]);
   await expectOk(result, `turn record ${effectiveArgs.join(" ")}`);
 

@@ -40,6 +40,16 @@ export type ReviewState = {
   reason: string;
 };
 
+// The same blind read, standing in front of the goal wording instead of a
+// question. Keyed by the exact text, so a wording that drifted after review has
+// no verdict of its own.
+export type GoalReviewState = {
+  text: string;
+  verdict: "pass" | "reject";
+  reviewer: string;
+  reason: string;
+};
+
 export type AnswerState = {
   id: string;
   question: string;
@@ -121,6 +131,7 @@ export type InterviewState = {
   dimensions: Map<string, DimensionState>;
   questions: Map<string, QuestionState>;
   reviews: Map<string, ReviewState>;
+  goalReviews: Map<string, GoalReviewState>;
   answers: Map<string, AnswerState>;
   remarks: Map<string, RemarkState>;
   restates: Map<string, { id: string; answer: string; text: string }>;
@@ -153,6 +164,7 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
   const dimensions = new Map<string, DimensionState>();
   const questions = new Map<string, QuestionState>();
   const reviews = new Map<string, ReviewState>();
+  const goalReviews = new Map<string, GoalReviewState>();
   const answers = new Map<string, AnswerState>();
   const remarks = new Map<string, RemarkState>();
   const restates = new Map<string, { id: string; answer: string; text: string }>();
@@ -216,6 +228,22 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
         reason !== null
       ) {
         reviews.set(question, { question, text, verdict, reviewer, reason });
+      }
+      continue;
+    }
+
+    if (kind === "goal-review") {
+      const text = stringValue(entry.text);
+      const verdict = stringValue(entry.verdict);
+      const reviewer = stringValue(entry.reviewer);
+      const reason = stringValue(entry.reason);
+      if (
+        text !== null &&
+        (verdict === "pass" || verdict === "reject") &&
+        reviewer !== null &&
+        reason !== null
+      ) {
+        goalReviews.set(text, { text, verdict, reviewer, reason });
       }
       continue;
     }
@@ -472,6 +500,7 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
     dimensions,
     questions,
     reviews,
+    goalReviews,
     answers,
     remarks,
     restates,
