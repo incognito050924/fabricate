@@ -4,6 +4,8 @@ import type { InterviewState } from "./interview-state.ts";
 // settled, what is still open, and how the driver is currently reading their
 // intent. It is derived from the ledger only — anything the driver did not write
 // down does not appear here, which is the point.
+//
+// Full, cumulative view — used by the on-demand `deep-interview status` command.
 export const statusBlock = (state: InterviewState): string =>
   [
     "─ 지금까지 ─",
@@ -16,6 +18,31 @@ export const statusBlock = (state: InterviewState): string =>
     "─",
     "",
   ].join("\n");
+
+// Auto-attached per turn. A 30-line cumulative block buried the question below
+// it (D-2). This shows a one-line summary plus only what this turn changed —
+// the full picture stays one command away.
+export const statusDiff = (before: InterviewState, after: InterviewState): string => {
+  const settledAfter = settled(after);
+  const openAfter = open(after);
+
+  return [
+    `─ 지금까지: 확정 ${settledAfter.length} · 미정 ${openAfter.length} · 전체 보기 \`fabricate deep-interview status\` ─`,
+    "이번 턴에 확정된 것",
+    ...indent(newLines(settled(before), settledAfter)),
+    "이번 턴에 새로 열린 것",
+    ...indent(newLines(open(before), openAfter)),
+    "이번 턴에 갱신된 뜻",
+    ...indent(newLines(reading(before), reading(after))),
+    "─",
+    "",
+  ].join("\n");
+};
+
+const newLines = (before: string[], after: string[]): string[] => {
+  const seen = new Set(before);
+  return after.filter((line) => !seen.has(line));
+};
 
 const settled = (state: InterviewState): string[] => {
   const lines: string[] = [];

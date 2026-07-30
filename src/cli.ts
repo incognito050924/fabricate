@@ -2,7 +2,7 @@ import { dispatchCheck } from "./check.ts";
 import { helpText } from "./help.ts";
 import { type HookEvent, handleHook } from "./hooks.ts";
 import { closeIntent, showIntent } from "./intent.ts";
-import { recordStart, recordTurn } from "./ledger.ts";
+import { recordStart, recordTurn, showStatus } from "./ledger.ts";
 import type { CliResult } from "./result.ts";
 import { fail, ok } from "./result.ts";
 
@@ -79,6 +79,10 @@ const dispatchDeepInterview = async (args: string[], env: CliEnv): Promise<CliRe
 
   if (subcommand === "show") {
     return await showIntent(env.cwd, args.slice(1));
+  }
+
+  if (subcommand === "status") {
+    return await showStatus(env.cwd);
   }
 
   if (subcommand === undefined) {

@@ -22,13 +22,15 @@ test("아무것도 요청하지 않아도 기록마다 지금까지의 상태가
       "실패 조건",
     ]);
 
-    expect(first.stdout).toContain("확정된 것");
-    expect(first.stdout).toContain("아직 안 정해진 것");
-    expect(first.stdout).toContain("지금 이해하고 있는 뜻");
+    expect(first.stdout).toContain("이번 턴에 확정된 것");
+    expect(first.stdout).toContain("이번 턴에 새로 열린 것");
+    expect(first.stdout).toContain("이번 턴에 갱신된 뜻");
   });
 });
 
-test("상태는 세 칸이 각각 실제 장부를 읽는다 — 안 닫힌 것과 닫힌 것이 자리를 바꾼다", async () => {
+// D-2: the block only carries what changed this turn — the full, cumulative
+// picture lives behind `deep-interview status` (see D-2.test.ts).
+test("상태는 세 칸이 각각 실제 장부를 읽는다 — 이번 턴에 바뀐 것만, 안 바뀐 것은 안 나온다", async () => {
   await withInterviewFixture("g-3-sections", async (fixture) => {
     await createSlashSession(fixture);
     await record(fixture, ["--kind", "fragment", "--id", "F1", "--text", "로그인 실패"]);
@@ -57,12 +59,13 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 안 닫힌 것�
       "월요일 오전 사내망에서 반복됩니다",
     ]);
 
-    // Not settled yet: the dimension is open and the answer is unconfirmed.
-    expect(section(openState.stdout, "아직 안 정해진 것")).toContain("D1");
-    expect(section(openState.stdout, "아직 안 정해진 것")).toContain("A1");
-    expect(section(openState.stdout, "확정된 것")).not.toContain("D1");
+    // A1 is new this turn. D1 opened turns ago and did not change — it must
+    // not repeat here even though it is still unresolved.
+    expect(section(openState.stdout, "이번 턴에 새로 열린 것")).toContain("A1");
+    expect(section(openState.stdout, "이번 턴에 새로 열린 것")).not.toContain("D1");
+    expect(section(openState.stdout, "이번 턴에 확정된 것")).not.toContain("D1");
 
-    await record(fixture, [
+    const restated = await record(fixture, [
       "--kind",
       "restate",
       "--id",
@@ -73,6 +76,12 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 안 닫힌 것�
       "사내망 접속 시 월요일 첫 인증만 튕긴다는 뜻으로 읽었습니다",
     ]);
 
+    // The driver's own reading of the user's intent is its own section — it
+    // shows up on the turn that wrote it, not on a later, unrelated turn.
+    expect(section(restated.stdout, "이번 턴에 갱신된 뜻")).toContain(
+      "사내망 접속 시 월요일 첫 인증만 튕긴다",
+    );
+
     const interpreted = await record(fixture, [
       "--kind",
       "confirm",
@@ -82,11 +91,7 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 안 닫힌 것�
       "accepted",
     ]);
 
-    // The driver's own reading of the user's intent is its own section.
-    expect(section(interpreted.stdout, "지금 이해하고 있는 뜻")).toContain(
-      "사내망 접속 시 월요일 첫 인증만 튕긴다",
-    );
-    expect(section(interpreted.stdout, "확정된 것")).toContain("A1");
+    expect(section(interpreted.stdout, "이번 턴에 확정된 것")).toContain("A1");
 
     const resolved = await record(fixture, [
       "--kind",
@@ -99,8 +104,8 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 안 닫힌 것�
       "A1",
     ]);
 
-    expect(section(resolved.stdout, "확정된 것")).toContain("D1");
-    expect(section(resolved.stdout, "아직 안 정해진 것")).not.toContain("D1");
+    expect(section(resolved.stdout, "이번 턴에 확정된 것")).toContain("D1");
+    expect(section(resolved.stdout, "이번 턴에 새로 열린 것")).not.toContain("D1");
   });
 });
 

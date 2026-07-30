@@ -7,7 +7,7 @@ import { projectDirFromCommandCwd } from "./project.ts";
 import type { CliResult } from "./result.ts";
 import { fail, ok } from "./result.ts";
 import { selectActiveSession } from "./session.ts";
-import { statusBlock } from "./status.ts";
+import { statusBlock, statusDiff } from "./status.ts";
 
 export const recordStart = async (cwd: string): Promise<CliResult> => {
   const projectDir = await projectDirFromCommandCwd(cwd);
@@ -23,6 +23,22 @@ export const recordStart = async (cwd: string): Promise<CliResult> => {
   });
 
   return ok("인터뷰 시작을 장부에 기록했습니다.\n");
+};
+
+// D-2: the per-turn block only shows what changed. This is the on-demand
+// escape hatch for the full, cumulative picture.
+export const showStatus = async (cwd: string): Promise<CliResult> => {
+  const projectDir = await projectDirFromCommandCwd(cwd);
+  const selected = await selectActiveSession(projectDir);
+
+  if (!selected.ok) {
+    return selected.result;
+  }
+
+  const ledgerPath = join(selected.session.dir, "ledger.jsonl");
+  const state = analyzeLedger(await readJsonLines(ledgerPath));
+
+  return ok(statusBlock(state));
 };
 
 export const recordTurn = async (
@@ -67,7 +83,7 @@ export const recordTurn = async (
   // Goal 3: the turn's standing is printed without anyone asking for it.
   const after = analyzeLedger(await readJsonLines(ledgerPath));
 
-  return ok(`${prepared.stdout ?? ""}${statusBlock(after)}`);
+  return ok(`${prepared.stdout ?? ""}${statusDiff(state, after)}`);
 };
 
 const parseRecordArgs = (
