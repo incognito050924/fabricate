@@ -121,14 +121,17 @@ const open = (state: InterviewState): string[] => {
 
 const reading = (state: InterviewState): string[] => {
   const lines: string[] = [];
-  const latestRestate = new Map<string, string>();
+  const latestRestate = new Map<string, { id: string; text: string }>();
 
   for (const restate of state.restates.values()) {
-    latestRestate.set(restate.answer, restate.text);
+    latestRestate.set(restate.answer, { id: restate.id, text: restate.text });
   }
 
-  for (const [answerId, text] of latestRestate) {
-    lines.push(`${answerId} ← ${short(text)}`);
+  // The restate id is here because the batched confirmation before close needs
+  // it as the argument to `confirm --restate`. Without it the only place to find
+  // that id was the ledger file (D-3).
+  for (const [answerId, restate] of latestRestate) {
+    lines.push(`${answerId} ← ${restate.id} ${short(restate.text)}`);
   }
 
   for (const materiality of state.materialities.values()) {

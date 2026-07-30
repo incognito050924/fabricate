@@ -361,11 +361,22 @@ const prepareRecord = (
     const verdict = requiredString(flags, "verdict");
     if (!restate.ok) return restate;
     if (!verdict.ok) return verdict;
-    if (!state.restates.has(restate.value)) {
+    const restateState = state.restates.get(restate.value);
+    if (restateState === undefined) {
       return reject(`No such restate: ${restate.value}`);
     }
     if (verdict.value !== "accepted" && verdict.value !== "rejected") {
       return reject("--verdict must be accepted or rejected.");
+    }
+    // Confirmation is now collected in one batch before close (D-3), which puts
+    // distance between a restatement and the "yes" that lands on it. A dozen ids
+    // in one pass makes accepting a superseded one easy, and that would lock a
+    // reading the user already pushed back on.
+    const latest = latestRestateFor(restateState.answer, state);
+    if (latest !== restate.value) {
+      return reject(
+        `${restate.value} was superseded by ${latest}. Confirm the latest restatement of ${restateState.answer}.`,
+      );
     }
     return accept({ kind, restate: restate.value, verdict: verdict.value });
   }
@@ -756,6 +767,22 @@ const validateCitation = (
   }
 
   return { ok: true };
+};
+
+// Insertion order is record order, so the last one wins.
+const latestRestateFor = (
+  answerId: string,
+  state: ReturnType<typeof analyzeLedger>,
+): string | null => {
+  let latest: string | null = null;
+
+  for (const restate of state.restates.values()) {
+    if (restate.answer === answerId) {
+      latest = restate.id;
+    }
+  }
+
+  return latest;
 };
 
 const commaList = (value: string | null): string[] => {

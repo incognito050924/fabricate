@@ -5,6 +5,7 @@ import {
   addCriterion,
   close,
   createSlashSession,
+  fabricate,
   record,
   repoRoot,
   withInterviewFixture,
@@ -111,3 +112,103 @@ test("확인을 미뤄 둬도 인터뷰는 계속 돈다 — 막는 자리는 cl
     expect((await close(fixture)).code).toBe(0);
   });
 });
+
+// Step ① asks the driver to collect "the latest restatement for each answer" and
+// confirm them in one pass. Nothing was printing the restate ids, so the only
+// place to find the argument for `--restate` was the ledger file itself.
+test("확인할 때 쓸 restate id 가 상태에 나온다", async () => {
+  await withInterviewFixture("d-3-confirm-ids", async (fixture) => {
+    await twoRoundInterview(fixture);
+
+    const status = await fabricate(fixture, ["deep-interview", "status"]);
+
+    expect(status.code).toBe(0);
+    expect(status.stdout).toContain("R1");
+    expect(status.stdout).toContain("R2");
+  });
+});
+
+// Batching moves the confirmation away from the restatement that earned it. With
+// a dozen restatements collected at the end, accepting a superseded one is one
+// mistyped id away — and it would lock a reading the user rejected.
+test("이미 고쳐 쓴 옛 되말하기는 채택으로 못 받는다", async () => {
+  await withInterviewFixture("d-3-confirm-superseded", async (fixture) => {
+    await twoRoundInterview(fixture);
+
+    // R1 is corrected by R3. Confirming R1 now would accept the reading the
+    // user already pushed back on.
+    await record(fixture, ["--kind", "confirm", "--restate", "R1", "--verdict", "rejected"]);
+    await record(fixture, [
+      "--kind",
+      "restate",
+      "--id",
+      "R3",
+      "--answer",
+      "A1",
+      "--text",
+      "사내망이 아니라 VPN 구간에서만 인증이 튕긴다는 뜻으로 읽었습니다",
+    ]);
+
+    const stale = await fabricate(fixture, [
+      "turn",
+      "record",
+      "--kind",
+      "confirm",
+      "--restate",
+      "R1",
+      "--verdict",
+      "accepted",
+    ]);
+
+    expect(stale.code).not.toBe(0);
+    expect(stale.stderr).toContain("R3");
+
+    await record(fixture, ["--kind", "confirm", "--restate", "R3", "--verdict", "accepted"]);
+  });
+});
+
+const twoRoundInterview = async (
+  fixture: Parameters<typeof createSlashSession>[0],
+): Promise<void> => {
+  await createSlashSession(fixture);
+  await record(fixture, ["--kind", "fragment", "--id", "F1", "--text", "로그인 실패"]);
+  await record(fixture, ["--kind", "dimension", "--id", "D1", "--text", "실패 조건"]);
+
+  for (const { q, a, r } of [
+    { q: "Q1", a: "A1", r: "R1" },
+    { q: "Q2", a: "A2", r: "R2" },
+  ]) {
+    await record(fixture, [
+      "--kind",
+      "question",
+      "--id",
+      q,
+      "--dimension",
+      "D1",
+      "--covers",
+      "F1",
+      "--text",
+      `${q} 언제 실패하나요?`,
+    ]);
+    await record(fixture, [
+      "--kind",
+      "answer",
+      "--id",
+      a,
+      "--question",
+      q,
+      "--text",
+      `${a} 월요일 오전 사내망에서 반복됩니다`,
+    ]);
+    await record(fixture, [
+      "--kind",
+      "restate",
+      "--id",
+      r,
+      "--answer",
+      a,
+      "--text",
+      `${a} 라운드: 사내망 접속 시 첫 인증만 튕긴다는 뜻으로 읽었습니다`,
+    ]);
+  }
+};

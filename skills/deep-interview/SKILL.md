@@ -244,11 +244,18 @@ All through the interview you have been restating without collecting acceptance.
 Show the latest line for every answer in a single response and ask — *"here is how I read all of this.
 Anything wrong?"*
 
+`fabricate deep-interview status` lists them for you: the `current reading` section carries one line
+per answer, and each line holds the restate id you need below.
+
 Record only what the user objects to as `rejected`, fix those and restate them. Record the rest as `accepted`.
 
 ```sh
 fabricate turn record --kind confirm --restate r1 --verdict accepted
 ```
+
+Only **the latest restatement of an answer** can be confirmed. Naming a superseded one gets refused and
+the refusal names the one that replaced it — accepting a reading the user already pushed back on is not
+something you can do by mistyping an id.
 
 If a single unconfirmed answer is left, `close` refuses and prints every one of their ids.
 **Skip this one pass and a reading the user never saw gets locked in** — this is the last place the
