@@ -76,7 +76,7 @@ test("짧은 답변이라도 새로 보탠 말이 없으면 거부한다", async
     const parrot = await restate(fixture, "(가)");
 
     expect(parrot.code).not.toBe(0);
-    expect(parrot.stderr).toContain("바꿔 말한 문장이 사용자 답변과 너무 겹칩니다");
+    expect(parrot.stderr).toContain("overlaps the user's own answer too much");
     expect(await ledger(fixture)).toHaveLength(before.length);
   });
 });

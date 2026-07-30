@@ -50,7 +50,7 @@ test("잠긴 의도와 모든 목표의 성공 증거가 있으면 통과하고 
     const checked = await fabricate(fixture, ["check", fixture.sessionId]);
 
     expect(checked.code).toBe(0);
-    expect(checked.stdout).toContain("2개 목표가 충족됐습니다");
+    expect(checked.stdout).toContain("Goals satisfied: 2");
     expect(checked.stdout).toContain("로그인 실패의 재현 조건이 확인되어야 한다");
     expect(checked.stdout).toContain("실패 조건을 재현하는 명령이 통과해야 한다");
   });
@@ -78,8 +78,8 @@ test("잠긴 의도와 모든 목표의 성공 증거가 있으면 통과하고 
     const checked = await fabricate(fixture, ["check", fixture.sessionId]);
 
     expect(checked.code).not.toBe(0);
-    expect(checked.stderr).toContain("증거 파일이 없습니다");
-    expect(checked.stderr).toContain("목표 1");
+    expect(checked.stderr).toContain("No evidence file");
+    expect(checked.stderr).toContain("goal 1");
   });
 });
 

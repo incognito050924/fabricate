@@ -17,7 +17,7 @@ test("전제를 뒤엎는 답은 의존 차원 전체를 stale 로 전파하고,
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("전제가 뒤집혀 다시 열린 쟁점");
+    expect(rejected.stderr).toContain("Dimensions reopened by an overturned premise");
     expect(rejected.stderr).toContain("D1");
     expect(rejected.stderr).toContain("D2");
     expect(rejected.stderr).toContain("D3");

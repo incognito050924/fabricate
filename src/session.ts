@@ -65,7 +65,7 @@ export const selectActiveSession = async (
   if (!(await pathExists(root))) {
     return {
       ok: false,
-      result: fail("활성 인터뷰 세션이 없습니다. `/fabricate:deep-interview`로 시작하세요.\n"),
+      result: fail("No active interview session. Start one with `/fabricate:deep-interview`.\n"),
     };
   }
 
@@ -90,7 +90,7 @@ export const selectActiveSession = async (
   if (activeSessions.length === 0) {
     return {
       ok: false,
-      result: fail("활성 인터뷰 세션이 없습니다. `/fabricate:deep-interview`로 시작하세요.\n"),
+      result: fail("No active interview session. Start one with `/fabricate:deep-interview`.\n"),
     };
   }
 
@@ -98,7 +98,7 @@ export const selectActiveSession = async (
     return {
       ok: false,
       result: fail(
-        `활성 인터뷰 세션이 ${activeSessions.length}개입니다. 하나만 남긴 뒤 다시 실행하세요.\n`,
+        `${activeSessions.length} active interview sessions. Leave exactly one and run again.\n`,
       ),
     };
   }
@@ -111,6 +111,6 @@ export const selectActiveSession = async (
 
   return {
     ok: false,
-    result: fail("활성 인터뷰 세션을 확인할 수 없습니다.\n"),
+    result: fail("Could not read the active interview session.\n"),
   };
 };

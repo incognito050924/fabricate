@@ -16,7 +16,7 @@ test("답변은 accepted 확인에 닿기 전까지 candidate 이고 accepted �
     const answerOnly = await close(fixture);
 
     expect(answerOnly.code).not.toBe(0);
-    expect(answerOnly.stderr).toContain("확인 못 받은 답변");
+    expect(answerOnly.stderr).toContain("Answers the user never confirmed");
     expect(answerOnly.stderr).toContain("A1");
     expect(await intentFiles(fixture)).toEqual([]);
 
@@ -33,7 +33,7 @@ test("답변은 accepted 확인에 닿기 전까지 candidate 이고 accepted �
     const restatedOnly = await close(fixture);
 
     expect(restatedOnly.code).not.toBe(0);
-    expect(restatedOnly.stderr).toContain("확인 못 받은 답변");
+    expect(restatedOnly.stderr).toContain("Answers the user never confirmed");
     expect(restatedOnly.stderr).toContain("A1");
     expect(await intentFiles(fixture)).toEqual([]);
 
@@ -41,7 +41,7 @@ test("답변은 accepted 확인에 닿기 전까지 candidate 이고 accepted �
     const rejectedRestate = await close(fixture);
 
     expect(rejectedRestate.code).not.toBe(0);
-    expect(rejectedRestate.stderr).toContain("확인 못 받은 답변");
+    expect(rejectedRestate.stderr).toContain("Answers the user never confirmed");
     expect(rejectedRestate.stderr).toContain("A1");
     expect(await intentFiles(fixture)).toEqual([]);
 

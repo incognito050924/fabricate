@@ -17,9 +17,9 @@ test("근거와 답변 없이 resolve 된 차원은 unevaluated 로 강등되고
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("근거 없이 닫으려 한 쟁점");
+    expect(rejected.stderr).toContain("Dimensions closed without evidence");
     expect(rejected.stderr).toContain("D1");
-    expect(rejected.stderr).toContain("demoted=1");
+    expect(rejected.stderr).toContain("closed-without-evidence=1");
     expect(await intentFiles(fixture)).toEqual([]);
   });
 
@@ -41,7 +41,7 @@ test("근거와 답변 없이 resolve 된 차원은 unevaluated 로 강등되고
     const accepted = await close(fixture, hash);
 
     expect(accepted.code).toBe(0);
-    expect(accepted.stdout).toContain("demoted=0");
+    expect(accepted.stdout).toContain("closed-without-evidence=0");
     expect(await intentFiles(fixture)).toEqual(["session-1.json"]);
   });
 });

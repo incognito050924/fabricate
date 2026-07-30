@@ -38,5 +38,5 @@ test("에이전트가 스스로 연 세션은 잠긴 레코드를 만들 수 없
   const intent = await readFile(join(repoRoot, "src", "intent.ts"), "utf8");
 
   expect(hooks.includes("pre-tool-use")).toBe(true);
-  expect(intent.includes("사용자 원문이 없습니다")).toBe(true);
+  expect(intent.includes("The user's original text is missing")).toBe(true);
 });

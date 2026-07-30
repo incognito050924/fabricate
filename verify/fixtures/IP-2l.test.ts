@@ -17,7 +17,7 @@ test("장부가 안 늘어난 활성 인터뷰 턴은 Stop 훅이 막는다", as
 
     expect(secondTurn.code).toBe(0);
     expect(JSON.parse(secondTurn.stdout)).toMatchObject({ decision: "block" });
-    expect(secondTurn.stdout).toContain("장부");
+    expect(secondTurn.stdout).toContain("ledger");
   });
 });
 

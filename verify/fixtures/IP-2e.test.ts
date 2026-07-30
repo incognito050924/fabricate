@@ -15,7 +15,7 @@ test("답변은 non-echo restate 뒤 accepted 확인에 닿아야 confirmed 가 
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("확인 못 받은 답변");
+    expect(rejected.stderr).toContain("Answers the user never confirmed");
     expect(rejected.stderr).toContain("A1");
     expect(await intentFiles(fixture)).toEqual([]);
   });
@@ -26,7 +26,7 @@ test("답변은 non-echo restate 뒤 accepted 확인에 닿아야 confirmed 가 
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("확인 못 받은 답변");
+    expect(rejected.stderr).toContain("Answers the user never confirmed");
     expect(rejected.stderr).toContain("A1");
     expect(await intentFiles(fixture)).toEqual([]);
   });

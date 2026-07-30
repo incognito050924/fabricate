@@ -53,7 +53,7 @@ test("중대성 라우팅은 assume, ask, must-ask 의 산출물 차이와 위�
     ]);
 
     expect(rejectedAsk.code).not.toBe(0);
-    expect(rejectedAsk.stderr).toContain("outcome 이 둘 이상");
+    expect(rejectedAsk.stderr).toContain("outcomes to split two or more ways");
 
     await record(fixture, [
       "--kind",
@@ -115,7 +115,7 @@ test("중대성 라우팅은 assume, ask, must-ask 의 산출물 차이와 위�
     ]);
 
     expect(rejectedAssume.code).not.toBe(0);
-    expect(rejectedAssume.stderr).toContain("outcome 이 같아야");
+    expect(rejectedAssume.stderr).toContain("every interpretation outcome to be the same");
 
     await record(fixture, [
       "--kind",
@@ -152,7 +152,7 @@ test("중대성 라우팅은 assume, ask, must-ask 의 산출물 차이와 위�
     ]);
 
     expect(rejectedWithoutRisk.code).not.toBe(0);
-    expect(rejectedWithoutRisk.stderr).toContain("--risk 값이 필요합니다");
+    expect(rejectedWithoutRisk.stderr).toContain("--risk requires a value");
 
     await record(fixture, [
       "--kind",
@@ -180,7 +180,7 @@ test("중대성 라우팅은 assume, ask, must-ask 의 산출물 차이와 위�
     const rejected = await close(fixture, hash);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("물을지 가정할지 안 정한 모호점");
+    expect(rejected.stderr).toContain("Ambiguities with no route");
     expect(rejected.stderr).toContain("M1");
     expect(await intentFiles(fixture)).toEqual([]);
   });

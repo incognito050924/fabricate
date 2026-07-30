@@ -38,7 +38,7 @@ test("soft criterion 은 rule 을 만들지 않고 사람 판정으로 남긴다
     ]);
 
     expect(rejectedRule.code).not.toBe(0);
-    expect(rejectedRule.stderr).toContain("사람 판정으로 남깁니다");
+    expect(rejectedRule.stderr).toContain("It stays a human judgement");
     expect(await ledger(fixture)).toHaveLength(beforeRule.length);
 
     const accepted = await close(fixture, hash);

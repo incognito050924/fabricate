@@ -8,12 +8,12 @@ import type { InterviewState } from "./interview-state.ts";
 // Full, cumulative view — used by the on-demand `deep-interview status` command.
 export const statusBlock = (state: InterviewState): string =>
   [
-    "─ 지금까지 ─",
-    "확정된 것",
+    "─ so far ─",
+    "settled",
     ...indent(settled(state)),
-    "아직 안 정해진 것",
+    "still open",
     ...indent(open(state)),
-    "지금 이해하고 있는 뜻",
+    "current reading",
     ...indent(reading(state)),
     "─",
     "",
@@ -27,12 +27,12 @@ export const statusDiff = (before: InterviewState, after: InterviewState): strin
   const openAfter = open(after);
 
   return [
-    `─ 지금까지: 확정 ${settledAfter.length} · 미정 ${openAfter.length} · 전체 보기 \`fabricate deep-interview status\` ─`,
-    "이번 턴에 확정된 것",
+    `─ so far: settled ${settledAfter.length} · open ${openAfter.length} · full view \`fabricate deep-interview status\` ─`,
+    "settled this turn",
     ...indent(newLines(settled(before), settledAfter)),
-    "이번 턴에 새로 열린 것",
+    "opened this turn",
     ...indent(newLines(open(before), openAfter)),
-    "이번 턴에 갱신된 뜻",
+    "reading updated this turn",
     ...indent(newLines(reading(before), reading(after))),
     "─",
     "",
@@ -65,7 +65,7 @@ const settled = (state: InterviewState): string[] => {
   }
 
   for (const [index, goal] of state.goals.entries()) {
-    lines.push(`목표 ${index}: ${short(goal)}`);
+    lines.push(`goal ${index}: ${short(goal)}`);
   }
 
   return lines;
@@ -80,40 +80,40 @@ const open = (state: InterviewState): string[] => {
     }
 
     const why = dimension.stale
-      ? "전제가 뒤집혀 다시 열림"
+      ? "reopened — its premise was overturned"
       : dimension.unevaluated
-        ? "근거 없이 닫으려 함"
-        : "아직 안 닫힘";
+        ? "closed without evidence"
+        : "not closed yet";
     lines.push(`${dimension.id} ${dimension.text} — ${why}`);
   }
 
   for (const answer of state.answers.values()) {
     if (!answer.confirmed) {
-      lines.push(`${answer.id} 확인 못 받음 — ${short(answer.text)}`);
+      lines.push(`${answer.id} not confirmed — ${short(answer.text)}`);
     }
     if (answer.unsure) {
-      lines.push(`${answer.id} 사용자가 확신 못 함`);
+      lines.push(`${answer.id} the user was unsure`);
     }
   }
 
   for (const ambiguity of state.ambiguities.values()) {
     if (!state.materialities.has(ambiguity.id)) {
-      lines.push(`${ambiguity.id} 물을지 가정할지 안 정함 — ${short(ambiguity.text)}`);
+      lines.push(`${ambiguity.id} not routed, ask or assume — ${short(ambiguity.text)}`);
     }
   }
 
   for (const contradiction of state.contradictions.values()) {
     if (!contradiction.resolved) {
-      lines.push(`${contradiction.id} 어긋남이 안 풀림 — ${short(contradiction.text)}`);
+      lines.push(`${contradiction.id} unresolved — ${short(contradiction.text)}`);
     }
   }
 
   if (state.criteria.size === 0) {
-    lines.push("완료 판정 기준이 아직 없음");
+    lines.push("no completion criterion yet");
   }
 
   if (state.goals.length === 0) {
-    lines.push("목표 술어가 아직 없음");
+    lines.push("no goal predicate yet");
   }
 
   return lines;
@@ -133,13 +133,13 @@ const reading = (state: InterviewState): string[] => {
 
   for (const materiality of state.materialities.values()) {
     if (materiality.assumption !== null) {
-      lines.push(`${materiality.ambiguity} 가정하고 감 — ${short(materiality.assumption)}`);
+      lines.push(`${materiality.ambiguity} assumed — ${short(materiality.assumption)}`);
     }
   }
 
   for (const remark of state.remarks.values()) {
     if (remark.overturns !== null) {
-      lines.push(`${remark.id} 사용자가 ${remark.overturns} 을 뒤집음 — ${short(remark.text)}`);
+      lines.push(`${remark.id} the user overturned ${remark.overturns} — ${short(remark.text)}`);
     }
   }
 
@@ -147,7 +147,7 @@ const reading = (state: InterviewState): string[] => {
 };
 
 const indent = (lines: string[]): string[] =>
-  lines.length === 0 ? ["  (없음)"] : lines.map((line) => `  ${line}`);
+  lines.length === 0 ? ["  (none)"] : lines.map((line) => `  ${line}`);
 
 const short = (text: string, limit = 60): string => {
   const flat = text.replaceAll(/\s+/g, " ").trim();

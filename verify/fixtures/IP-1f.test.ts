@@ -43,7 +43,7 @@ test("goal-hash 는 사용자에게 보여준 목표 문안에 묶이고 문안�
     const rejected = await close(fixture, "not-the-shown-goal-hash");
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("goal-hash 불일치");
+    expect(rejected.stderr).toContain("goal-hash mismatch");
     expect(await intentFiles(fixture)).toEqual([]);
   });
 
@@ -62,7 +62,7 @@ test("goal-hash 는 사용자에게 보여준 목표 문안에 묶이고 문안�
     const rejected = await close(fixture, oldHash);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("goal-hash 불일치");
+    expect(rejected.stderr).toContain("goal-hash mismatch");
     expect(await intentFiles(fixture)).toEqual([]);
 
     const accepted = await close(fixture, newHash);

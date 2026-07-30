@@ -155,7 +155,7 @@ const handleStop = async (payload: Record<string, unknown>): Promise<CliResult> 
       prompt_id: promptId,
       start_L: startLength,
       last_L: ledgerLength,
-      reason: "활성 인터뷰 턴에서 장부가 늘지 않았습니다.",
+      reason: "An active interview turn ended without the ledger growing.",
     });
     await writeTurnState(turnStatePath, {
       prompt_id: promptId,
@@ -174,7 +174,7 @@ const handleStop = async (payload: Record<string, unknown>): Promise<CliResult> 
     `${JSON.stringify({
       decision: "block",
       reason:
-        "활성 인터뷰 세션인데 이번 턴에 장부가 늘지 않았습니다. 질문이나 판단을 사용자에게 내기 전에 `fabricate turn record ...`로 이번 턴의 장부를 기록하세요.",
+        "This is an active interview session and the ledger did not grow this turn. Record this turn with `fabricate turn record ...` before you send a question or a judgement to the user.",
     })}\n`,
   );
 };

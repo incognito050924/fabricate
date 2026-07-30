@@ -17,7 +17,7 @@ export const runCli = async (argv: string[], env: CliEnv): Promise<CliResult> =>
   try {
     return await dispatch(argv, env);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
+    const message = error instanceof Error ? error.message : "Unknown error.";
     return fail(`${message}\n`);
   }
 };
@@ -45,22 +45,22 @@ const dispatch = async (argv: string[], env: CliEnv): Promise<CliResult> => {
     return await dispatchCheck(env.cwd, argv.slice(1));
   }
 
-  return fail(`알 수 없는 명령입니다: ${command}\n`);
+  return fail(`Unknown command: ${command}\n`);
 };
 
 const dispatchHook = async (args: string[], env: CliEnv): Promise<CliResult> => {
   const event = args[0];
 
   if (event === undefined) {
-    return fail("훅 이벤트 이름이 필요합니다.\n");
+    return fail("A hook event name is required.\n");
   }
 
   if (!hookEvents.has(event)) {
-    return fail(`알 수 없는 훅 이벤트입니다: ${event}\n`);
+    return fail(`Unknown hook event: ${event}\n`);
   }
 
   if (args.length > 1) {
-    return fail(`알 수 없는 인자입니다: ${args[1]}\n`);
+    return fail(`Unknown argument: ${args[1]}\n`);
   }
 
   return await handleHook(event as HookEvent, await env.readStdin());
@@ -86,10 +86,10 @@ const dispatchDeepInterview = async (args: string[], env: CliEnv): Promise<CliRe
   }
 
   if (subcommand === undefined) {
-    return fail("deep-interview 하위 명령이 필요합니다.\n");
+    return fail("A deep-interview subcommand is required.\n");
   }
 
-  return fail(`알 수 없는 deep-interview 하위 명령입니다: ${subcommand}\n`);
+  return fail(`Unknown deep-interview subcommand: ${subcommand}\n`);
 };
 
 const dispatchTurn = async (args: string[], env: CliEnv): Promise<CliResult> => {
@@ -100,8 +100,8 @@ const dispatchTurn = async (args: string[], env: CliEnv): Promise<CliResult> => 
   }
 
   if (subcommand === undefined) {
-    return fail("turn 하위 명령이 필요합니다.\n");
+    return fail("A turn subcommand is required.\n");
   }
 
-  return fail(`알 수 없는 turn 하위 명령입니다: ${subcommand}\n`);
+  return fail(`Unknown turn subcommand: ${subcommand}\n`);
 };

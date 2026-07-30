@@ -38,11 +38,11 @@ export const dispatchCheck = async (cwd: string, args: string[]): Promise<CliRes
   }
 
   if (subcommand === undefined) {
-    return fail("check 하위 명령 또는 intent id 가 필요합니다.\n");
+    return fail("A check subcommand or an intent id is required.\n");
   }
 
   if (args.length > 1) {
-    return fail(`알 수 없는 인자입니다: ${args[1]}\n`);
+    return fail(`Unknown argument: ${args[1]}\n`);
   }
 
   return await checkIntent(cwd, subcommand);
@@ -63,7 +63,7 @@ const recordEvidence = async (cwd: string, args: string[]): Promise<CliResult> =
   const goalText = loaded.intent.goals.texts[parsed.goalIndex];
   if (goalText === undefined) {
     return fail(
-      `목표 인덱스가 범위를 벗어났습니다: ${parsed.goalIndex} (목표 ${loaded.intent.goals.texts.length}개)\n`,
+      `Goal index out of range: ${parsed.goalIndex} (${loaded.intent.goals.texts.length} goals)\n`,
     );
   }
 
@@ -83,12 +83,12 @@ const recordEvidence = async (cwd: string, args: string[]): Promise<CliResult> =
   await Bun.write(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
 
   const summary = [
-    `증거를 기록했습니다: ${evidencePath}`,
-    `목표 ${parsed.goalIndex}: ${goalText}`,
-    `검증 명령 exit ${result.code}: ${parsed.command}`,
+    `Recorded evidence: ${evidencePath}`,
+    `goal ${parsed.goalIndex}: ${goalText}`,
+    `verification command exit ${result.code}: ${parsed.command}`,
   ];
   const outputTail =
-    evidence.output_tail.length === 0 ? [] : ["출력 꼬리:", ...evidence.output_tail];
+    evidence.output_tail.length === 0 ? [] : ["output tail:", ...evidence.output_tail];
   const text = [...summary, ...outputTail, ""].join("\n");
 
   return {
@@ -111,26 +111,28 @@ const checkIntent = async (cwd: string, intentId: string): Promise<CliResult> =>
     const evidence = await loadEvidence(projectDir, intentId, index);
 
     if (!evidence.ok) {
-      failures.push(`목표 ${index}: ${goalText} — ${evidence.reason}`);
+      failures.push(`goal ${index}: ${goalText} — ${evidence.reason}`);
       continue;
     }
 
     const reason = invalidEvidenceReason(evidence.evidence, loaded.intent, index);
     if (reason !== null) {
-      failures.push(`목표 ${index}: ${goalText} — ${reason}`);
+      failures.push(`goal ${index}: ${goalText} — ${reason}`);
       continue;
     }
 
-    successes.push(`- 목표 ${index}: ${goalText} — ${evidence.evidence.command}`);
+    successes.push(`- goal ${index}: ${goalText} — ${evidence.evidence.command}`);
   }
 
   if (failures.length > 0) {
     return fail(
-      ["완료 증거가 부족합니다.", ...failures.map((reason) => `- ${reason}`), ""].join("\n"),
+      ["Completion evidence is missing.", ...failures.map((reason) => `- ${reason}`), ""].join(
+        "\n",
+      ),
     );
   }
 
-  return ok([`${successes.length}개 목표가 충족됐습니다.`, ...successes, ""].join("\n"));
+  return ok([`Goals satisfied: ${successes.length}`, ...successes, ""].join("\n"));
 };
 
 type ParsedRecordArgs =
@@ -149,10 +151,10 @@ const parseRecordArgs = (args: string[]): ParsedRecordArgs => {
     if (arg === "--intent") {
       const value = args[index + 1];
       if (value === undefined || value.length === 0) {
-        return { ok: false, result: fail("--intent 값이 필요합니다.\n") };
+        return { ok: false, result: fail("--intent requires a value.\n") };
       }
       if (intentId !== undefined) {
-        return { ok: false, result: fail("중복 인자입니다: --intent\n") };
+        return { ok: false, result: fail("Duplicate argument: --intent\n") };
       }
       intentId = value;
       index += 2;
@@ -162,10 +164,10 @@ const parseRecordArgs = (args: string[]): ParsedRecordArgs => {
     if (arg === "--goal") {
       const value = args[index + 1];
       if (value === undefined || value.length === 0) {
-        return { ok: false, result: fail("--goal 값이 필요합니다.\n") };
+        return { ok: false, result: fail("--goal requires a value.\n") };
       }
       if (goalRaw !== undefined) {
-        return { ok: false, result: fail("중복 인자입니다: --goal\n") };
+        return { ok: false, result: fail("Duplicate argument: --goal\n") };
       }
       goalRaw = value;
       index += 2;
@@ -175,34 +177,34 @@ const parseRecordArgs = (args: string[]): ParsedRecordArgs => {
     if (arg === "--command") {
       const value = args[index + 1];
       if (value === undefined || value.length === 0) {
-        return { ok: false, result: fail("--command 값이 필요합니다.\n") };
+        return { ok: false, result: fail("--command requires a value.\n") };
       }
       if (command !== undefined) {
-        return { ok: false, result: fail("중복 인자입니다: --command\n") };
+        return { ok: false, result: fail("Duplicate argument: --command\n") };
       }
       command = value;
       index += 2;
       continue;
     }
 
-    return { ok: false, result: fail(`알 수 없는 인자입니다: ${arg}\n`) };
+    return { ok: false, result: fail(`Unknown argument: ${arg}\n`) };
   }
 
   if (intentId === undefined) {
-    return { ok: false, result: fail("--intent 값이 필요합니다.\n") };
+    return { ok: false, result: fail("--intent requires a value.\n") };
   }
 
   if (goalRaw === undefined) {
-    return { ok: false, result: fail("--goal 값이 필요합니다.\n") };
+    return { ok: false, result: fail("--goal requires a value.\n") };
   }
 
   const goalIndex = Number(goalRaw);
   if (!Number.isInteger(goalIndex) || goalIndex < 0) {
-    return { ok: false, result: fail("--goal 값은 0 이상의 정수여야 합니다.\n") };
+    return { ok: false, result: fail("--goal must be an integer of 0 or more.\n") };
   }
 
   if (command === undefined) {
-    return { ok: false, result: fail("--command 값이 필요합니다.\n") };
+    return { ok: false, result: fail("--command requires a value.\n") };
   }
 
   return { ok: true, intentId, goalIndex, command };
@@ -216,7 +218,7 @@ const loadIntent = async (
   if (text === null) {
     return {
       ok: false,
-      result: fail(`잠긴 의도 레코드가 없습니다: ${intentId}\n`),
+      result: fail(`No locked intent record: ${intentId}\n`),
     };
   }
 
@@ -224,7 +226,7 @@ const loadIntent = async (
   if (!isIntentRecord(parsed)) {
     return {
       ok: false,
-      result: fail(`잠긴 의도 레코드를 읽을 수 없습니다: ${intentId}\n`),
+      result: fail(`Could not read the locked intent record: ${intentId}\n`),
     };
   }
 
@@ -238,12 +240,12 @@ const loadEvidence = async (
 ): Promise<{ ok: true; evidence: EvidenceRecord } | { ok: false; reason: string }> => {
   const text = await readUtf8IfExists(evidencePathFor(projectDir, intentId, goalIndex));
   if (text === null) {
-    return { ok: false, reason: "증거 파일이 없습니다." };
+    return { ok: false, reason: "No evidence file." };
   }
 
   const parsed = parseJson(text);
   if (!isEvidenceRecord(parsed)) {
-    return { ok: false, reason: "증거 파일 형식이 올바르지 않습니다." };
+    return { ok: false, reason: "Malformed evidence file." };
   }
 
   return { ok: true, evidence: parsed };
@@ -255,25 +257,25 @@ const invalidEvidenceReason = (
   expectedGoalIndex: number,
 ): string | null => {
   if (evidence.intent_id !== intent.id || evidence.goal_hash !== intent.goals.goal_hash) {
-    return "다른 intent 의 증거입니다.";
+    return "The evidence belongs to a different intent.";
   }
 
   if (evidence.goal_index !== expectedGoalIndex) {
-    return `목표 인덱스가 다릅니다: expected ${expectedGoalIndex}, got ${evidence.goal_index}`;
+    return `Goal index mismatch: expected ${expectedGoalIndex}, got ${evidence.goal_index}`;
   }
 
   if (evidence.exit_code !== 0) {
-    return `검증 명령 실패: exit ${evidence.exit_code}`;
+    return `Verification command failed: exit ${evidence.exit_code}`;
   }
 
   const lockedAt = Date.parse(intent.locked_at);
   const recordedAt = Date.parse(evidence.recorded_at);
   if (!Number.isFinite(lockedAt) || !Number.isFinite(recordedAt)) {
-    return "증거 시각을 읽을 수 없습니다.";
+    return "Could not read the evidence timestamp.";
   }
 
   if (recordedAt < lockedAt) {
-    return "오래된 증거입니다.";
+    return "Stale evidence — recorded before the intent was locked.";
   }
 
   return null;

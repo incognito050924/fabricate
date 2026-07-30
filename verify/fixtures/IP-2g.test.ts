@@ -14,9 +14,9 @@ test("준비도는 unresolved contradiction, unsure, demoted 수치를 장부에
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("contradictions=0");
-    expect(rejected.stderr).toContain("unsure=1");
-    expect(rejected.stderr).toContain("demoted=0");
+    expect(rejected.stderr).toContain("unresolved-contradictions=0");
+    expect(rejected.stderr).toContain("unsure-answers=1");
+    expect(rejected.stderr).toContain("closed-without-evidence=0");
   });
 
   await withInterviewFixture("ip-2g-demoted", async (fixture) => {
@@ -27,9 +27,9 @@ test("준비도는 unresolved contradiction, unsure, demoted 수치를 장부에
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("contradictions=0");
-    expect(rejected.stderr).toContain("unsure=0");
-    expect(rejected.stderr).toContain("demoted=1");
+    expect(rejected.stderr).toContain("unresolved-contradictions=0");
+    expect(rejected.stderr).toContain("unsure-answers=0");
+    expect(rejected.stderr).toContain("closed-without-evidence=1");
   });
 
   await withInterviewFixture("ip-2g-contradiction", async (fixture) => {
@@ -49,9 +49,9 @@ test("준비도는 unresolved contradiction, unsure, demoted 수치를 장부에
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("contradictions=1");
-    expect(rejected.stderr).toContain("unsure=0");
-    expect(rejected.stderr).toContain("demoted=0");
+    expect(rejected.stderr).toContain("unresolved-contradictions=1");
+    expect(rejected.stderr).toContain("unsure-answers=0");
+    expect(rejected.stderr).toContain("closed-without-evidence=0");
   });
 
   await withInterviewFixture("ip-2g-positive", async (fixture) => {
@@ -61,10 +61,10 @@ test("준비도는 unresolved contradiction, unsure, demoted 수치를 장부에
     const accepted = await close(fixture, hash);
 
     expect(accepted.code).toBe(0);
-    expect(accepted.stdout).toContain("contradictions=0");
-    expect(accepted.stdout).toContain("unsure=0");
-    expect(accepted.stdout).toContain("demoted=0");
-    expect(accepted.stdout).toContain("ready=true");
+    expect(accepted.stdout).toContain("unresolved-contradictions=0");
+    expect(accepted.stdout).toContain("unsure-answers=0");
+    expect(accepted.stdout).toContain("closed-without-evidence=0");
+    expect(accepted.stdout).toContain("ready-to-close=true");
   });
 });
 

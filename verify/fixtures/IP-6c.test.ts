@@ -62,7 +62,7 @@ test("코드와 모순되는 답은 실재 파일 인용과 다음 질문이 있
     ]);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("--question 값이 필요합니다");
+    expect(rejected.stderr).toContain("--question requires a value");
     expect(await ledger(fixture)).toHaveLength(before.length);
   });
 
@@ -89,7 +89,7 @@ test("코드와 모순되는 답은 실재 파일 인용과 다음 질문이 있
     ]);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("--citation 경로가 실재하지 않습니다");
+    expect(rejected.stderr).toContain("--citation path does not exist");
     expect(await ledger(fixture)).toHaveLength(before.length);
   });
 });

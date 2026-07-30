@@ -24,7 +24,7 @@ test("미해소 차원이 남으면 close 가 거부하고, 해소하면 잠근�
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("안 닫힌 쟁점");
+    expect(rejected.stderr).toContain("Dimensions still open");
     expect(rejected.stderr).toContain("D2");
     expect(await intentFiles(fixture)).toEqual([]);
   });

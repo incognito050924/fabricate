@@ -39,8 +39,8 @@ test("매 기록마다 요약줄이 맨 앞에 온다 — 확정·미정 개수"
     // "미정" also counts the still-missing criteria/goal lines that `open()`
     // always reports until they're written — D1 plus those two.
     const summaryLine = first.stdout.split("\n")[0];
-    expect(summaryLine).toContain("확정 0");
-    expect(summaryLine).toContain("미정 3");
+    expect(summaryLine).toContain("settled 0");
+    expect(summaryLine).toContain("open 3");
   });
 });
 
@@ -57,7 +57,7 @@ test("이번 턴에 안 바뀐 것은 다시 안 나온다 — diff만 보인다
       "--text",
       "실패 조건",
     ]);
-    expect(section(dimensionTurn.stdout, "이번 턴에 새로 열린 것")).toContain("D1");
+    expect(section(dimensionTurn.stdout, "opened this turn")).toContain("D1");
 
     // A later, unrelated turn must not repeat D1 — it did not change this turn.
     await record(fixture, ["--kind", "fragment", "--id", "F1", "--text", "로그인 실패"]);
@@ -100,7 +100,7 @@ test("전체 보기 명령은 지금까지 쌓인 상태를 전부 낸다", asyn
 
     expect(full.code).toBe(0);
     // Cumulative — D1 was opened turns ago, and still shows up here.
-    expect(section(full.stdout, "아직 안 정해진 것")).toContain("D1");
+    expect(section(full.stdout, "still open")).toContain("D1");
   });
 });
 

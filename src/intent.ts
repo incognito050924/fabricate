@@ -43,9 +43,7 @@ export const closeIntent = async (cwd: string, args: string[]): Promise<CliResul
     });
 
     return fail(
-      ["닫을 수 없습니다.", ...reasons.map((reason) => `- ${reason}`), readinessText, ""].join(
-        "\n",
-      ),
+      ["Cannot close.", ...reasons.map((reason) => `- ${reason}`), readinessText, ""].join("\n"),
     );
   }
 
@@ -95,33 +93,33 @@ export const closeIntent = async (cwd: string, args: string[]): Promise<CliResul
   // the interview ended and ordinary conversation became impossible (D-4).
   await removeIfPresent(join(selected.session.dir, "active"));
 
-  return ok(`${readinessText}\n잠긴 의도 레코드를 썼습니다: ${intentPath}\n`);
+  return ok(`${readinessText}\nWrote the locked intent record: ${intentPath}\n`);
 };
 
 export const showIntent = async (cwd: string, args: string[]): Promise<CliResult> => {
   if (args.length === 0) {
-    return fail("intent id 가 필요합니다.\n");
+    return fail("An intent id is required.\n");
   }
 
   if (args.length > 1) {
-    return fail(`알 수 없는 인자입니다: ${args[1]}\n`);
+    return fail(`Unknown argument: ${args[1]}\n`);
   }
 
   const intentId = args[0];
   if (intentId === undefined || intentId.length === 0) {
-    return fail("intent id 가 필요합니다.\n");
+    return fail("An intent id is required.\n");
   }
 
   const projectDir = await projectDirFromCommandCwd(cwd);
   const text = await readUtf8IfExists(join(fabricateDir(projectDir), "intent", `${intentId}.json`));
 
   if (text === null) {
-    return fail(`잠긴 의도 레코드가 없습니다: ${intentId}\n`);
+    return fail(`No locked intent record: ${intentId}\n`);
   }
 
   const parsed = parseJson(text);
   if (!isIntentRecord(parsed)) {
-    return fail(`잠긴 의도 레코드를 읽을 수 없습니다: ${intentId}\n`);
+    return fail(`Could not read the locked intent record: ${intentId}\n`);
   }
 
   return ok(formatIntentForShow(parsed));
@@ -139,21 +137,21 @@ const parseCloseArgs = (args: string[]): CloseArgs => {
     if (arg === "--goal-hash") {
       const value = args[index + 1];
       if (value === undefined || value.length === 0) {
-        return { ok: false, result: fail("--goal-hash 값이 필요합니다.\n") };
+        return { ok: false, result: fail("--goal-hash requires a value.\n") };
       }
       if (goalHash !== undefined) {
-        return { ok: false, result: fail("중복 인자입니다: --goal-hash\n") };
+        return { ok: false, result: fail("Duplicate argument: --goal-hash\n") };
       }
       goalHash = value;
       index += 2;
       continue;
     }
 
-    return { ok: false, result: fail(`알 수 없는 인자입니다: ${arg}\n`) };
+    return { ok: false, result: fail(`Unknown argument: ${arg}\n`) };
   }
 
   if (goalHash === undefined) {
-    return { ok: false, result: fail("--goal-hash 값이 필요합니다.\n") };
+    return { ok: false, result: fail("--goal-hash requires a value.\n") };
   }
 
   return { ok: true, goalHash };
@@ -168,18 +166,18 @@ const closeReasons = (
 
   if (request === null) {
     reasons.push(
-      '사용자 원문이 없습니다. /fabricate:deep-interview "<요청>" 슬래시 명령으로 다시 시작하세요.',
+      `The user's original text is missing. Start again with the slash command /fabricate:deep-interview "<request>".`,
     );
   }
 
   if (state.questions.size === 0) {
-    reasons.push("질문이 없습니다.");
+    reasons.push("No question was ever asked.");
   }
 
   if (state.goals.length === 0) {
-    reasons.push("목표 술어가 없습니다.");
+    reasons.push("No goal predicate.");
   } else if (state.goalHash !== providedGoalHash) {
-    reasons.push(`goal-hash 불일치: expected ${state.goalHash}, got ${providedGoalHash}`);
+    reasons.push(`goal-hash mismatch: expected ${state.goalHash}, got ${providedGoalHash}`);
   }
 
   const uncoveredFragments = [...state.fragments.values()].filter(
@@ -187,10 +185,10 @@ const closeReasons = (
       ![...state.questions.values()].some((question) => question.covers.includes(fragment.id)),
   );
   if (state.fragments.size === 0) {
-    reasons.push("사용자 말을 조각으로 하나도 안 쪼갰습니다.");
+    reasons.push("The user's words were never cut into fragments.");
   } else if (uncoveredFragments.length > 0) {
     reasons.push(
-      `어느 질문에도 안 걸린 조각: ${uncoveredFragments.map((fragment) => fragment.id).join(", ")}`,
+      `Fragments no question covers: ${uncoveredFragments.map((fragment) => fragment.id).join(", ")}`,
     );
   }
 
@@ -199,7 +197,7 @@ const closeReasons = (
   );
   if (unresolvedDimensions.length > 0) {
     reasons.push(
-      `안 닫힌 쟁점: ${unresolvedDimensions.map((dimension) => dimension.id).join(", ")}`,
+      `Dimensions still open: ${unresolvedDimensions.map((dimension) => dimension.id).join(", ")}`,
     );
   }
 
@@ -208,20 +206,22 @@ const closeReasons = (
   );
   if (unevaluatedDimensions.length > 0) {
     reasons.push(
-      `근거 없이 닫으려 한 쟁점: ${unevaluatedDimensions.map((dimension) => dimension.id).join(", ")}`,
+      `Dimensions closed without evidence: ${unevaluatedDimensions.map((dimension) => dimension.id).join(", ")}`,
     );
   }
 
   const staleDimensions = [...state.dimensions.values()].filter((dimension) => dimension.stale);
   if (staleDimensions.length > 0) {
     reasons.push(
-      `전제가 뒤집혀 다시 열린 쟁점: ${staleDimensions.map((dimension) => dimension.id).join(", ")}`,
+      `Dimensions reopened by an overturned premise: ${staleDimensions.map((dimension) => dimension.id).join(", ")}`,
     );
   }
 
   const unconfirmedAnswers = [...state.answers.values()].filter((answer) => !answer.confirmed);
   if (unconfirmedAnswers.length > 0) {
-    reasons.push(`확인 못 받은 답변: ${unconfirmedAnswers.map((answer) => answer.id).join(", ")}`);
+    reasons.push(
+      `Answers the user never confirmed: ${unconfirmedAnswers.map((answer) => answer.id).join(", ")}`,
+    );
   }
 
   const unresolvedContradictions = [...state.contradictions.values()].filter(
@@ -232,13 +232,13 @@ const closeReasons = (
       ? null
       : Math.max(...state.contradictionPassIndexes);
   if (lastPassIndex === null) {
-    reasons.push("모순 패스가 실행되지 않았습니다.");
+    reasons.push("The cross-answer contradiction pass never ran.");
   } else if (state.lastAnswerIndex !== null && lastPassIndex < state.lastAnswerIndex) {
-    reasons.push("모순 패스가 마지막 답변보다 앞에 있습니다.");
+    reasons.push("The contradiction pass ran before the last answer.");
   }
   if (unresolvedContradictions.length > 0) {
     reasons.push(
-      `안 풀린 어긋남: ${unresolvedContradictions
+      `Contradictions still unresolved: ${unresolvedContradictions
         .map((contradiction) => contradiction.id)
         .join(", ")}`,
     );
@@ -253,7 +253,7 @@ const closeReasons = (
   );
   if (unroutedAmbiguities.length > 0) {
     reasons.push(
-      `물을지 가정할지 안 정한 모호점: ${unroutedAmbiguities.map((ambiguity) => ambiguity.id).join(", ")}`,
+      `Ambiguities with no route, ask or assume: ${unroutedAmbiguities.map((ambiguity) => ambiguity.id).join(", ")}`,
     );
   }
 
@@ -261,7 +261,7 @@ const closeReasons = (
   // required an interview to write one, so the gate below had nothing to check and
   // passed in silence.
   if (state.criteria.size === 0) {
-    reasons.push("완료 판정 기준이 없습니다.");
+    reasons.push("No completion criterion.");
   }
 
   const hardCriteriaWithoutExamples = [...state.criteria.values()].filter(
@@ -269,7 +269,7 @@ const closeReasons = (
   );
   if (hardCriteriaWithoutExamples.length > 0) {
     reasons.push(
-      `hard 기준 예시 없음: ${hardCriteriaWithoutExamples
+      `Hard criteria with no example: ${hardCriteriaWithoutExamples
         .map((criterion) => criterion.id)
         .join(", ")}`,
     );
@@ -280,7 +280,7 @@ const closeReasons = (
   );
   if (hardCriteriaWithoutRules.length > 0) {
     reasons.push(
-      `hard 기준 rule 없음: ${hardCriteriaWithoutRules
+      `Hard criteria with no rule: ${hardCriteriaWithoutRules
         .map((criterion) => criterion.id)
         .join(", ")}`,
     );
@@ -333,12 +333,12 @@ const isIntentRecord = (value: unknown): value is IntentRecord => {
 
 const formatIntentForShow = (intent: IntentRecord): string =>
   [
-    `잠긴 의도 레코드: ${intent.id}`,
-    "사용자 원문:",
+    `locked intent record: ${intent.id}`,
+    "user's original text:",
     "----- fabricate request bytes begin -----",
     intent.request,
     "----- fabricate request bytes end -----",
-    "목표 술어:",
+    "goal predicate:",
     ...intent.goals.texts.map((goal, index) => `${index}. ${goal}`),
     `goal-hash: ${intent.goals.goal_hash}`,
     `locked-at: ${intent.locked_at}`,

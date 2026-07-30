@@ -30,7 +30,7 @@ test("reject 된 review 와 검토 문안 불일치는 question 을 막고, 재�
     });
 
     expect(rejectedQuestion.code).not.toBe(0);
-    expect(rejectedQuestion.stderr).toContain("대화를 못 본 검토자가 이 질문을 거부했습니다");
+    expect(rejectedQuestion.stderr).toContain("rejected this question");
     expect((await ledger(fixture)).some((entry) => entry.kind === "question")).toBe(false);
 
     await expectOk(
@@ -48,7 +48,7 @@ test("reject 된 review 와 검토 문안 불일치는 question 을 막고, 재�
     });
 
     expect(changedTextQuestion.code).not.toBe(0);
-    expect(changedTextQuestion.stderr).toContain("검토받은 질문 문안과 다릅니다");
+    expect(changedTextQuestion.stderr).toContain("differs from the wording that was reviewed");
     expect((await ledger(fixture)).some((entry) => entry.kind === "question")).toBe(false);
 
     await expectOk(

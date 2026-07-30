@@ -12,7 +12,7 @@ test("show 는 없는 id 와 잠기지 않은 세션을 거부하고 잠긴 뒤 
     const missing = await fabricate(fixture, ["deep-interview", "show", "missing-intent"]);
 
     expect(missing.code).not.toBe(0);
-    expect(missing.stderr).toContain("잠긴 의도 레코드가 없습니다");
+    expect(missing.stderr).toContain("No locked intent record");
     expect(missing.stderr).toContain("missing-intent");
 
     await createSlashSession(fixture);
@@ -21,7 +21,7 @@ test("show 는 없는 id 와 잠기지 않은 세션을 거부하고 잠긴 뒤 
     const unlocked = await fabricate(fixture, ["deep-interview", "show", fixture.sessionId]);
 
     expect(unlocked.code).not.toBe(0);
-    expect(unlocked.stderr).toContain("잠긴 의도 레코드가 없습니다");
+    expect(unlocked.stderr).toContain("No locked intent record");
     expect(unlocked.stderr).toContain(fixture.sessionId);
 
     await expectCode(close(fixture), 0);

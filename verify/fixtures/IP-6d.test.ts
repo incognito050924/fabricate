@@ -31,7 +31,7 @@ test("challenge 는 citation 없이는 거부되고 citation 이 있으면 장�
     ]);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("--citation 값이 필요합니다");
+    expect(rejected.stderr).toContain("--citation requires a value");
     expect(await ledger(fixture)).toHaveLength(before.length);
   });
 

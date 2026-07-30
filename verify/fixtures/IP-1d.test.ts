@@ -18,7 +18,7 @@ test("질문을 하나도 하지 않은 세션은 닫히지 않고, 질문과 �
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("질문이 없습니다");
+    expect(rejected.stderr).toContain("No question was ever asked");
     expect(await intentFiles(fixture)).toEqual([]);
   });
 

@@ -43,7 +43,7 @@ test("start, turn record, close 가 장부에 순서대로 남고 표식 없이�
     const rejected = await fabricate(fixture, ["deep-interview", "start"]);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("활성 인터뷰 세션이 없습니다");
+    expect(rejected.stderr).toContain("No active interview session");
     expect(await pathExists(ledgerPath(fixture))).toBe(false);
   });
 });

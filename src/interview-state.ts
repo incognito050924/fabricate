@@ -467,16 +467,15 @@ export const analyzeLedger = (rawEntries: unknown[]): InterviewState => {
   };
 };
 
-// The counts keep their machine-readable key=value form; the Korean says what each
-// one is counting. Before this the line was four English identifiers and a user
-// could not tell what it was measuring.
+// The keys say what they count rather than naming an internal field: "demoted"
+// meant nothing to a reader who had not read the code.
 export const readinessLine = (readiness: Readiness): string =>
   [
-    "준비도:",
-    `안 풀린 어긋남 contradictions=${readiness.contradictions}`,
-    `· 확신 못 한 답 unsure=${readiness.unsure}`,
-    `· 근거 없이 닫은 것 demoted=${readiness.demoted}`,
-    `· 닫아도 되는가 ready=${readiness.ready}`,
+    "readiness:",
+    `unresolved-contradictions=${readiness.contradictions}`,
+    `· unsure-answers=${readiness.unsure}`,
+    `· closed-without-evidence=${readiness.demoted}`,
+    `· ready-to-close=${readiness.ready}`,
   ].join(" ");
 
 const readinessFor = (

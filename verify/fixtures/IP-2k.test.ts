@@ -82,6 +82,6 @@ test("PreToolUse 만으로 열린 세션도 start 없이 Stop 훅이 막는다",
 
     expect(blocked.code).toBe(0);
     expect(JSON.parse(blocked.stdout)).toMatchObject({ decision: "block" });
-    expect(blocked.stdout).toContain("장부");
+    expect(blocked.stdout).toContain("ledger");
   });
 });

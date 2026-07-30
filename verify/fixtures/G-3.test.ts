@@ -22,9 +22,9 @@ test("아무것도 요청하지 않아도 기록마다 지금까지의 상태가
       "실패 조건",
     ]);
 
-    expect(first.stdout).toContain("이번 턴에 확정된 것");
-    expect(first.stdout).toContain("이번 턴에 새로 열린 것");
-    expect(first.stdout).toContain("이번 턴에 갱신된 뜻");
+    expect(first.stdout).toContain("settled this turn");
+    expect(first.stdout).toContain("opened this turn");
+    expect(first.stdout).toContain("reading updated this turn");
   });
 });
 
@@ -61,9 +61,9 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 이번 턴에 �
 
     // A1 is new this turn. D1 opened turns ago and did not change — it must
     // not repeat here even though it is still unresolved.
-    expect(section(openState.stdout, "이번 턴에 새로 열린 것")).toContain("A1");
-    expect(section(openState.stdout, "이번 턴에 새로 열린 것")).not.toContain("D1");
-    expect(section(openState.stdout, "이번 턴에 확정된 것")).not.toContain("D1");
+    expect(section(openState.stdout, "opened this turn")).toContain("A1");
+    expect(section(openState.stdout, "opened this turn")).not.toContain("D1");
+    expect(section(openState.stdout, "settled this turn")).not.toContain("D1");
 
     const restated = await record(fixture, [
       "--kind",
@@ -78,7 +78,7 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 이번 턴에 �
 
     // The driver's own reading of the user's intent is its own section — it
     // shows up on the turn that wrote it, not on a later, unrelated turn.
-    expect(section(restated.stdout, "이번 턴에 갱신된 뜻")).toContain(
+    expect(section(restated.stdout, "reading updated this turn")).toContain(
       "사내망 접속 시 월요일 첫 인증만 튕긴다",
     );
 
@@ -91,7 +91,7 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 이번 턴에 �
       "accepted",
     ]);
 
-    expect(section(interpreted.stdout, "이번 턴에 확정된 것")).toContain("A1");
+    expect(section(interpreted.stdout, "settled this turn")).toContain("A1");
 
     const resolved = await record(fixture, [
       "--kind",
@@ -104,8 +104,8 @@ test("상태는 세 칸이 각각 실제 장부를 읽는다 — 이번 턴에 �
       "A1",
     ]);
 
-    expect(section(resolved.stdout, "이번 턴에 확정된 것")).toContain("D1");
-    expect(section(resolved.stdout, "이번 턴에 새로 열린 것")).not.toContain("D1");
+    expect(section(resolved.stdout, "settled this turn")).toContain("D1");
+    expect(section(resolved.stdout, "opened this turn")).not.toContain("D1");
   });
 });
 

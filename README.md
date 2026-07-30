@@ -48,4 +48,12 @@ bun link && claude plugin marketplace add ./ && claude plugin install fabricate@
 
 ## 도구 사슬
 
-Bun + TypeScript(strict) + zod + citty. 코드와 주석은 영어, 사용자에게 보이는 문구는 한국어.
+Bun + TypeScript(strict) + zod + citty.
+
+언어 규약은 표면마다 다르다.
+
+- **코드 · 주석 · 프롬프트**(`skills/*/SKILL.md` · `agents/*.md`) — 영어. 사용자에게 안 보인다.
+- **CLI 출력** — 영어. 이것을 읽는 것은 에이전트다.
+- **사용자에게 보이는 문장** — 에이전트가 쓴다. **사용자가 쓴 언어를 따라간다.** CLI가 낸 상태
+  블록이나 거부 사유를 사용자에게 옮길 때도 사용자의 언어로 옮긴다. 다만 **사용자가 쓴 문장을
+  인용하는 자리는 원문 그대로** 둔다.

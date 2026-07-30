@@ -15,7 +15,7 @@ test("모순 패스는 마지막 답 뒤에 돌아야 하고, 찾은 모순은 �
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("모순 패스가 실행되지 않았습니다");
+    expect(rejected.stderr).toContain("contradiction pass never ran");
     expect(await intentFiles(fixture)).toEqual([]);
   });
 
@@ -36,7 +36,7 @@ test("모순 패스는 마지막 답 뒤에 돌아야 하고, 찾은 모순은 �
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("안 풀린 어긋남");
+    expect(rejected.stderr).toContain("Contradictions still unresolved");
     expect(rejected.stderr).toContain("C1");
     expect(await intentFiles(fixture)).toEqual([]);
   });
@@ -79,7 +79,7 @@ test("모순 패스는 마지막 답 뒤에 돌아야 하고, 찾은 모순은 �
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("모순 패스가 마지막 답변보다 앞");
+    expect(rejected.stderr).toContain("ran before the last answer");
     expect(await intentFiles(fixture)).toEqual([]);
   });
 

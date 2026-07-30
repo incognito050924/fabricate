@@ -27,7 +27,7 @@ test("다른 intent 의 증거 파일을 재사용하면 거부하고 같은 int
       const reused = await fabricate(b, ["check", b.sessionId]);
 
       expect(reused.code).not.toBe(0);
-      expect(reused.stderr).toContain("다른 intent");
+      expect(reused.stderr).toContain("different intent");
 
       await recordSuccessfulEvidence(b);
 

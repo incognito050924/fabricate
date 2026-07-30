@@ -59,7 +59,10 @@ test("배송물에 직역·음차로 굳은 말이 남아 있지 않다", async 
   expect(걸린_것).toEqual([]);
 });
 
-test("닫기가 거부할 때 내는 사유가 통용되는 한국어다", async () => {
+// D-1 moved the CLI's own wording to English — it is an agent-facing surface now,
+// and the driver is what writes to the user. What this test still pins is that no
+// transliterated coinage rides along into anything shipped.
+test("닫기가 거부할 때 내는 사유에 직역·음차로 굳은 말이 없다", async () => {
   await withInterviewFixture("g-5-close-reasons", async (fixture) => {
     await createSlashSession(fixture);
     await record(fixture, ["--kind", "fragment", "--id", "F1", "--text", "로그인 실패"]);
@@ -68,8 +71,8 @@ test("닫기가 거부할 때 내는 사유가 통용되는 한국어다", async
     const rejected = await close(fixture, "any");
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("안 닫힌 쟁점");
-    expect(rejected.stderr).toContain("어느 질문에도 안 걸린 조각");
+    expect(rejected.stderr).toContain("Dimensions still open");
+    expect(rejected.stderr).toContain("Fragments no question covers");
 
     for (const 말 of 갈아치울_말) {
       expect(rejected.stderr.includes(말)).toBe(false);
@@ -77,7 +80,7 @@ test("닫기가 거부할 때 내는 사유가 통용되는 한국어다", async
   });
 });
 
-test("준비도 줄이 무엇을 세고 있는지 한국어로 말한다", async () => {
+test("준비도 줄의 키가 무엇을 세는지 이름만 보고 알 수 있다", async () => {
   await withInterviewFixture("g-5-readiness", async (fixture) => {
     await createSlashSession(fixture);
     await record(fixture, ["--kind", "dimension", "--id", "D1", "--text", "실패 조건"]);
@@ -86,10 +89,10 @@ test("준비도 줄이 무엇을 세고 있는지 한국어로 말한다", async
     const rejected = await close(fixture, "any");
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("안 풀린 어긋남");
-    expect(rejected.stderr).toContain("확신 못 한 답");
-    expect(rejected.stderr).toContain("근거 없이 닫은 것");
-    expect(rejected.stderr).toContain("닫아도 되는가");
+    expect(rejected.stderr).toContain("unresolved-contradictions");
+    expect(rejected.stderr).toContain("unsure-answers");
+    expect(rejected.stderr).toContain("closed-without-evidence");
+    expect(rejected.stderr).toContain("ready-to-close");
   });
 });
 

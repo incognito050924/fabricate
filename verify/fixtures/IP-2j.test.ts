@@ -20,8 +20,8 @@ test("활성 표식이 있는데 이번 턴 장부가 안 늘면 Stop 훅이 막
 
     expect(blocked.code).toBe(0);
     expect(JSON.parse(blocked.stdout)).toMatchObject({ decision: "block" });
-    expect(blocked.stdout).toContain("활성 인터뷰");
-    expect(blocked.stdout).toContain("장부");
+    expect(blocked.stdout).toContain("active interview session");
+    expect(blocked.stdout).toContain("ledger");
     expect(blocked.stdout).toContain("fabricate turn record");
 
     const turnstate = JSON.parse(

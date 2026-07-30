@@ -100,7 +100,7 @@ test("확인을 미뤄 둬도 인터뷰는 계속 돈다 — 막는 자리는 cl
     // Only now does the deferred confirmation come due.
     const blocked = await close(fixture);
     expect(blocked.code).not.toBe(0);
-    expect(blocked.stderr).toContain("확인 못 받은 답변");
+    expect(blocked.stderr).toContain("Answers the user never confirmed");
     expect(blocked.stderr).toContain("A1");
     expect(blocked.stderr).toContain("A2");
 

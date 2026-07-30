@@ -42,7 +42,7 @@ test("assume route 는 서로 다른 해석 둘 이상이 있을 때만 장부�
     ]);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("서로 다른 interpretation 이 둘 이상");
+    expect(rejected.stderr).toContain("two or more distinct interpretations");
     expect(await ledger(fixture)).toHaveLength(before.length);
   });
 
@@ -90,7 +90,7 @@ test("assume route 는 서로 다른 해석 둘 이상이 있을 때만 장부�
     ]);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("서로 다른 interpretation 이 둘 이상");
+    expect(rejected.stderr).toContain("two or more distinct interpretations");
     expect(await ledger(fixture)).toHaveLength(before.length);
   });
 

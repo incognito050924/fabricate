@@ -82,7 +82,7 @@ test("질문 전에 세션-맹검 review 가 장부에 남고, review 없이는 
     ]);
 
     expect(question.code).not.toBe(0);
-    expect(question.stderr).toContain("대화를 못 본 검토자의 판정 없이 질문할 수 없습니다");
+    expect(question.stderr).toContain("No question goes out without a verdict from a reviewer");
     expect(await ledger(fixture)).toHaveLength(before.length);
   });
 });

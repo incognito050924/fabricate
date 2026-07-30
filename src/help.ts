@@ -1,6 +1,6 @@
-export const helpText = `fabricate 사용법
+export const helpText = `fabricate usage
 
-사용 가능한 명령:
+Commands:
   fabricate hook <user-prompt-expansion|pre-tool-use|stop>
   fabricate deep-interview start
   fabricate deep-interview close --goal-hash <sha256>

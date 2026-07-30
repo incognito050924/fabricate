@@ -60,7 +60,7 @@ test("PreToolUse 로 시작된 원문 없는 세션은 거부되고, 같은 sess
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("사용자 원문이 없습니다");
+    expect(rejected.stderr).toContain("The user's original text is missing");
     expect(rejected.stderr).toContain("/fabricate:deep-interview");
     expect(await intentFiles(fixture)).toEqual([]);
   });

@@ -12,7 +12,7 @@ test("잠긴 의도가 없으면 거부하고 실제 잠긴 의도와 증거가 
     const checked = await fabricate(fixture, ["check", "missing-intent"]);
 
     expect(checked.code).not.toBe(0);
-    expect(checked.stderr).toContain("잠긴 의도 레코드가 없습니다");
+    expect(checked.stderr).toContain("No locked intent record");
     expect(checked.stderr).toContain("missing-intent");
   });
 
@@ -24,7 +24,7 @@ test("잠긴 의도가 없으면 거부하고 실제 잠긴 의도와 증거가 
     const checked = await fabricate(fixture, ["check", "unknown-intent"]);
 
     expect(checked.code).not.toBe(0);
-    expect(checked.stderr).toContain("잠긴 의도 레코드가 없습니다");
+    expect(checked.stderr).toContain("No locked intent record");
     expect(checked.stderr).toContain("unknown-intent");
   });
 
@@ -34,7 +34,7 @@ test("잠긴 의도가 없으면 거부하고 실제 잠긴 의도와 증거가 
     const checked = await fabricate(fixture, ["check", fixture.sessionId]);
 
     expect(checked.code).not.toBe(0);
-    expect(checked.stderr).toContain("잠긴 의도 레코드가 없습니다");
+    expect(checked.stderr).toContain("No locked intent record");
     expect(checked.stderr).toContain(fixture.sessionId);
   });
 
@@ -59,7 +59,7 @@ test("잠긴 의도가 없으면 거부하고 실제 잠긴 의도와 증거가 
     const checked = await fabricate(fixture, ["check", fixture.sessionId]);
 
     expect(checked.code).toBe(0);
-    expect(checked.stdout).toContain("1개 목표가 충족됐습니다");
+    expect(checked.stdout).toContain("Goals satisfied: 1");
   });
 });
 

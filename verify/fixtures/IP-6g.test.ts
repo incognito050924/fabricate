@@ -77,7 +77,7 @@ test("hard criterion 의 예시 요구는 다른 증거로 면제되지 않고 e
     const rejected = await close(fixture);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("hard 기준 예시 없음");
+    expect(rejected.stderr).toContain("Hard criteria with no example");
     expect(rejected.stderr).toContain("K1");
     expect(await intentFiles(fixture)).toEqual([]);
 

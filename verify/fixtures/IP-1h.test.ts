@@ -50,7 +50,7 @@ test("사용자 답변과 너무 겹치는 재진술은 거부하고 다른 말�
     ]);
 
     expect(echo.code).not.toBe(0);
-    expect(echo.stderr).toContain("바꿔 말한 문장이 사용자 답변과 너무 겹칩니다");
+    expect(echo.stderr).toContain("overlaps the user's own answer too much");
     expect(await ledger(fixture)).toHaveLength(beforeEcho.length);
 
     await record(fixture, [

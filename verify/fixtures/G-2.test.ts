@@ -19,7 +19,7 @@ test("완료 판정 기준을 하나도 안 적으면 닫기가 거부한다", a
     const rejected = await close(fixture, hash);
 
     expect(rejected.code).not.toBe(0);
-    expect(rejected.stderr).toContain("완료 판정 기준이 없습니다");
+    expect(rejected.stderr).toContain("No completion criterion");
     expect(await intentFiles(fixture)).toEqual([]);
   });
 });

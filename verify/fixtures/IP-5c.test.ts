@@ -44,7 +44,7 @@ test("driver 로 정규화되는 reviewer 와 세션 id 자신은 거부되고, 
         ]);
 
         expect(rejected.code).not.toBe(0);
-        expect(rejected.stderr).toContain("검토자가 진행자와 같은 자리입니다");
+        expect(rejected.stderr).toContain("The reviewer is the driver itself");
         expect(await ledger(fixture)).toHaveLength(before.length);
       },
     );

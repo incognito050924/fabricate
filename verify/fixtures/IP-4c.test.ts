@@ -16,7 +16,7 @@ test("증거 없음, 실패한 검증 명령, 오래된 증거를 거부하고 �
     const missing = await fabricate(fixture, ["check", fixture.sessionId]);
 
     expect(missing.code).not.toBe(0);
-    expect(missing.stderr).toContain("증거 파일이 없습니다");
+    expect(missing.stderr).toContain("No evidence file");
 
     await recordSuccessfulEvidence(fixture);
 
@@ -43,7 +43,7 @@ test("증거 없음, 실패한 검증 명령, 오래된 증거를 거부하고 �
 
     const failed = await fabricate(fixture, ["check", fixture.sessionId]);
     expect(failed.code).not.toBe(0);
-    expect(failed.stderr).toContain("검증 명령 실패");
+    expect(failed.stderr).toContain("Verification command failed");
     expect(failed.stderr).toContain("exit 1");
 
     await recordSuccessfulEvidence(fixture);
@@ -62,7 +62,7 @@ test("증거 없음, 실패한 검증 명령, 오래된 증거를 거부하고 �
 
     const old = await fabricate(fixture, ["check", fixture.sessionId]);
     expect(old.code).not.toBe(0);
-    expect(old.stderr).toContain("오래된 증거");
+    expect(old.stderr).toContain("Stale evidence");
 
     await recordSuccessfulEvidence(fixture);
 

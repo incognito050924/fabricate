@@ -27,7 +27,7 @@ test("question 은 실제 dimension 에 묶여야 하고 거부된 question 은 
     ]);
 
     expect(missingDimension.code).not.toBe(0);
-    expect(missingDimension.stderr).toContain("--dimension 값이 필요합니다");
+    expect(missingDimension.stderr).toContain("--dimension requires a value");
     expect(await ledger(fixture)).toHaveLength(beforeMissingDimension.length);
 
     const beforeUnknownDimension = await ledger(fixture);
@@ -46,7 +46,7 @@ test("question 은 실제 dimension 에 묶여야 하고 거부된 question 은 
     ]);
 
     expect(unknownDimension.code).not.toBe(0);
-    expect(unknownDimension.stderr).toContain("존재하지 않는 dimension 입니다: D404");
+    expect(unknownDimension.stderr).toContain("No such dimension: D404");
     expect(await ledger(fixture)).toHaveLength(beforeUnknownDimension.length);
 
     await record(fixture, [

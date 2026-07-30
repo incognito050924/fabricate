@@ -38,13 +38,13 @@ test("hard criterion 은 사용자 판정 예시 뒤에 rule 이 있어야 close
     ]);
 
     expect(rejectedEarlyRule.code).not.toBe(0);
-    expect(rejectedEarlyRule.stderr).toContain("example 이 하나 이상");
+    expect(rejectedEarlyRule.stderr).toContain("at least one example");
     expect(await ledger(fixture)).toHaveLength(beforeRule.length);
 
     const rejectedWithoutExample = await close(fixture, hash);
 
     expect(rejectedWithoutExample.code).not.toBe(0);
-    expect(rejectedWithoutExample.stderr).toContain("hard 기준 예시 없음");
+    expect(rejectedWithoutExample.stderr).toContain("Hard criteria with no example");
     expect(rejectedWithoutExample.stderr).toContain("K1");
     expect(await intentFiles(fixture)).toEqual([]);
 
@@ -64,7 +64,7 @@ test("hard criterion 은 사용자 판정 예시 뒤에 rule 이 있어야 close
     const rejectedWithoutRule = await close(fixture, hash);
 
     expect(rejectedWithoutRule.code).not.toBe(0);
-    expect(rejectedWithoutRule.stderr).toContain("hard 기준 rule 없음");
+    expect(rejectedWithoutRule.stderr).toContain("Hard criteria with no rule");
     expect(rejectedWithoutRule.stderr).toContain("K1");
 
     await record(fixture, [

@@ -80,7 +80,7 @@ test("전제를 치려면 여전히 실재하는 파일과 줄을 대야 한다"
     ]);
 
     expect(noCitation.code).not.toBe(0);
-    expect(noCitation.stderr).toContain("--citation 값이 필요합니다");
+    expect(noCitation.stderr).toContain("--citation requires a value");
 
     const fakeCitation = await fabricate(fixture, [
       "turn",
@@ -98,7 +98,7 @@ test("전제를 치려면 여전히 실재하는 파일과 줄을 대야 한다"
     ]);
 
     expect(fakeCitation.code).not.toBe(0);
-    expect(fakeCitation.stderr).toContain("실재하지 않습니다");
+    expect(fakeCitation.stderr).toContain("does not exist");
     expect(await ledger(fixture)).toHaveLength(before.length);
   });
 });
