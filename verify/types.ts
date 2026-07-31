@@ -18,11 +18,6 @@ export type CheckContext = {
 
 export type StructureStatus = "PASS" | "FAIL" | "n/a";
 
-export type Criterion = {
-  id: string;
-  title: string;
-};
-
 export type ProcessResult = {
   command: string;
   args: string[];

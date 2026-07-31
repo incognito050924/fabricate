@@ -1,29 +1,39 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { criteria, structureChecks } from "./criteria.ts";
-import { parseJUnitFile } from "./lib/junit.ts";
 import { runProcess, tailOutput } from "./lib/process.ts";
 import { type SweepResult, sweepStaleVerifyMarketplaces } from "./lib/stale-marketplaces.ts";
 import type { Check, CheckContext, ProcessResult, StructureStatus } from "./types.ts";
 
-type AxisAResult = {
-  id: string;
-  title: string;
-  ok: boolean;
-  detail: string;
-};
+// Each check module carries its own title, so this list is only here to name the
+// modules that must exist. Scanning the directory instead would let a check that
+// was deleted read as "nothing to run" rather than as a failure.
+const structureCheckIds = [
+  "S-1",
+  "S-2",
+  "S-3",
+  "S-4",
+  "S-5",
+  "S-6",
+  "S-7",
+  "S-8",
+  "S-9",
+  "S-10",
+  "S-11",
+  "S-12",
+  "S-13",
+  "S-14",
+];
 
-type AxisBResult = {
+type StructureResult = {
   id: string;
   title: string;
   status: StructureStatus;
   detail: string;
 };
 
-type AxisCResult = {
-  id: "typecheck" | "lint" | "test";
-  title: string;
+type ToolResult = {
+  id: string;
   ok: boolean;
   detail: string;
 };
@@ -35,22 +45,18 @@ const main = async (): Promise<number> => {
 
   try {
     // A killed run never reaches its teardown, so its marketplace entry and cache
-    // directory stay in the user's home. Sweep them before starting (GOAL.md §4-9).
+    // directory stay in the user's home. Sweep them before starting.
     const swept = await sweepStaleVerifyMarketplaces(repoRoot);
-    const testRun = await runFixtures(repoRoot, tmpRoot, obsPath);
-    const axisA = await axisAFromJUnit(testRun, join(tmpRoot, "junit.xml"));
-    const axisB = await runStructureChecks({
-      repoRoot,
-      tmpRoot,
-      obsPath,
-    });
-    const axisC = [
-      await runTool("typecheck", "typecheck", ["run", "typecheck"], repoRoot),
-      await runTool("lint", "lint", ["run", "lint"], repoRoot),
-      axisCTestResult(testRun),
+    // The fixtures are also what writes the host observation, so they have to run
+    // before the structure checks that read it.
+    const fixtures = await runFixtures(repoRoot, obsPath);
+    const structure = await runStructureChecks({ repoRoot, tmpRoot, obsPath });
+    const tools = [
+      await runTool("typecheck", ["run", "typecheck"], repoRoot),
+      await runTool("lint", ["run", "lint"], repoRoot),
     ];
 
-    const output = formatReport(axisA, axisB, axisC);
+    const output = formatReport(fixtures, structure, tools);
     process.stdout.write(sweepReport(swept) + output.text);
     return output.exitCode;
   } finally {
@@ -58,74 +64,26 @@ const main = async (): Promise<number> => {
   }
 };
 
-const runFixtures = async (
-  repoRoot: string,
-  tmpRoot: string,
-  obsPath: string,
-): Promise<ProcessResult> =>
-  await runProcess(
-    "bun",
-    [
-      "test",
-      "verify/fixtures",
-      "--reporter=junit",
-      `--reporter-outfile=${join(tmpRoot, "junit.xml")}`,
-    ],
-    {
-      cwd: repoRoot,
-      env: {
-        FABRICATE_VERIFY_OBS: obsPath,
-      },
+const runFixtures = async (repoRoot: string, obsPath: string): Promise<ProcessResult> =>
+  await runProcess("bun", ["test", "verify/fixtures"], {
+    cwd: repoRoot,
+    env: {
+      FABRICATE_VERIFY_OBS: obsPath,
     },
-  );
-
-const axisAFromJUnit = async (
-  testRun: ProcessResult,
-  junitPath: string,
-): Promise<AxisAResult[]> => {
-  const suites = await parseJUnitFile(junitPath);
-  const noTestFiles = `${testRun.stdout}\n${testRun.stderr}`.includes("0 test files");
-
-  return criteria.map((criterion) => {
-    const suite = suites.get(criterion.id);
-
-    if (suite === undefined) {
-      const suffix = noTestFiles ? "\nbun test 가 테스트 파일을 찾지 못했다." : "";
-
-      return {
-        id: criterion.id,
-        title: criterion.title,
-        ok: false,
-        detail: `fixture 없음: verify/fixtures/${criterion.id}.test.ts${suffix}`,
-      };
-    }
-
-    const ok = suite.tests > 0 && suite.failures === 0 && suite.errors === 0;
-    const detail = ok
-      ? ""
-      : `fixture 실패: tests=${suite.tests}, failures=${suite.failures}, errors=${suite.errors}`;
-
-    return {
-      id: criterion.id,
-      title: criterion.title,
-      ok,
-      detail,
-    };
   });
-};
 
-const runStructureChecks = async (ctx: CheckContext): Promise<AxisBResult[]> => {
-  const results: AxisBResult[] = [];
+const runStructureChecks = async (ctx: CheckContext): Promise<StructureResult[]> => {
+  const results: StructureResult[] = [];
 
-  for (const definition of structureChecks) {
-    const check = await loadCheck(definition.id);
+  for (const id of structureCheckIds) {
+    const check = await loadCheck(id);
 
     if (check === null) {
       results.push({
-        id: definition.id,
-        title: definition.title,
+        id,
+        title: "",
         status: "FAIL",
-        detail: `검사 모듈이 없다: verify/checks/${definition.id}.ts`,
+        detail: `검사 모듈이 없다: verify/checks/${id}.ts`,
       });
       continue;
     }
@@ -135,15 +93,16 @@ const runStructureChecks = async (ctx: CheckContext): Promise<AxisBResult[]> => 
       const status = outcome.targets.length === 0 ? "n/a" : outcome.ok ? "PASS" : "FAIL";
 
       results.push({
-        id: definition.id,
+        id,
         title: check.title,
         status,
         detail: outcome.detail,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "알 수 없는 검사 오류";
+
       results.push({
-        id: definition.id,
+        id,
         title: check.title,
         status: "FAIL",
         detail: message,
@@ -167,27 +126,14 @@ const loadCheck = async (id: string): Promise<Check | null> => {
   }
 };
 
-const runTool = async (
-  id: AxisCResult["id"],
-  title: string,
-  args: string[],
-  repoRoot: string,
-): Promise<AxisCResult> => {
+const runTool = async (id: string, args: string[], repoRoot: string): Promise<ToolResult> => {
   const result = await runProcess("bun", args, { cwd: repoRoot });
   return {
     id,
-    title,
     ok: result.code === 0,
     detail: toolDetail(result),
   };
 };
-
-const axisCTestResult = (result: ProcessResult): AxisCResult => ({
-  id: "test",
-  title: "test",
-  ok: result.code === 0,
-  detail: toolDetail(result),
-});
 
 const toolDetail = (result: ProcessResult): string => {
   if (result.code === 0) {
@@ -199,47 +145,44 @@ const toolDetail = (result: ProcessResult): string => {
   return `exit ${result.code}${suffix}`;
 };
 
+// Only what is not passing gets printed. A count of how many things went green
+// would be answering a question nobody asked — what matters is whether anything
+// is still red, and what it is.
 const formatReport = (
-  axisA: AxisAResult[],
-  axisB: AxisBResult[],
-  axisC: AxisCResult[],
+  fixtures: ProcessResult,
+  structure: StructureResult[],
+  tools: ToolResult[],
 ): { text: string; exitCode: number } => {
-  const axisAGreen = axisA.filter((result) => result.ok).length;
-  const axisBGreen = axisB.filter((result) => result.status === "PASS").length;
-  const axisCGreen = axisC.filter((result) => result.ok).length;
-  const green = axisAGreen + axisBGreen + axisCGreen;
-  const exitCode =
-    axisAGreen === criteria.length &&
-    axisBGreen === structureChecks.length &&
-    axisCGreen === axisC.length
-      ? 0
-      : 1;
-  const lines = [
-    `fabricate verify — ${green}/60 초록 (축 A ${axisAGreen}/43 · 축 B ${axisBGreen}/14 · 축 C ${axisCGreen}/3)`,
-    "",
-    "축 A — GOAL §2 통합 술어",
-  ];
+  const fixturesOk = fixtures.code === 0;
+  const structureLeft = structure.filter((result) => result.status !== "PASS");
+  const toolsLeft = tools.filter((result) => !result.ok);
+  const lines = ["fabricate verify", "", "픽스처 — bun test verify/fixtures"];
 
-  for (const result of axisA.filter((item) => !item.ok)) {
-    lines.push(`  ${result.id.padEnd(6)} ${result.title}`);
-    lines.push(indentDetail(result.detail, 9));
+  lines.push(fixturesOk ? "  통과" : indentDetail(toolDetail(fixtures), 2));
+  lines.push("", "구조 검사");
+
+  if (structureLeft.length === 0) {
+    lines.push("  통과");
   }
 
-  lines.push("", "축 B — 구조 검사");
-
-  for (const result of axisB.filter((item) => item.status !== "PASS")) {
+  for (const result of structureLeft) {
     lines.push(`  ${result.id.padEnd(5)} ${result.status.padEnd(4)} ${result.title}`);
     lines.push(indentDetail(result.detail, 8));
   }
 
-  lines.push("", "축 C — 도구 사슬");
+  lines.push("", "도구 사슬");
 
-  for (const result of axisC.filter((item) => !item.ok)) {
-    lines.push(`  ${result.id.padEnd(9)} FAIL  ${result.title}`);
+  if (toolsLeft.length === 0) {
+    lines.push("  통과");
+  }
+
+  for (const result of toolsLeft) {
+    lines.push(`  ${result.id.padEnd(9)} FAIL`);
     lines.push(indentDetail(result.detail, 8));
   }
 
-  lines.push("", `${green}/60 초록 — exit ${exitCode}`);
+  const exitCode = fixturesOk && structureLeft.length === 0 && toolsLeft.length === 0 ? 0 : 1;
+  lines.push("", `exit ${exitCode}`);
 
   return {
     text: `${lines.join("\n")}\n`,
@@ -248,7 +191,7 @@ const formatReport = (
 };
 
 // Silence would read as "nothing was left behind". Say what was cleaned and what
-// resisted, so a leak that the sweep cannot fix stays visible (§4-7).
+// resisted, so a leak that the sweep cannot fix stays visible.
 const sweepReport = (swept: SweepResult): string => {
   const lines: string[] = [];
 
