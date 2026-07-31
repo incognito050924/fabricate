@@ -56,7 +56,7 @@ test("driver 로 정규화되는 reviewer 와 세션 id 자신은 거부되고, 
     await record(fixture, ["--kind", "dimension", "--id", "D1", "--text", "실패 조건"]);
 
     // The machine sees only the reviewer name string. It does not prove that a
-    // subagent actually ran; GOAL §8 declares that residual explicitly.
+    // subagent actually ran. That residual is known and accepted.
     const acceptedReview = await fabricate(fixture, [
       "turn",
       "record",

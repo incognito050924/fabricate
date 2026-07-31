@@ -55,7 +55,7 @@ const handleUserPromptExpansion = async (payload: Record<string, unknown>): Prom
   const commandArgs = optionalString(payload, "command_args");
 
   // An empty argument is not user text. Writing an empty request.txt would let a
-  // session claim it has the user's words when it does not (GOAL.md IP-2ⓜ).
+  // session claim it has the user's words when it does not.
   if (commandArgs !== null && commandArgs.length > 0) {
     await writeFileIfAbsent(join(session.dir, "request.txt"), commandArgs);
   }

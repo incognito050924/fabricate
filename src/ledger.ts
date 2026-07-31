@@ -232,7 +232,7 @@ const prepareRecord = (
   // D-6: the blind reviewer only ever stood in front of questions. The goal
   // predicate — the one thing that gets locked and handed to the next session —
   // went out unread. It is the surface where "a reader who was not here can
-  // understand this" is the entire promise (IP-3), so it gets the same reader.
+  // understand this" is the entire promise, so it gets the same reader.
   if (kind === "goal-review") {
     const verdict = blindVerdict(flags, sessionId);
     if (!verdict.ok) return verdict;

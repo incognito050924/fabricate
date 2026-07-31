@@ -232,9 +232,8 @@ const closeReasons = (
   // aside with a reason.
   //
   // What this cannot see is a later goal record dropping what an earlier one
-  // carried: `goalCovers` is the union over all of them. That is the same line
-  // GOAL.md §8 draws — the machine checks that the accounting happened, not that
-  // the wording is faithful.
+  // carried: `goalCovers` is the union over all of them. The machine checks that
+  // the accounting happened, not that the wording is faithful.
   const unaccountedRemarks = [...state.remarks.values()].filter(
     (remark) => !state.goalCovers.has(remark.id) && !state.setAsides.has(remark.id),
   );

@@ -29,8 +29,8 @@ const 갈아치울_말 = [
 ];
 
 // What the interview ships to the user: the two skills, the subagent definition,
-// and every string the CLI can print. GOAL.md and STATE.md are project records,
-// not something the interview says to anyone.
+// the README, and every string the CLI can print. Working notes kept in the repo
+// are not something the interview says to anyone.
 const 배송물 = async (): Promise<{ path: string; text: string }[]> => {
   const paths = [
     join(repoRoot, "skills", "deep-interview", "SKILL.md"),

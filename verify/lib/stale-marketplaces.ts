@@ -8,8 +8,8 @@ import { runProcess } from "./process.ts";
 // source is a temporary directory, and removes it again in a `finally`. A `finally`
 // does not run when the process is killed, and killing `bun run verify` mid-flight is
 // ordinary — a timeout, a Ctrl-C, a task cancelled. Two such runs left entries and
-// cache directories behind in the user's home, which GOAL.md §4-9 makes verify's own
-// responsibility to clean up.
+// cache directories behind in the user's home, which is verify's own responsibility
+// to clean up.
 //
 // Signal handlers cannot close this: SIGKILL is not catchable. What can is sweeping at
 // the start of the next run. A leftover is identifiable without ambiguity — its source
